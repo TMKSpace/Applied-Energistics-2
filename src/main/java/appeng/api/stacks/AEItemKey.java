@@ -243,7 +243,11 @@ public final class AEItemKey extends AEKey {
 
     @Override
     public boolean hasComponents() {
+        //#if FABRIC
+        return !stack.getComponentsPatch().isEmpty();
+        //#else
         return !stack.isComponentsPatchEmpty();
+        //#endif
     }
 
     /**
@@ -272,6 +276,10 @@ public final class AEItemKey extends AEKey {
         var id = BuiltInRegistries.ITEM.getKey(stack.getItem());
         String idString = id != BuiltInRegistries.ITEM.getDefaultKey() ? id.toString()
                 : stack.getItem().getClass().getName() + "(unregistered)";
+        //#if FABRIC
+        return stack.getComponentsPatch().isEmpty() ? idString : idString + " (with patches)";
+        //#else
         return stack.isComponentsPatchEmpty() ? idString : idString + " (with patches)";
+        //#endif
     }
 }

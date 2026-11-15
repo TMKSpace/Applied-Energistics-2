@@ -280,7 +280,11 @@ public class EntropyManipulatorItem extends AEBasePoweredItem implements IBlockT
     @Nullable
     private static EntropyRecipe findRecipe(ServerLevel level, EntropyMode mode, BlockState blockState,
             FluidState fluidState) {
+        //#if FABRIC
+        for (var holder : nfcompat.recipes.RecipeMaps.of(level.recipeAccess()).byType(AERecipeTypes.ENTROPY)) {
+        //#else
         for (var holder : level.recipeAccess().recipeMap().byType(AERecipeTypes.ENTROPY)) {
+        //#endif
             var recipe = holder.value();
             if (recipe.matches(mode, blockState, fluidState)) {
                 return recipe;

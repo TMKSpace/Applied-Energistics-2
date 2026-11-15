@@ -167,8 +167,14 @@ public class AEBaseBlockEntity extends BlockEntity
             if (registryAccess == null) {
                 LOG.warn("Ignoring  update packet for {} since no registry is available.", this);
             } else if (readUpdateData(
+//#if FABRIC
+                    nfcompat.network.Buffers.create(Unpooled.wrappedBuffer(decodedUpdateData), registryAccess,
+                            ConnectionType.NEOFORGE)
+//#else
                     new RegistryFriendlyByteBuf(Unpooled.wrappedBuffer(decodedUpdateData), registryAccess,
-                            ConnectionType.NEOFORGE))) {
+                            ConnectionType.NEOFORGE)
+//#endif
+            )) {
                 // Triggers a chunk re-render if the level is already loaded
                 if (level != null) {
                     requestModelDataUpdate();
@@ -451,8 +457,25 @@ public class AEBaseBlockEntity extends BlockEntity
     }
 
 //#if FABRIC
-    // В NeoForge это переопределение BlockEntity#getModelData(), а у нас — реализация
-    // ModelDataProvider, поэтому @Override тут не к чему прицепиться.
+    /**
+     * NeoForge патчит `BlockEntity`, добавляя `onChunkUnloaded()`; в ванили такого хука
+     * нет (есть `setRemoved()`). Объявляем здесь, чтобы вся иерархия AE2 компилировалась
+     * и `super.onChunkUnloaded()` в наследниках был валиден.
+     *
+     * TODO: вызывать из миксина на `BlockEntity#setRemoved`, иначе метод не работает.
+     */
+    public void onChunkUnloaded() {
+    }
+
+    /**
+     * NeoForge добавляет `invalidateCapabilities()`. Нужен он для его кэша capability,
+     * а у нас кэша нет — каждый запрос идёт в провайдеры напрямую, инвалидировать нечего.
+     */
+    public void invalidateCapabilities() {
+    }
+
+    // NeoForge не переопределяет BlockEntity#getModelData(): у нас этот метод объявлен
+    // в интерфейсе ModelDataProvider, поэтому @Override здесь не к чему прикрепить.
     public ModelData getModelData() {
 //#else
     @Override

@@ -194,8 +194,15 @@ public record MEInventoryUpdatePacket(
 
         private RegistryFriendlyByteBuf ensureData() {
             if (encodedEntries == null) {
-                encodedEntries = new RegistryFriendlyByteBuf(Unpooled.buffer(INITIAL_BUFFER_CAPACITY), registryAccess,
-                        ConnectionType.NEOFORGE);
+                encodedEntries =
+//#if FABRIC
+                        nfcompat.network.Buffers.create(Unpooled.buffer(INITIAL_BUFFER_CAPACITY), registryAccess,
+                                ConnectionType.NEOFORGE)
+//#else
+                        new RegistryFriendlyByteBuf(Unpooled.buffer(INITIAL_BUFFER_CAPACITY), registryAccess,
+                                ConnectionType.NEOFORGE)
+//#endif
+                        ;
             }
             return encodedEntries;
         }

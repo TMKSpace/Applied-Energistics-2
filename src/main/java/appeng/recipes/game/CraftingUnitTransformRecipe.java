@@ -69,7 +69,11 @@ public class CraftingUnitTransformRecipe extends MechanicsRecipe<RecipeInput> {
     public static ItemStack getRemovedUpgrade(ServerLevel level, Block upgradedBlock) {
         var recipeManager = level.recipeAccess();
 
+        //#if FABRIC
+        for (var holder : nfcompat.recipes.RecipeMaps.of(recipeManager).byType(AERecipeTypes.CRAFTING_UNIT_TRANSFORM)) {
+        //#else
         for (var holder : recipeManager.recipeMap().byType(AERecipeTypes.CRAFTING_UNIT_TRANSFORM)) {
+        //#endif
             if (holder.value().upgradedBlock == upgradedBlock) {
                 return holder.value().upgradeItem.getDefaultInstance();
             }

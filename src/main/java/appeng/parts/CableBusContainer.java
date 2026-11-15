@@ -298,7 +298,15 @@ public class CableBusContainer implements AEMultiBlockEntity, ICableBusContainer
         this.markForUpdate();
         this.markForSave();
         this.partChanged();
+        //#if FABRIC
+        nfcompat.capabilities.CapabilityInvalidation.invalidate(getBlockEntity());
+        //#else
+        //#if FABRIC
+        nfcompat.capabilities.CapabilityInvalidation.invalidate(getBlockEntity());
+        //#else
         getBlockEntity().invalidateCapabilities();
+        //#endif
+        //#endif
         this.partRendererCache = null;
         updateNeighborShapeOnSide(side);
     }

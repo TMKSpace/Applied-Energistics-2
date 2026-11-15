@@ -76,7 +76,11 @@ public class StorageCellDisassemblyRecipe extends MechanicsRecipe<SingleRecipeIn
     public static List<ItemStack> getDisassemblyResult(ServerLevel level, Item cell) {
         var recipeManager = level.recipeAccess();
 
+        //#if FABRIC
+        for (var holder : nfcompat.recipes.RecipeMaps.of(recipeManager).byType(AERecipeTypes.CELL_DISASSEMBLY)) {
+        //#else
         for (var holder : recipeManager.recipeMap().byType(AERecipeTypes.CELL_DISASSEMBLY)) {
+        //#endif
             if (holder.value().storageCell == cell) {
                 return holder.value().cellDisassemblyItems().stream().map(ItemStackTemplate::create).toList();
             }
