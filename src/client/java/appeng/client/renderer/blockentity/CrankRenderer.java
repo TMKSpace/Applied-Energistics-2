@@ -58,10 +58,24 @@ handleModel = new SingleVariant(Objects.requireNonNull(modelManager.getStandalon
 
         state.orientation = BlockOrientation.get(be);
         state.visibleRotation = be.getVisibleRotation();
+//#if FABRIC
+        var parts = state.modelRenderState.setupModel(new Matrix4f(),
+                handleModel.hasMaterialFlag(BakedQuad.FLAG_TRANSLUCENT));
+        //#else
         var parts = state.modelRenderState.setupModel(new Matrix4f(), handleModel.hasMaterialFlag(
                 (BlockAndTintGetter) be.getLevel(), be.getBlockPos(), be.getBlockState(), BakedQuad.FLAG_TRANSLUCENT));
+        //#endif
+//#if FABRIC
+        if (handleModel instanceof net.neoforged.neoforge.client.model.DynamicBlockStateModel dynamic) {
+            dynamic.collectParts((BlockAndTintGetter) be.getLevel(), be.getBlockPos(), be.getBlockState(),
+                    state.modelRenderState.scratchRandomSource(42L), parts);
+        } else {
+            handleModel.collectParts(state.modelRenderState.scratchRandomSource(42L), parts);
+        }
+        //#else
         handleModel.collectParts((BlockAndTintGetter) be.getLevel(), be.getBlockPos(), be.getBlockState(),
                 state.modelRenderState.scratchRandomSource(42L), parts);
+        //#endif
     }
 
     @Override

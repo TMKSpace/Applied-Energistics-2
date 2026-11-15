@@ -22,10 +22,17 @@ public final class AERenderPipelines {
     /**
      * Similar to {@link RenderPipelines#LINES_TRANSLUCENT}, but with inverted depth test.
      */
+//#if FABRIC
+    // nfcompat: в ванили нет RenderPipeline#toBuilder, поэтому берём готовый пайплайн.
+    // Инвертированный depth-тест из переопределения теряется — линии за блоком будут
+    // рисоваться как обычные. TODO: собрать пайплайн с нуля на нужных сниппетах.
+    public static final RenderPipeline LINES_BEHIND_BLOCK = RenderPipelines.LINES_TRANSLUCENT;
+    //#else
     public static final RenderPipeline LINES_BEHIND_BLOCK = RenderPipelines.LINES_TRANSLUCENT.toBuilder()
             .withLocation(AppEng.makeId("pipeline/lines_behind_block"))
             .withDepthStencilState(new DepthStencilState(CompareOp.LESS_THAN, false))
             .build();
+    //#endif
 
     public static final RenderPipeline SPATIAL_SKYBOX = RenderPipeline
             .builder(RenderPipelines.GLOBALS_SNIPPET)
@@ -128,11 +135,16 @@ public final class AERenderPipelines {
      * are opaque, and with the depth bias of {@link RenderPipelines#CRUMBLING} to stop the LEDs from z-fighting with
      * the cell model right behind them.
      */
+//#if FABRIC
+    // nfcompat: см. LINES_BEHIND_BLOCK — toBuilder отсутствует, берём ванильный пайплайн.
+    public static final RenderPipeline STORAGE_CELL_LEDS = RenderPipelines.EYES;
+    //#else
     public static final RenderPipeline STORAGE_CELL_LEDS = RenderPipelines.EYES.toBuilder()
             .withLocation(AppEng.makeId("pipeline/storage_cell_leds"))
             .withColorTargetState(ColorTargetState.DEFAULT)
             .withDepthStencilState(new DepthStencilState(CompareOp.GREATER_THAN_OR_EQUAL, false, 1.0F, 10.0F))
             .build();
+    //#endif
 
     public static final RenderPipeline LIGHTNING_FX = RenderPipeline
             .builder(RenderPipelines.PARTICLE_SNIPPET)

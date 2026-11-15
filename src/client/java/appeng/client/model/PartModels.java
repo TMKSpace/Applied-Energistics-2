@@ -47,12 +47,21 @@ public final class PartModels {
         var fileToIdConverter = FileToIdConverter.json("ae2/parts");
         return CompletableFuture.supplyAsync(() -> {
             var clientParts = new HashMap<Identifier, ClientPart>();
+//#if FABRIC
+            nfcompat.util.JsonScan.scanDirectory(
+                    resourceManager,
+                    fileToIdConverter,
+                    JsonOps.INSTANCE,
+                    ClientPart.CODEC,
+                    clientParts);
+            //#else
             SimpleJsonResourceReloadListener.scanDirectory(
                     resourceManager,
                     fileToIdConverter,
                     JsonOps.INSTANCE,
                     ClientPart.CODEC,
                     clientParts);
+            //#endif
             return clientParts;
         }, executor)
                 .thenAccept(clientParts -> {
