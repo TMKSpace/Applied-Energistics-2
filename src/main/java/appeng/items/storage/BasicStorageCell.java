@@ -174,7 +174,10 @@ public class BasicStorageCell extends AEBaseItem implements IBasicCellItem, AETo
         return true;
     }
 
+    //#if FABRIC
+    //#else
     @Override
+    //#endif
     public InteractionResult onItemUseFirst(ItemStack stack, UseOnContext context) {
         if (context.getLevel() instanceof ServerLevel serverLevel
                 && this.disassembleDrive(stack, serverLevel, context.getPlayer())) {

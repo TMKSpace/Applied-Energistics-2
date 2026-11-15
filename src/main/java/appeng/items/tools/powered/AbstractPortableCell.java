@@ -84,7 +84,10 @@ public abstract class AbstractPortableCell extends PoweredContainerItem
         return DyedItemColor.getOrDefault(stack, defaultColor);
     }
 
+    //#if FABRIC
+    //#else
     @Override
+    //#endif
     public InteractionResult onItemUseFirst(ItemStack stack, UseOnContext context) {
         return context.isSecondaryUseActive()
                 && this.disassembleDrive(stack, context.getLevel(), context.getPlayer())

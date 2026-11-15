@@ -141,7 +141,11 @@ public class AEClientboundPacketHandler {
         if (packet.soundMode() == BlockTransitionEffectPacket.SoundMode.FLUID) {
             // This code is based on what BucketItem does
             Fluid fluid = packet.blockState().getFluidState().getType();
+            //#if FABRIC
+            soundEvent = fluid.getFluidType().getSound(fluid, SoundActions.BUCKET_FILL);
+            //#else
             soundEvent = fluid.getFluidType().getSound(SoundActions.BUCKET_FILL);
+            //#endif
             if (soundEvent == null) {
                 if (fluid.is(FluidTags.LAVA)) {
                     soundEvent = SoundEvents.BUCKET_FILL_LAVA;

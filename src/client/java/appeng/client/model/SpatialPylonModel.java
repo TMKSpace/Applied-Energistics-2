@@ -208,7 +208,10 @@ public class SpatialPylonModel implements DynamicBlockStateModel {
         return materialFlags;
     }
 
+    //#if FABRIC
+    //#else
     @Override
+    //#endif
     public @BakedQuad.MaterialFlags int materialFlags(BlockAndTintGetter level, BlockPos pos, BlockState state) {
         // TODO 26.1: Compute the actual wost-case material flags based on the concrete texture used by the pylon at the
         // location

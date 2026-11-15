@@ -167,7 +167,10 @@ public class CableBusModel implements DynamicBlockStateModel {
         return BakedQuad.FLAG_TRANSLUCENT | BakedQuad.FLAG_ANIMATED;
     }
 
+    //#if FABRIC
+    //#else
     @Override
+    //#endif
     public @BakedQuad.MaterialFlags int materialFlags(BlockAndTintGetter level, BlockPos pos, BlockState state) {
         // TODO 26.1: Determine flags based on attached part models
         return materialFlags();

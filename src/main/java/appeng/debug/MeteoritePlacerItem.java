@@ -86,7 +86,10 @@ public class MeteoritePlacerItem extends AEBaseItem {
         return CraterType.values()[tag.getByteOr(MODE_TAG, (byte) 0)];
     }
 
+    //#if FABRIC
+    //#else
     @Override
+    //#endif
     public InteractionResult onItemUseFirst(ItemStack stack, UseOnContext context) {
         if (context.getLevel().isClientSide()) {
             return InteractionResult.PASS;

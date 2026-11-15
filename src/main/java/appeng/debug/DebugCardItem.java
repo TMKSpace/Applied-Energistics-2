@@ -93,7 +93,10 @@ public class DebugCardItem extends AEBaseItem {
         return InteractionResult.SUCCESS;
     }
 
+    //#if FABRIC
+    //#else
     @Override
+    //#endif
     public InteractionResult onItemUseFirst(ItemStack stack, UseOnContext context) {
         if (context.getLevel().isClientSide()) {
             return InteractionResult.PASS;

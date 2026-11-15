@@ -52,7 +52,10 @@ public class EraserItem extends AEBaseItem {
         super(properties);
     }
 
+    //#if FABRIC
+    //#else
     @Override
+    //#endif
     public InteractionResult onItemUseFirst(ItemStack stack, UseOnContext context) {
         if (context.getLevel().isClientSide()) {
             return InteractionResult.PASS;

@@ -101,7 +101,10 @@ public class SkyStoneChestRenderer implements BlockEntityRenderer<SkyStoneChestB
         poseStack.popPose();
     }
 
+    //#if FABRIC
+    //#else
     @Override
+    //#endif
     public AABB getRenderBoundingBox(SkyStoneChestBlockEntity blockEntity) {
         BlockPos pos = blockEntity.getBlockPos();
         return AABB.encapsulatingFullBlocks(pos.offset(-1, 0, -1), pos.offset(1, 1, 1));

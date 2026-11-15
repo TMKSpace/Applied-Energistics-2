@@ -54,7 +54,10 @@ public class FacadeItem extends AEBaseItem implements IFacadeItem {
         super(properties);
     }
 
+    //#if FABRIC
+    //#else
     @Override
+    //#endif
     public InteractionResult onItemUseFirst(ItemStack stack, UseOnContext context) {
         if (stack.getItem() != this) {
             return InteractionResult.PASS;

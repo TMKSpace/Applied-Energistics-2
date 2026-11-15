@@ -33,6 +33,10 @@ public record UpdateHoldingCtrlPacket(boolean keyDown) implements ServerboundPac
 
     @Override
     public void handleOnServer(ServerPlayer player) {
+        //#if FABRIC
+        nfcompat.attachments.Attachments.set(player, AEAttachmentTypes.HOLDING_CTRL, keyDown);
+        //#else
         player.setData(AEAttachmentTypes.HOLDING_CTRL, keyDown);
+        //#endif
     }
 }

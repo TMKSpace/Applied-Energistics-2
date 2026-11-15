@@ -70,7 +70,10 @@ public class MatrixFrameBlock extends AEBaseBlock {
         return false;
     }
 
+    //#if FABRIC
+    //#else
     @Override
+    //#endif
     public void onBlockExploded(BlockState state, ServerLevel level, BlockPos pos, Explosion explosion) {
         // Immune to explosions
     }
@@ -85,7 +88,10 @@ public class MatrixFrameBlock extends AEBaseBlock {
         return 1.0f;
     }
 
+    //#if FABRIC
+    //#else
     @Override
+    //#endif
     public boolean canEntityDestroy(final BlockState state, final BlockGetter level, final BlockPos pos,
             final Entity entity) {
         return false;

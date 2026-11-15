@@ -59,7 +59,10 @@ public class UpgradeCardItem extends AEBaseItem {
         }
     }
 
+    //#if FABRIC
+    //#else
     @Override
+    //#endif
     public InteractionResult onItemUseFirst(ItemStack stack, UseOnContext context) {
         Player player = context.getPlayer();
         InteractionHand hand = context.getHand();

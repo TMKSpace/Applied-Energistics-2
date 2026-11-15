@@ -556,7 +556,11 @@ public class CraftingCpuLogic {
                     job.finalOutput.amount(),
                     job.remainingAmount,
                     status);
+            //#if FABRIC
+            nfcompat.network.Payloads.send(connectedPlayer, message);
+            //#else
             connectedPlayer.connection.send(message);
+            //#endif
         }
     }
 }

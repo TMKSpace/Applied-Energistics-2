@@ -131,7 +131,10 @@ public final class TinyTNTPrimedEntity extends PrimedTnt implements IEntityWithC
     }
 
     // override :P
+    //#if FABRIC
+    //#else
     @Override
+    //#endif
     protected void explode() {
         this.level().playSound(null, this.getX(), this.getY(), this.getZ(), SoundEvents.GENERIC_EXPLODE.value(),
                 SoundSource.BLOCKS, 4.0F,
@@ -182,7 +185,11 @@ public final class TinyTNTPrimedEntity extends PrimedTnt implements IEntityWithC
                                     ? state.getFluidState().getExplosionResistance()
                                     : 0f;
                             final float resistance = Math
+                                    //#if FABRIC
+                                    .max(block.getExplosionResistance(), fluidResistance);
+                                    //#else
                                     .max(block.getExplosionResistance(state, this.level(), point, ex), fluidResistance);
+                                    //#endif
                             strength -= (resistance + 0.3F) * 0.11f;
 
                             if (strength > 0.01 && !state.isAir()) {

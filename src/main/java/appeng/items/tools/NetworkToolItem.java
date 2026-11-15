@@ -89,7 +89,10 @@ public class NetworkToolItem extends AEBaseItem implements IMenuItem {
         return InteractionResult.SUCCESS;
     }
 
+    //#if FABRIC
+    //#else
     @Override
+    //#endif
     public InteractionResult onItemUseFirst(ItemStack stack, UseOnContext context) {
         // Disassembly is handled by the generic wrench handler
         if (context.isSecondaryUseActive()) {

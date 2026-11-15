@@ -147,7 +147,10 @@ public class CableBusBlock extends AEBaseEntityBlock<CableBusBlockEntity> implem
         builder.add(LIGHT_LEVEL, WATERLOGGED);
     }
 
+    //#if FABRIC
+    //#else
     @Override
+    //#endif
     public boolean isLadder(BlockState state, LevelReader level, BlockPos pos, LivingEntity entity) {
         return this.cb(level, pos).isLadder(entity);
     }
@@ -169,7 +172,10 @@ public class CableBusBlock extends AEBaseEntityBlock<CableBusBlockEntity> implem
         return this.cb(level, pos).canConnectRedstone(side.getOpposite());
     }
 
+    //#if FABRIC
+    //#else
     @Override
+    //#endif
     public ItemStack getCloneItemStack(LevelReader level, BlockPos pos, BlockState state, boolean includeData,
             Player player) {
         var playerRay = InteractionUtil.getPlayerRay(player, 100);
@@ -330,7 +336,10 @@ public class CableBusBlock extends AEBaseEntityBlock<CableBusBlockEntity> implem
         }
     }
 
+    //#if FABRIC
+    //#else
     @Override
+    //#endif
     public void onNeighborChange(BlockState state, LevelReader level, BlockPos pos, BlockPos neighbor) {
         this.cb(level, pos).onNeighborChanged(level, pos, neighbor);
     }

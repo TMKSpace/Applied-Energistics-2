@@ -84,7 +84,10 @@ public class ReplicatorCardItem extends AEBaseItem {
         return super.use(level, playerIn, handIn);
     }
 
+    //#if FABRIC
+    //#else
     @Override
+    //#endif
     public InteractionResult onItemUseFirst(ItemStack stack, UseOnContext context) {
         Level level = context.getLevel();
         if (level.isClientSide()) {

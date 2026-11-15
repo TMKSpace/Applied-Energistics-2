@@ -116,7 +116,11 @@ public class PartPlacement {
         }
 
         var state = level.getBlockState(pos);
+        //#if FABRIC
+        var ss = state.getSoundType();
+        //#else
         var ss = state.getSoundType(level, pos, player);
+        //#endif
         level.playSound(null, pos, ss.getPlaceSound(), SoundSource.BLOCKS, (ss.getVolume() + 1.0F) / 2.0F,
                 ss.getPitch() * 0.8F);
         return addedPart;
@@ -140,7 +144,11 @@ public class PartPlacement {
         }
 
         if (player != null) {
+            //#if FABRIC
+            side = nfcompat.attachments.Attachments.get(player, AEAttachmentTypes.HOLDING_CTRL) ? side.getOpposite() : side;
+            //#else
             side = player.getData(AEAttachmentTypes.HOLDING_CTRL) ? side.getOpposite() : side;
+            //#endif
         }
 
         if (canPlacePartOnBlock(player, level, partStack, pos, side)) {

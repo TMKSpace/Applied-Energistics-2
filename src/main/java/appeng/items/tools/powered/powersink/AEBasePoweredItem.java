@@ -68,7 +68,10 @@ public abstract class AEBasePoweredItem extends AEBaseItem implements IAEItemPow
         return true;
     }
 
+    //#if FABRIC
+    //#else
     @Override
+    //#endif
     public boolean shouldCauseReequipAnimation(ItemStack oldStack, ItemStack newStack, boolean slotChanged) {
         return slotChanged || !ItemStack.isSameItem(oldStack, newStack);
     }
