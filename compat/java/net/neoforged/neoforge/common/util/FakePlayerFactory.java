@@ -24,8 +24,7 @@ public final class FakePlayerFactory {
         if (server == null) {
             return null;
         }
-        return new ServerPlayer(server, level, profile, server.getPlayerList().getPlayers().isEmpty()
-                ? null
-                : server.getPlayerList().getPlayers().get(0).clientInformation());
+        // именно FakePlayer: AE2 проверяет instanceof этого класса
+        return new FakePlayer(level, profile);
     }
 }

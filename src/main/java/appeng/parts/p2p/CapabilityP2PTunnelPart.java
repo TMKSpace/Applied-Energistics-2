@@ -125,11 +125,19 @@ public abstract class CapabilityP2PTunnelPart<P extends CapabilityP2PTunnelPart<
             P input = getInput();
 
             if (input != null) {
+                //#if FABRIC
+                nfcompat.capabilities.CapabilityInvalidation.invalidate(input.getBlockEntity());
+                //#else
                 input.getBlockEntity().invalidateCapabilities();
+                //#endif
             }
         } else {
             for (P output : getOutputs()) {
+                //#if FABRIC
+                nfcompat.capabilities.CapabilityInvalidation.invalidate(output.getBlockEntity());
+                //#else
                 output.getBlockEntity().invalidateCapabilities();
+                //#endif
             }
         }
     }
@@ -139,6 +147,10 @@ public abstract class CapabilityP2PTunnelPart<P extends CapabilityP2PTunnelPart<
         // This might be invoked while the network is being unloaded,
         // however the capability system should handle this fine.
         // (Not OK for block updates though, thankfully we don't need them anymore!)
+        //#if FABRIC
+        nfcompat.capabilities.CapabilityInvalidation.invalidate(getBlockEntity());
+        //#else
         getBlockEntity().invalidateCapabilities();
+        //#endif
     }
 }

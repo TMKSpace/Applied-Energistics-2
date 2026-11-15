@@ -977,7 +977,12 @@ public abstract class AEBaseMenu extends AbstractContainerMenu {
                 throw new IllegalArgumentException(
                         "Client action " + action + " requires an argument, but none was given");
             }
-            var buffer = new RegistryFriendlyByteBuf(
+            var buffer =
+            //#if FABRIC
+                    nfcompat.network.Buffers.create(
+            //#else
+                    new RegistryFriendlyByteBuf(
+            //#endif
                     Unpooled.buffer(),
                     registryAccess(),
                     ConnectionType.NEOFORGE);
@@ -1008,7 +1013,12 @@ public abstract class AEBaseMenu extends AbstractContainerMenu {
             T arg = null;
             LOG.debug("Handling client action '{}' with payload {}", key, HexFormat.of().formatHex(payload));
             if (argCodec != null) {
-                var buffer = new RegistryFriendlyByteBuf(
+                var buffer =
+                //#if FABRIC
+                        nfcompat.network.Buffers.create(
+                //#else
+                        new RegistryFriendlyByteBuf(
+                //#endif
                         Unpooled.wrappedBuffer(payload),
                         registryAccess,
                         ConnectionType.NEOFORGE);

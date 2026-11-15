@@ -61,6 +61,18 @@ public class AppEngSlot extends Slot {
      */
     private Boolean validState = null;
 
+//#if FABRIC
+    /**
+     * NeoForge патчит ванильный {@link Slot}, добавляя {@code getSlotIndex()}.
+     * В ванили индекс лежит в приватном поле {@code slot}, куда нам не достать,
+     * поэтому отдаём собственный {@code invSlot}: он передаётся в {@code super(...)}
+     * и всегда равен ему.
+     */
+    public int getSlotIndex() {
+        return this.invSlot;
+    }
+//#endif
+
     public AppEngSlot(InternalInventory inv, int invSlot) {
         super(EMPTY_INVENTORY, invSlot, 0, 0);
         this.inventory = inv;

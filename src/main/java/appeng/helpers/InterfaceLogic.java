@@ -222,7 +222,11 @@ public class InterfaceLogic implements ICraftingRequester, IUpgradeableObject, I
             });
         }
 
+        //#if FABRIC
+        nfcompat.capabilities.CapabilityInvalidation.invalidate(this.host.getBlockEntity());
+        //#else
         this.host.getBlockEntity().invalidateCapabilities();
+        //#endif
     }
 
     public void gridChanged() {

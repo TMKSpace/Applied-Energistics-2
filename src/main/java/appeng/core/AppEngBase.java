@@ -338,7 +338,11 @@ public abstract class AppEngBase implements AppEng {
     @Override
     public RecipeMap getRecipeMapForType(Level level, RecipeType<?> recipeType) {
         if (level instanceof ServerLevel serverLevel) {
+            //#if FABRIC
+            return nfcompat.recipes.RecipeMaps.of(serverLevel.recipeAccess());
+            //#else
             return serverLevel.recipeAccess().recipeMap();
+            //#endif
         } else {
             LOG.warn("Don't know how to retrieve recipe information for level type {}", level);
             return RecipeMap.EMPTY;

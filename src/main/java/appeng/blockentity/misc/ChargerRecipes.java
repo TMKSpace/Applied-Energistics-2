@@ -12,7 +12,11 @@ import appeng.recipes.handlers.ChargerRecipe;
 public class ChargerRecipes {
 
     public static Iterable<RecipeHolder<ChargerRecipe>> getRecipes(ServerLevel level) {
+        //#if FABRIC
+        return nfcompat.recipes.RecipeMaps.of(level.recipeAccess()).byType(AERecipeTypes.CHARGER);
+        //#else
         return level.recipeAccess().recipeMap().byType(AERecipeTypes.CHARGER);
+        //#endif
     }
 
     @Nullable

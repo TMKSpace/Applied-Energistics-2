@@ -20,6 +20,7 @@ public class ModContainer {
     private final ModInfo modInfo;
     private final IEventBus eventBus;
     private final List<ModConfig> configs = new ArrayList<>();
+    private final java.util.Map<Class<?>, net.neoforged.fml.IExtensionPoint> extensions = new java.util.HashMap<>();
 
     public ModContainer(ModInfo modInfo, IEventBus eventBus) {
         this.modInfo = modInfo;
@@ -56,5 +57,21 @@ public class ModContainer {
 
     public List<ModConfig> getConfigs() {
         return configs;
+    }
+
+    /** Регистрация точки расширения мода (в NeoForge — экран конфигов и т.п.). */
+    public <T extends net.neoforged.fml.IExtensionPoint> T registerExtensionPoint(Class<? extends T> point) {
+        return registerExtensionPoint(point, null);
+    }
+
+    public <T extends net.neoforged.fml.IExtensionPoint> T registerExtensionPoint(Class<? extends T> point, T impl) {
+        if (impl != null) {
+            extensions.put(point, impl);
+        }
+        return impl;
+    }
+
+    public <T extends net.neoforged.fml.IExtensionPoint> java.util.Optional<T> getCustomExtension(Class<T> point) {
+        return java.util.Optional.ofNullable(point.cast(extensions.get(point)));
     }
 }

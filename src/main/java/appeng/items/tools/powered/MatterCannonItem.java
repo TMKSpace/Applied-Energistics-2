@@ -458,7 +458,11 @@ public class MatterCannonItem extends AEBasePoweredItem implements IBasicCellIte
             return 0;
         }
 
+        //#if FABRIC
+        var recipes = nfcompat.recipes.RecipeMaps.of(server.getRecipeManager()).byType(AERecipeTypes.MATTER_CANNON_AMMO);
+        //#else
         var recipes = server.getRecipeManager().recipeMap().byType(AERecipeTypes.MATTER_CANNON_AMMO);
+        //#endif
         for (var holder : recipes) {
             var ammoRecipe = holder.value();
             if (what.matches(ammoRecipe.getAmmo())) {
