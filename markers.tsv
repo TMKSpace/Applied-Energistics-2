@@ -1,0 +1,217 @@
+file	line	note	fabric_code
+src\main\java\appeng\api\features\P2PTunnelAttunement.java	118		Predicate<ItemStack> test = stack -> cap.getCapability(stack, null) != null;
+src\main\java\appeng\api\features\P2PTunnelAttunement.java	136		Predicate<ItemStack> test = stack -> cap.getCapability(stack, ItemAccess.forStack(stack)) != null;
+src\main\java\appeng\api\features\PlayerRegistryInternal.java	21	в ванили нет уровнезависимых фабрик — сервер берём из хука старта	import net.minecraft.util.datafix.DataFixTypes; import net.neoforged.neoforge.server.ServerLifecycleHooks;  import java.util.ArrayList; import java.util.List; i
+src\main\java\appeng\api\implementations\blockentities\ICraftingMachine.java	49		return AECapabilities.CRAFTING_MACHINE.getCapability(blockEntity.getLevel(), blockEntity.getBlockPos(), blockEntity.getBlockState(), blockEntity, side);
+src\main\java\appeng\api\implementations\blockentities\ICraftingMachine.java	61		return AECapabilities.CRAFTING_MACHINE.getCapability(level, pos, null, null, side);
+src\main\java\appeng\api\implementations\blockentities\ICrankable.java	57		return AECapabilities.CRANKABLE.getCapability(level, pos, null, null, side);
+src\main\java\appeng\api\implementations\blockentities\PatternContainerGroup.java	87	Heuristic: If it doesn't allow item or fluid transfers, ignore it	var itemHandler = Capabilities.Item.BLOCK.getCapability(level, pos, target.getBlockState(), target, side);
+src\main\java\appeng\api\implementations\blockentities\PatternContainerGroup.java	94		var fluidHandler = Capabilities.Fluid.BLOCK.getCapability(level, pos, target.getBlockState(), target, side);
+src\main\java\appeng\api\implementations\blockentities\PatternContainerGroup.java	126		var targetItem = level instanceof ServerLevel ? targetBlock.getCloneItemStack(level, pos, target.getBlockState(), true) : new ItemStack(targetBlock);
+src\main\java\appeng\api\inventories\InternalInventory.java	52		var handler = Capabilities.Item.BLOCK.getCapability(level, pos, null, null, side);
+src\main\java\appeng\api\networking\GridHelper.java	133		return AECapabilities.IN_WORLD_GRID_NODE_HOST.getCapability(level, pos, null, null, null);
+src\main\java\appeng\api\stacks\AEFluidKey.java	159	#if FABRIC	return stack.getFluid().builtInRegistryHolder().is((TagKey<Fluid>) tag);
+src\main\java\appeng\api\stacks\AEItemKey.java	246		return !stack.getComponentsPatch().isEmpty();
+src\main\java\appeng\api\stacks\AEItemKey.java	279		return stack.getComponentsPatch().isEmpty() ? idString : idString + " (with patches)";
+src\main\java\appeng\api\stacks\AEKeyTypesInternal.java	36	в ванильном Registry нет addCallback — идём через хелпер шима	nfcompat.registry.RegistryCallbacks.onBake(registry, ignored -> { var types = new HashSet<AEKeyType>(); for (var aeKeyType : registry) { types.add(aeKeyType); }
+src\main\java\appeng\block\crafting\AbstractCraftingUnitBlock.java	45	#if FABRIC	import nfcompat.model.ModelDataHooks;  import appeng.block.AEBaseEntityBlock; import appeng.blockentity.crafting.CraftingBlockEntity; import appeng.core.definit
+src\main\java\appeng\block\misc\TinyTNTBlock.java	89		
+src\main\java\appeng\block\networking\CableBusBlock.java	65	#if FABRIC	import nfcompat.model.ModelDataHooks;  import appeng.api.parts.IFacadeContainer; import appeng.api.parts.IFacadePart; import appeng.api.util.AEColor; import app
+src\main\java\appeng\block\networking\CableBusBlock.java	175		
+src\main\java\appeng\block\networking\CableBusBlock.java	339		
+src\main\java\appeng\block\networking\CableBusBlock.java	369		modelData = ModelDataHooks.get(be);
+src\main\java\appeng\block\networking\CableBusBlock.java	375		modelData = ModelDataHooks.get(renderView, pos);
+src\main\java\appeng\block\qnb\QuantumBaseBlock.java	42	#if FABRIC	import nfcompat.model.ModelDataHooks;  import appeng.block.AEBaseEntityBlock; import appeng.blockentity.qnb.QuantumBridgeBlockEntity;  public abstract class Qua
+src\main\java\appeng\block\spatial\MatrixFrameBlock.java	73		
+src\main\java\appeng\block\spatial\MatrixFrameBlock.java	91		
+src\main\java\appeng\blockentity\AEBaseBlockEntity.java	76	NeoForge), поэтому роль базового контракта играет nfcompat.model.ModelDataProvider.	import nfcompat.model.ModelDataProvider;  import it.unimi.dsi.fastutil.objects.Reference2IntMap;  import appeng.api.ids.AEComponents; import appeng.api.inventor
+src\main\java\appeng\blockentity\AEBaseBlockEntity.java	170		nfcompat.network.Buffers.create(Unpooled.wrappedBuffer(decodedUpdateData), registryAccess, ConnectionType.NEOFORGE)
+src\main\java\appeng\blockentity\AEBaseBlockEntity.java	459	в интерфейсе ModelDataProvider, поэтому @Override здесь не к чему прикрепить.	/** * NeoForge патчит `BlockEntity`, добавляя `onChunkUnloaded()`; в ванили такого хука * нет (есть `setRemoved()`). Объявляем здесь, чтобы вся иерархия AE2 ком
+src\main\java\appeng\blockentity\misc\ChargerRecipes.java	15		return nfcompat.recipes.RecipeMaps.of(level).byType(AERecipeTypes.CHARGER);
+src\main\java\appeng\blockentity\storage\SkyStoneTankBlockEntity.java	43		tank.serialize(data.child("tank"));
+src\main\java\appeng\client\render\AERenderPipelines.java	25	рисоваться как обычные. TODO: собрать пайплайн с нуля на нужных сниппетах.	public static final RenderPipeline LINES_BEHIND_BLOCK = RenderPipelines.LINES_TRANSLUCENT;
+src\main\java\appeng\client\render\AERenderPipelines.java	81		.builder(AppEng.makeId("area_overlay_face").toString(),
+src\main\java\appeng\client\render\AERenderPipelines.java	101		.builder(AppEng.makeId("area_overlay_line").toString(), RenderPipeline.builder(RenderPipelines.OIT_LINES_SNIPPET)
+src\main\java\appeng\client\render\AERenderPipelines.java	122		.builder(AppEng.makeId("lines_occluded").toString(),
+src\main\java\appeng\client\render\AERenderPipelines.java	138	nfcompat: см. LINES_BEHIND_BLOCK — toBuilder отсутствует, берём ванильный пайплайн.	public static final RenderPipeline STORAGE_CELL_LEDS = RenderPipelines.EYES;
+src\main\java\appeng\client\render\AERenderPipelines.java	160		.builder(AppEng.makeId("lightning_fx").toString(), RenderPipeline.builder(RenderPipelines.OIT_PARTICLE_SNIPPET)
+src\main\java\appeng\core\AppEngBase.java	341		return nfcompat.recipes.RecipeMaps.of(serverLevel);
+src\main\java\appeng\core\FacadeCreativeTab.java	40		group = CreativeModeTab.builder(CreativeModeTab.Row.TOP, 0)
+src\main\java\appeng\core\FacadeCreativeTab.java	46	nfcompat: withTabsBefore — метод NeoForge	
+src\main\java\appeng\core\MainCreativeTab.java	47		var tab = CreativeModeTab.builder(CreativeModeTab.Row.TOP, 0)
+src\main\java\appeng\core\definitions\AEBlockEntities.java	228	ванильный конструктор берёт Set<Block>, NeoForge добавляет вариант с varargs	var blocks = Arrays.stream(blockDefinitions) .map(d -> (net.minecraft.world.level.block.Block) d.block()) .collect(java.util.stream.Collectors.toSet());  var ty
+src\main\java\appeng\core\definitions\AEEntities.java	51		builder -> builder.clientTrackingRange(16).updateInterval(4));
+src\main\java\appeng\core\definitions\ItemDefinition.java	69		return new ItemStackTemplate(item.asItem(), stackSize);
+src\main\java\appeng\core\network\clientbound\MEInventoryUpdatePacket.java	198		nfcompat.network.Buffers.create(Unpooled.buffer(INITIAL_BUFFER_CAPACITY), registryAccess, ConnectionType.NEOFORGE)
+src\main\java\appeng\core\network\serverbound\FillCraftingGridFromRecipePacket.java	79		this.ingredientTemplates = nfcompat.util.Lists.nonNullCopy(ingredientTemplates.stream().map(ItemStack::copy).toList());
+src\main\java\appeng\core\network\serverbound\FillCraftingGridFromRecipePacket.java	338		if (true) { // ванильный Ingredient не бывает "кастомным"
+src\main\java\appeng\core\network\serverbound\FillCraftingGridFromRecipePacket.java	343	#endif	return ingredient.items()
+src\main\java\appeng\core\network\serverbound\RequestClosestMeteoritePacket.java	37		nfcompat.network.Payloads.send(player, new CompassResponsePacket(pos, result));
+src\main\java\appeng\core\network\serverbound\UpdateHoldingCtrlPacket.java	36		nfcompat.attachments.Attachments.set(player, AEAttachmentTypes.HOLDING_CTRL, keyDown);
+src\main\java\appeng\crafting\execution\CraftingCpuLogic.java	559		nfcompat.network.Payloads.send(connectedPlayer, message);
+src\main\java\appeng\crafting\pattern\EncodedPatternItem.java	91		
+src\main\java\appeng\debug\DebugCardItem.java	96		
+src\main\java\appeng\debug\EnergyGeneratorBlockEntity.java	65		var consumer = Capabilities.Energy.BLOCK.getCapability(getLevel(), getBlockPos().relative(facing), null, null, facing.getOpposite());
+src\main\java\appeng\debug\EraserItem.java	55		
+src\main\java\appeng\debug\MeteoritePlacerItem.java	89		
+src\main\java\appeng\debug\ReplicatorCardItem.java	87		
+src\main\java\appeng\entity\TinyTNTPrimedEntity.java	134	override :P	
+src\main\java\appeng\entity\TinyTNTPrimedEntity.java	188		.max(block.getExplosionResistance(), fluidResistance);
+src\main\java\appeng\helpers\InterfaceLogic.java	225		nfcompat.capabilities.CapabilityInvalidation.invalidate(this.host.getBlockEntity());
+src\main\java\appeng\helpers\patternprovider\PatternProviderTarget.java	54		storage = AECapabilities.ME_STORAGE.getCapability(l, be.getBlockPos(), be.getBlockState(), be, side);
+src\main\java\appeng\helpers\patternprovider\PatternProviderTarget.java	60		storage = AECapabilities.ME_STORAGE.getCapability(l, pos, null, null, side);
+src\main\java\appeng\hotkeys\CuriosHotkeyAction.java	22		var cap = CuriosIntegration.ITEM_HANDLER.getCapability(player, null);
+src\main\java\appeng\init\InitCapabilityProviders.java	112		var genericInv = AECapabilities.GENERIC_INTERNAL_INV.getCapability(level, pos, state, blockEntity, context);
+src\main\java\appeng\init\worldgen\InitBiomes.java	53	останется без своего неба/облаков, пока эти атрибуты не зарегистрированы.	.mobSpawnSettings(new MobSpawnSettings.Builder().build()) .build();
+src\main\java\appeng\items\materials\UpgradeCardItem.java	62		
+src\main\java\appeng\items\materials\UpgradeCardItem.java	116		return net.minecraft.world.InteractionResult.PASS; // nfcompat: onItemUseFirst — метод NeoForge
+src\main\java\appeng\items\misc\MissingContentItem.java	33	"id" is just the most common ID field for key types	if (itemStackData != null && itemStackData.copyTag().contains("id")) {
+src\main\java\appeng\items\misc\MissingContentItem.java	52		} else if (genericStackData != null && genericStackData.copyTag().contains("id")) {
+src\main\java\appeng\items\misc\WrappedGenericStack.java	113		LOG.error("Removing a broken wrapped generic stack from player {} slot {}", player, nfcompat.menu.SlotIndices.get(slot));
+src\main\java\appeng\items\parts\FacadeItem.java	57		
+src\main\java\appeng\items\storage\BasicStorageCell.java	177		
+src\main\java\appeng\items\storage\CreativeCellItem.java	73		if (tooltipFlags.isAdvanced()) {
+src\main\java\appeng\items\tools\MemoryCardItem.java	329		
+src\main\java\appeng\items\tools\NetworkToolItem.java	92		
+src\main\java\appeng\items\tools\powered\AbstractPortableCell.java	87		
+src\main\java\appeng\items\tools\powered\EntropyManipulatorItem.java	171	nfcompat: Block#onCaughtFire — патч NeoForge, ванильного хука нет	
+src\main\java\appeng\items\tools\powered\EntropyManipulatorItem.java	287		for (var holder : nfcompat.recipes.RecipeMaps.of(level).byType(AERecipeTypes.ENTROPY)) {
+src\main\java\appeng\items\tools\powered\MatterCannonItem.java	461		var recipes = nfcompat.recipes.RecipeMaps.of(server.registryAccess()).byType(AERecipeTypes.MATTER_CANNON_AMMO);
+src\main\java\appeng\items\tools\powered\powersink\AEBasePoweredItem.java	71		
+src\main\java\appeng\menu\AEBaseMenu.java	900		nfcompat.network.Payloads.send(serverPlayer, packet);
+src\main\java\appeng\menu\AEBaseMenu.java	985		nfcompat.network.Buffers.create(
+src\main\java\appeng\menu\AEBaseMenu.java	1021		nfcompat.network.Buffers.create(
+src\main\java\appeng\menu\implementations\MenuTypeBuilder.java	160		
+src\main\java\appeng\menu\implementations\MenuTypeBuilder.java	170	провайдер в ExtendedMenuProvider и передаём тот же writer.	player.openMenu(nfcompat.menu.Menus.withData(new AppEngMenuProvider(), buffer -> { MenuLocators.writeToPacket(buffer, locator); buffer.writeBoolean(fromSubMenu)
+src\main\java\appeng\menu\implementations\MolecularAssemblerMenu.java	109		if (!currentItem.isEmpty() && !isValidItemForSlot(nfcompat.menu.SlotIndices.get(slot), currentItem)) {
+src\main\java\appeng\menu\locator\CuriosItemLocator.java	19		var cap = CuriosIntegration.ITEM_HANDLER.getCapability(player, null);
+src\main\java\appeng\menu\slot\AppEngSlot.java	64		/** * NeoForge патчит ванильный {@link Slot}, добавляя {@code getSlotIndex()}. * В ванили индекс лежит в приватном поле {@code slot}, куда нам не достать, * поэ
+src\main\java\appeng\parts\CableBusContainer.java	301		nfcompat.capabilities.CapabilityInvalidation.invalidate(getBlockEntity());
+src\main\java\appeng\parts\CableBusContainer.java	304	#else	nfcompat.capabilities.CapabilityInvalidation.invalidate(getBlockEntity());
+src\main\java\appeng\parts\PartPlacement.java	119		var ss = state.getSoundType();
+src\main\java\appeng\parts\PartPlacement.java	147		side = nfcompat.attachments.Attachments.get(player, AEAttachmentTypes.HOLDING_CTRL) ? side.getOpposite() : side;
+src\main\java\appeng\parts\automation\PlaneConnectionHelper.java	27	#if FABRIC	import nfcompat.model.ModelDataHooks;  import appeng.api.parts.IPart; import appeng.api.parts.IPartCollisionHelper; import appeng.api.parts.IPartHost; import ap
+src\main\java\appeng\parts\p2p\CapabilityP2PTunnelPart.java	128		nfcompat.capabilities.CapabilityInvalidation.invalidate(input.getBlockEntity());
+src\main\java\appeng\parts\p2p\CapabilityP2PTunnelPart.java	136		nfcompat.capabilities.CapabilityInvalidation.invalidate(output.getBlockEntity());
+src\main\java\appeng\parts\p2p\CapabilityP2PTunnelPart.java	150	This might be invoked while the network is being unloaded, however the capability system should handle this fine. (Not OK for block updates though, thankfully we don't need them anymore!)	nfcompat.capabilities.CapabilityInvalidation.invalidate(getBlockEntity());
+src\main\java\appeng\parts\storagebus\StorageBusPart.java	147		nfcompat.capabilities.CapabilityInvalidation.registerListener(serverLevel, targetPos, this.capabilityListener);
+src\main\java\appeng\recipes\AERecipeTypes.java	37	только через DR и берём готовый объект.	RecipeType<T> type = DR.<RecipeType<T>>register(id, () -> new RecipeType<T>() { }).get();
+src\main\java\appeng\recipes\game\CraftingUnitTransformRecipe.java	72		for (var holder : nfcompat.recipes.RecipeMaps.of(level).byType(AERecipeTypes.CRAFTING_UNIT_TRANSFORM)) {
+src\main\java\appeng\recipes\game\CraftingUnitTransformRecipe.java	89		for (var holder : nfcompat.recipes.RecipeMaps.of(level).byType(AERecipeTypes.CRAFTING_UNIT_TRANSFORM)) {
+src\main\java\appeng\recipes\game\StorageCellDisassemblyRecipe.java	79		for (var holder : nfcompat.recipes.RecipeMaps.of(level).byType(AERecipeTypes.CELL_DISASSEMBLY)) {
+src\main\java\appeng\recipes\mattercannon\MatterCannonAmmo.java	103		consumer.accept(ResourceKey.create(Registries.RECIPE, id), recipe, null);
+src\main\java\appeng\recipes\quartzcutting\QuartzCuttingRecipe.java	62		this.isSimple = true; // nfcompat: ванильный Ingredient не различает simple/custom
+src\main\java\appeng\recipes\transform\TransformLogic.java	70		for (var holder : nfcompat.recipes.RecipeMaps.of(level).byType(AERecipeTypes.TRANSFORM)) {
+src\main\java\appeng\recipes\transform\TransformLogic.java	152		for (var holder : nfcompat.recipes.RecipeMaps.of(level).byType(AERecipeTypes.TRANSFORM)) {
+src\main\java\appeng\recipes\transform\TransformLogic.java	176		for (var holder : nfcompat.recipes.RecipeMaps.of(level).byType(AERecipeTypes.TRANSFORM)) {
+src\main\java\appeng\recipes\transform\TransformLogic.java	203		for (var holder : nfcompat.recipes.RecipeMaps.of(level).byType(AERecipeTypes.TRANSFORM)) {
+src\main\java\appeng\recipes\transform\TransformLogic.java	212		if (true) { // ванильный Ingredient не бывает "кастомным"
+src\main\java\appeng\recipes\transform\TransformLogic.java	215	#else	if (true) { // ванильный Ingredient не бывает "кастомным"
+src\main\java\appeng\recipes\transform\TransformLogic.java	218	#else	if (true) { // ванильный Ingredient не бывает "кастомным"
+src\main\java\appeng\recipes\transform\TransformLogic.java	225	#endif #endif #endif	holderSets.add(net.minecraft.core.HolderSet.direct(ingredient.items().toList()));
+src\main\java\appeng\recipes\transform\TransformLogic.java	228	#else	holderSets.add(net.minecraft.core.HolderSet.direct(ingredient.items().toList()));
+src\main\java\appeng\recipes\transform\TransformLogic.java	231	#else	holderSets.add(net.minecraft.core.HolderSet.direct(ingredient.items().toList()));
+src\main\java\appeng\recipes\transform\TransformLogic.java	281		if (true) { // ванильный Ingredient не "кастомный"
+src\main\java\appeng\recipes\transform\TransformLogic.java	286	#endif	holderSets.add(net.minecraft.core.HolderSet.direct(ingredient.items().toList()));
+src\main\java\appeng\server\services\ChunkLoadState.java	3	#if FABRIC	import net.minecraft.util.datafix.DataFixTypes; import net.neoforged.neoforge.server.ServerLifecycleHooks;  import java.util.ArrayList; import java.util.HashMap
+src\main\java\appeng\server\services\compass\CompassRegion.java	21	#if FABRIC	import net.minecraft.util.datafix.DataFixTypes;  import java.util.BitSet; import java.util.HashMap; import java.util.List; import java.util.Map; import java.uti
+src\main\java\appeng\server\testplots\CraftingPatternHelper.java	91		var it = nfcompat.recipes.RecipeMaps.of(level).getRecipesFor(RecipeType.STONECUTTING, input, level).iterator();
+src\main\java\appeng\server\testplots\InscriberTestPlots.java	32		var namedIngots = new ItemStackTemplate(Items.IRON_INGOT.builtInRegistryHolder(), 2, DataComponentPatch.builder()
+src\main\java\appeng\server\testplots\InscriberTestPlots.java	100		ItemStack.isSameItemSameComponents(inv.getStackInSlot(0), expectedTopSlot.create()),
+src\main\java\appeng\server\testplots\InscriberTestPlots.java	108		ItemStack.isSameItemSameComponents(inv.getStackInSlot(1), expectedBottomSlot.create()),
+src\main\java\appeng\server\testplots\InscriberTestPlots.java	116		ItemStack.isSameItemSameComponents(inv.getStackInSlot(2), expectedMiddleSlot.create()),
+src\main\java\appeng\server\testplots\InscriberTestPlots.java	124		ItemStack.isSameItemSameComponents(inv.getStackInSlot(3), expectedResult.create()),
+src\main\java\appeng\server\testplots\TestPlots.java	727		var craftingRecipes = nfcompat.recipes.RecipeMaps.of(node.getLevel()).byType(RecipeType.CRAFTING);
+src\main\java\appeng\server\testworld\PlotTestHelper.java	220		return cap.getCapability(getLevel(), absolutePos(ref), null, null, context);
+src\main\java\appeng\util\SearchInventoryEvent.java	35		var cap = CuriosIntegration.ITEM_HANDLER.getCapability(event.getEntity(), null);
+src\main\java\appeng\util\fluid\FluidSoundHelper.java	46		SoundEvent fillSound = null; // nfcompat: звуков жидкостей в шиме нет
+src\main\java\appeng\util\fluid\FluidSoundHelper.java	63		SoundEvent fillSound = null; // nfcompat: звуков жидкостей в шиме нет
+src\client\java\appeng\client\AEClientboundPacketHandler.java	144	#if FABRIC	soundEvent = null; // nfcompat: звуков жидкостей в шиме нет
+src\client\java\appeng\client\AppEngClient.java	219		"key.ae2.mouse_wheel_item_modifier", InputConstants.Type.KEYBOARD, InputConstants.KEY_LSHIFT, Hotkeys.CATEGORY);
+src\client\java\appeng\client\AppEngClient.java	228		"key.ae2.part_placement_opposite", InputConstants.Type.KEYBOARD, InputConstants.KEY_LCONTROL, Hotkeys.CATEGORY);
+src\client\java\appeng\client\AppEngClient.java	419		if (event.getKey() == PART_PLACEMENT_OPPOSITE.getDefaultKey().getValue()) {
+src\client\java\appeng\client\AppEngClient.java	428		var previousIsDown = nfcompat.attachments.Attachments.get(player, AEAttachmentTypes.HOLDING_CTRL);
+src\client\java\appeng\client\AppEngClient.java	434		nfcompat.attachments.Attachments.set(player, AEAttachmentTypes.HOLDING_CTRL, isDown);
+src\client\java\appeng\client\areaoverlay\AreaOverlayRenderer.java	67		nfcompat.client.RenderStateData.set(event.getRenderState(), OVERLAY_AREAS, areasInThisLevel);
+src\client\java\appeng\client\areaoverlay\AreaOverlayRenderer.java	77		var visibleAreas = nfcompat.client.RenderStateData.getOrDefault(levelRenderState, OVERLAY_AREAS, List.of());
+src\client\java\appeng\client\gui\AEBaseScreen.java	302		if (configInv.isItemValid(nfcompat.menu.SlotIndices.get(slot), wrappedStack)) {
+src\client\java\appeng\client\gui\AEBaseScreen.java	569		if (getMinecraft().options.keyPickItem.matches(pickBlockButton)
+src\client\java\appeng\client\gui\AEBaseScreen.java	792		if (nfcompat.menu.SlotIndices.get(s) == j && s.container == this.menu.getPlayerInventory() && !s.mayPickup(this.menu.getPlayerInventory().player)) {
+src\client\java\appeng\client\gui\AEBaseScreen.java	808		if (nfcompat.menu.SlotIndices.get(s) == j
+src\client\java\appeng\client\gui\AEBaseScreen.java	827	вспомогательный метод, а не переопределение	private boolean ae2IsHovering(Slot slot, double x, double y) { if (slot instanceof ResizableSlot resizableSlot) { var width = resizableSlot.getWidth(); var heig
+src\client\java\appeng\client\gui\implementations\InterfaceScreen.java	59		menu.openSetAmountMenu(nfcompat.menu.SlotIndices.get(configSlot));
+src\client\java\appeng\client\gui\me\common\MEStorageScreen.java	733	By using the overload of the renderTooltip method that takes an ItemStack, we support the Forge tooltip event system	guiGraphics.setTooltipForNextFrame(font, currentToolTip, stack.getTooltipImage(), x, y);
+src\client\java\appeng\client\gui\style\Blitter.java	48	Непрозрачный вариант (без блендинга) не применяется; TODO: собрать свой пайплайн.	public static final RenderPipeline GUI_TEXTURED_OPAQUE = RenderPipelines.GUI_TEXTURED;
+src\client\java\appeng\client\gui\style\Blitter.java	334	переводим их в пиксели предполагаемого размера текстуры.	guiGraphics.blit(pipeline, this.texture, (int) x1, (int) y1, minU * DEFAULT_TEXTURE_WIDTH, minV * DEFAULT_TEXTURE_HEIGHT, (int) (x2 - x1), (int) (y2 - y1), DEFA
+src\client\java\appeng\client\gui\style\FluidBlitter.java	54		var tintSource = fluidModel.tintSource();
+src\client\java\appeng\client\gui\style\FluidBlitter.java	60		color = -1; // nfcompat: тинт жидкости по стеку недоступен (BlockTintSource работает с ItemStack)
+src\client\java\appeng\client\integrations\itemlists\FluidBlockRendering.java	15	TODO: портировать на fabric PictureInPictureRenderer.	
+src\client\java\appeng\client\integrations\jei\EntropyManipulatorCategory.java	163		Either.left(ItemModText.FLOWING_FLUID_NAME.text( net.neoforged.neoforge.fluids.FluidType.of(fluid).getDescription())));
+src\client\java\appeng\client\integrations\jei\JEIPlugin.java	367		guiGraphics.setTooltipForNextFrame(font, textLines, Optional.empty(), x, y);
+src\client\java\appeng\client\model\PaintSplotchesModel.java	46	#if FABRIC	import nfcompat.model.ModelDataHooks;  import appeng.block.paint.PaintSplotches; import appeng.blockentity.misc.PaintSplotchesBlockEntity; import appeng.client.
+src\client\java\appeng\client\model\PaintSplotchesModel.java	111		return ModelDataHooks.get(level, pos);
+src\client\java\appeng\client\model\PartModels.java	50		nfcompat.util.JsonScan.scanDirectory( resourceManager, fileToIdConverter, JsonOps.INSTANCE, ClientPart.CODEC, clientParts);
+src\client\java\appeng\client\model\QnbFormedModel.java	46	#if FABRIC	import nfcompat.model.ModelDataHooks;  import appeng.block.qnb.QnbFormedState; import appeng.blockentity.qnb.QuantumBridgeBlockEntity; import appeng.client.rend
+src\client\java\appeng\client\model\SpatialPylonModel.java	47	#if FABRIC	import nfcompat.model.ModelDataHooks;  import appeng.blockentity.spatial.SpatialPylonBlockEntity; import appeng.client.render.CubeBuilder; import appeng.core.Ap
+src\client\java\appeng\client\model\SpatialPylonModel.java	211		
+src\client\java\appeng\client\render\BasicUnbakedModel.java	30		public interface BasicUnbakedModel extends UnbakedModel, net.minecraft.client.resources.model.ResolvableModel {
+src\client\java\appeng\client\render\BasicUnbakedModel.java	40		
+src\client\java\appeng\client\render\FacadeItemModel.java	89		if (facadeBlockState.is(net.minecraft.world.level.block.Blocks.AIR)) {
+src\client\java\appeng\client\render\cablebus\CableBusModel.java	53	#if FABRIC	import nfcompat.model.ModelDataHooks;  import appeng.api.parts.IPart; import appeng.api.parts.IPartItem; import appeng.api.util.AECableType; import appeng.api.u
+src\client\java\appeng\client\render\cablebus\CableBusModel.java	170		
+src\client\java\appeng\client\render\cablebus\FacadeBuilder.java	210		if (model instanceof net.neoforged.neoforge.client.model.DynamicBlockStateModel dynamic) { dynamic.collectParts(level, pos, blockState, random, parts); } else {
+src\client\java\appeng\client\render\cablebus\FacadeBuilder.java	258		quad.setAmbientOcclusion(false); // nfcompat: AO-флага в ванильном MaterialInfo нет
+src\client\java\appeng\client\render\cablebus\FacadeBuilder.java	319		
+src\client\java\appeng\client\render\cablebus\FacadeBuilder.java	324	#if FABRIC	return net.minecraft.util.TriState.FALSE; // nfcompat: AO-флага в ванильном BlockStateModelPart нет
+src\client\java\appeng\client\render\crafting\CraftingCubeModel.java	44	#if FABRIC	import nfcompat.model.ModelDataHooks;  import appeng.block.crafting.CraftingUnitType; import appeng.blockentity.crafting.CraftingCubeModelData; import appeng.cl
+src\client\java\appeng\client\render\model\DriveModel.java	52	#if FABRIC	import nfcompat.model.ModelDataHooks;  import appeng.api.client.StorageCellModels; import appeng.block.storage.DriveModelData; import appeng.client.model.Spinna
+src\client\java\appeng\client\renderer\blockentity\CrankRenderer.java	42		handleModel = new SingleVariant(nfcompat.client.StandaloneModels.get(modelManager, HANDLE_MODEL));
+src\client\java\appeng\client\renderer\blockentity\CrankRenderer.java	61		var parts = state.modelRenderState.setupModel(new Matrix4f(), handleModel.hasMaterialFlag(BakedQuad.FLAG_TRANSLUCENT));
+src\client\java\appeng\client\renderer\blockentity\CrankRenderer.java	68	#endif	if (handleModel instanceof net.neoforged.neoforge.client.model.DynamicBlockStateModel dynamic) { dynamic.collectParts((BlockAndTintGetter) be.getLevel(), be.get
+src\client\java\appeng\client\renderer\blockentity\MEChestRenderer.java	105		var model = nfcompat.client.StandaloneModels.get(modelManager, cellModelKey);
+src\client\java\appeng\client\renderer\blockentity\MEChestRenderer.java	110	#endif	var blockAndTintGetter = (BlockAndTintGetter) be.getLevel(); var modelParts = state.cellModel.setupModel(IDENTITY, model.hasMaterialFlag(BakedQuad.FLAG_TRANSLUC
+src\client\java\appeng\client\renderer\blockentity\MEChestRenderer.java	116		var modelParts = state.cellModel.setupModel(IDENTITY, model.hasMaterialFlag(
+src\client\java\appeng\client\renderer\blockentity\MEChestRenderer.java	123	#endif	if (model instanceof net.neoforged.neoforge.client.model.DynamicBlockStateModel dynamic) { dynamic.collectParts(blockAndTintGetter, be.getBlockPos(), be.getBloc
+src\client\java\appeng\client\renderer\blockentity\SkyStoneChestRenderer.java	104		
+src\client\java\appeng\client\renderer\blockentity\SkyStoneTankRenderer.java	71		var tintSource = fluidModel.tintSource();
+src\client\java\appeng\client\renderer\blockentity\SkyStoneTankRenderer.java	77		state.color = -1; // nfcompat: тинт жидкости недоступен (BlockTintSource работает с ItemStack)
+src\client\java\appeng\client\renderer\entity\TinyTNTPrimedRenderer.java	68		if (renderState.fuseRemainingInTicks + 1.0F < 10.0F) { // nfcompat: partialTick в render state — патч NeoForge
+src\client\java\appeng\client\renderer\entity\TinyTNTPrimedRenderer.java	73	#endif	f2 = 1.0F - (renderState.fuseRemainingInTicks + 1.0F) / 10.0F; // nfcompat: partialTick — патч NeoForge
+src\client\java\appeng\client\renderer\keytypes\FluidKeyRenderer.java	48		var tintSource = fluidModel.tintSource();
+src\client\java\appeng\client\renderer\keytypes\FluidKeyRenderer.java	54		state.color = -1; // nfcompat: тинт жидкости недоступен (BlockTintSource работает с ItemStack)
+src\client\java\appeng\datagen\AE2DataGenerators.java	21	Must run last	import java.util.List;  import net.fabricmc.fabric.api.datagen.v1.DataGeneratorEntrypoint; import net.fabricmc.fabric.api.datagen.v1.FabricDataGenerator; import
+src\client\java\appeng\datagen\providers\loot\BlockDropProvider.java	82	Vanilla's BlockLootSubProvider has no getKnownBlocks() hook; AE2 only uses this as its own block iterator.	private Iterable<Block> getKnownBlocks() {
+src\client\java\appeng\datagen\providers\models\AE2ModelProvider.java	34		
+src\client\java\appeng\datagen\providers\models\AE2ModelProvider.java	46		/** * Collects AE2's part item models and writes them as {@code assets/ae2/ae2/parts/*.json}. The format and the codec * are AE2's own, so nothing here depends 
+src\client\java\appeng\datagen\providers\models\BlockModelProvider.java	191		.with(createFacingSpinDispatch()));
+src\client\java\appeng\datagen\providers\models\BlockModelProvider.java	220	Vanilla TextureMapping has no copy(); rebuild the mapping with the conflicted lights texture.	new TextureMapping() .put(TextureSlot.ALL, makeMaterial("block/controller")) .put(TextureSlot.SIDE, makeMaterial("block/controller_column")) .put(TextureSlot.EN
+src\client\java\appeng\datagen\providers\models\BlockModelProvider.java	244	Vanilla TextureMapping has no copy(); rebuild the mapping with the conflicted lights texture.	new TextureMapping() .put(TextureSlot.ALL, makeMaterial("block/controller")) .put(TextureSlot.SIDE, makeMaterial("block/controller_column")) .put(TextureSlot.EN
+src\client\java\appeng\datagen\providers\models\BlockModelProvider.java	503	Vanilla TextureMapping has no copy(); build the "on" mapping from scratch instead.	var textureMappingOn = TextureMapping.cube(block) .put(TextureSlot.DOWN, MACHINE_BOTTOM) .put(TextureSlot.EAST, getBlockTexture(block, "_side")) .put(TextureSlo
+src\client\java\appeng\datagen\providers\models\BlockModelProvider.java	528		.with(createFacingSpinDispatch()));
+src\client\java\appeng\datagen\providers\models\BlockModelProvider.java	589		.with(createFacingSpinDispatch()));
+src\client\java\appeng\datagen\providers\models\BlockModelProvider.java	607		.with(createFacingSpinDispatch()));
+src\client\java\appeng\datagen\providers\models\BlockModelProvider.java	688	Vanilla ModelTemplate has no extend() builder; the template is already complete.	plainVariant(ModelTemplates.CROSS .create(block, TextureMapping.cross(block), modelOutput)))
+src\client\java\appeng\datagen\providers\models\ItemModelProvider.java	19	in its own item model registry). Register an empty model instead and report the stub.	import net.minecraft.core.registries.BuiltInRegistries; import net.minecraft.resources.Identifier; import net.minecraft.util.ARGB; import net.minecraft.world.le
+src\client\java\appeng\datagen\providers\models\ModelSubProvider.java	36		
+src\client\java\appeng\datagen\providers\models\ModelSubProvider.java	45		
+src\client\java\appeng\datagen\providers\models\ModelSubProvider.java	60		/** * Model used for every block whose real model is a NeoForge-style custom unbaked blockstate model. Vanilla * blockstates can only point at a model file, so 
+src\client\java\appeng\datagen\providers\models\ModelSubProvider.java	146		/** * Vanilla equivalent of NeoForge's unbaked facing+spin dispatch: the spin is folded into the rotation of the * plain variant, which is exactly what NeoForge
+src\client\java\appeng\datagen\providers\models\ModelSubProvider.java	189	Vanilla has no unbaked blockstate models: keep the orientation, but as plain variant rotations.	multipart.with(condition, plainSpinnableVariant(baseVariant.modelLocation()) .with(applyRotation(orientation.getAngleX(), orientation.getAngleY(), orientation.g
+src\client\java\appeng\datagen\providers\models\ModelSubProvider.java	234		/** * Three-angle variant of {@link #applyRotation(int, int)} - the spin of a spinnable block is a z-rotation and is * baked into the plain variant on Fabric. *
+src\client\java\appeng\datagen\providers\models\ModelSubProvider.java	308	wraps. Rotations come from the blockstate dispatch instead.	return plainSpinnableVariant(variant.modelLocation());
+src\client\java\appeng\datagen\providers\models\ModelSubProvider.java	322		return variant(new Variant(model));
+src\client\java\appeng\datagen\providers\recipes\CraftingRecipes.java	35	from AE2RecipeProvider#create, so it has to stay public here.	public void buildRecipes() {
+src\client\java\appeng\datagen\providers\recipes\QuartzCuttingRecipesProvider.java	24	Vanilla's RecipeProvider declares buildRecipes() as public (NeoForge narrows it to protected).	public void buildRecipes() {
+src\client\java\appeng\datagen\providers\tags\BiomeTagsProvider.java	35	Vanilla derives the pack directory from the tag namespace and has no mod-id parameter.	super(packOutput, registries);
+src\client\java\appeng\datagen\providers\tags\BiomeTagsProvider.java	46	Vanilla's TagAppender has no add(TagEntry); the dimension key can be added directly instead.	tag(BiomeTags.WITHOUT_WANDERING_TRADER_SPAWNS) .add(SpatialStorageDimensionIds.BIOME_KEY);
+src\client\java\appeng\datagen\providers\tags\BlockTagsProvider.java	46	Vanilla derives the pack directory from the tag namespace and has no mod-id parameter.	super(packOutput, Registries.BLOCK, registries);
+src\client\java\appeng\datagen\providers\tags\BlockTagsProvider.java	56		return new IntrinsicTagAppender<>(super.tag(tag), getOrCreateRawBuilder(tag), BuiltInRegistries.BLOCK);
+src\client\java\appeng\datagen\providers\tags\DataComponentTypeTagProvider.java	28	Vanilla derives the pack directory from the tag namespace and has no mod-id parameter.	super(output, Registries.DATA_COMPONENT_TYPE, registries);
+src\client\java\appeng\datagen\providers\tags\DataComponentTypeTagProvider.java	44	Vanilla MC 26.3's Holder API has no getKey(); unwrapKey() is the equivalent accessor.	componentKeys.put(entry.get(), entry.unwrapKey().orElseThrow());
+src\client\java\appeng\datagen\providers\tags\DataComponentTypeTagProvider.java	63	Vanilla MC 26.3's Holder API has no getKey(); unwrapKey() is the equivalent accessor.	tag(ConventionTags.EXPORTED_SETTINGS).add( BuiltInRegistries.DATA_COMPONENT_TYPE.wrapAsHolder(AEComponents.EXPORTED_SETTINGS_SOURCE) .unwrapKey().orElseThrow())
+src\client\java\appeng\datagen\providers\tags\FluidTagsProvider.java	33	Vanilla derives the pack directory from the tag namespace and has no mod-id parameter.	super(output, registries);
+src\client\java\appeng\datagen\providers\tags\IntrinsicTagAppender.java	24		import net.minecraft.tags.TagBuilder; import net.minecraft.tags.TagEntry; import net.minecraft.tags.TagKey;  /** * Vanilla's {@link TagAppender} only accepts re
+src\client\java\appeng\datagen\providers\tags\ItemTagsProvider.java	56		return new IntrinsicTagAppender<>(super.tag(tag), getOrCreateRawBuilder(tag), BuiltInRegistries.ITEM);
+src\client\java\appeng\datagen\providers\tags\ItemTagsProvider.java	183	equivalent.	.addOptionalTag(TagKey.create(Registries.ITEM, Identifier.parse("c:ingots/tin"))) .addOptionalTag(TagKey.create(Registries.ITEM, Identifier.parse("c:ingots/bras
+src\client\java\appeng\datagen\providers\tags\PoiTypeTagsProvider.java	15	Vanilla derives the pack directory from the tag namespace and has no mod-id parameter.	super(packOutput, registries);
+src\client\java\appeng\datagen\providers\tags\VillagerTradeTagsProvider.java	17	Vanilla derives the pack directory from the tag namespace and has no mod-id parameter.	super(output, Registries.VILLAGER_TRADE, lookupProvider);

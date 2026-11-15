@@ -6,7 +6,9 @@
   "mixins": [
     "BlockEntityMixin"
   ],
-  "client": [],
+  "client": [
+    "ClientTooltipComponentMixin"
+  ],
   "injectors": {
     "defaultRequire": 1
   }
