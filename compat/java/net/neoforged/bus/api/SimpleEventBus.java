@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.function.Consumer;
 
 /**
  * Минимальная, но настоящая реализация шины: слушатели группируются по классу события,
@@ -15,15 +16,36 @@ import java.util.concurrent.CopyOnWriteArrayList;
  *
  * Тип события вытаскивается из SerializedLambda слушателя. Пока это работает для лямбд
  * и ссылок на методы с одним параметром — ровно то, что использует AE2.
+ *
+ * Отдельно поддержаны слушатели, зарегистрированные как {@link Consumer} без класса
+ * события (так делает GuideME: `bus.addListener(this::onSomething)`). Для них тип
+ * неизвестен в рантайме, поэтому слушатель «привязывается» к первому событию, которое
+ * он согласился принять: чужой тип лямбда отбрасывает исключением ClassCastException
+ * ещё до вызова тела (javac вставляет checkcast в сгенерированный метод), поэтому
+ * такая проба безопасна и делается один раз на слушателя.
  */
 public final class SimpleEventBus implements IEventBus {
 
-    private record Entry<T extends Event>(EventListener<T> listener, EventPriority priority, int order) {
+    private record Entry(Consumer<Event> listener, EventPriority priority, int order) {
     }
 
-    private final Map<Class<?>, List<Entry<?>>> listeners = new ConcurrentHashMap<>();
+    /** Слушатель без известного типа события. */
+    private static final class FuzzyEntry {
+        final Consumer<Event> listener;
+        final EventPriority priority;
+        /** Класс события, который слушатель принял. null — ещё не привязан. */
+        volatile Class<?> bound;
+
+        FuzzyEntry(Consumer<Event> listener, EventPriority priority) {
+            this.listener = listener;
+            this.priority = priority;
+        }
+    }
+
+    private final Map<Class<?>, List<Entry>> listeners = new ConcurrentHashMap<>();
+    private final List<FuzzyEntry> fuzzy = new CopyOnWriteArrayList<>();
     /** Слушатели, добавленные через {@link #register(Object)}: нужно для unregister. */
-    private final Map<Object, List<Entry<?>>> registered = new ConcurrentHashMap<>();
+    private final Map<Object, List<Entry>> registered = new ConcurrentHashMap<>();
 
     @Override
     public <T extends Event> void addListener(EventListener<T> listener) {
@@ -37,9 +59,36 @@ public final class SimpleEventBus implements IEventBus {
             System.err.println("[nfcompat] не удалось определить тип события у слушателя: " + listener.getClass());
             return;
         }
-        List<Entry<?>> list = listeners.computeIfAbsent(eventType, k -> new CopyOnWriteArrayList<>());
-        list.add(new Entry<>(listener, priority, list.size()));
-        list.sort(Comparator.comparingInt((Entry<?> e) -> priorityRank(e.priority())).thenComparingInt(Entry::order));
+        addRaw(eventType, priority, asConsumer(listener));
+    }
+
+    @Override
+    @SuppressWarnings("unchecked")
+    public <T extends Event> void addListener(Consumer<T> listener) {
+        fuzzy.add(new FuzzyEntry((Consumer<Event>) listener, EventPriority.NORMAL));
+    }
+
+    @Override
+    @SuppressWarnings("unchecked")
+    public <T extends Event> void addListener(EventPriority priority, Consumer<T> listener) {
+        fuzzy.add(new FuzzyEntry((Consumer<Event>) listener, priority));
+    }
+
+    @Override
+    @SuppressWarnings("unchecked")
+    public <T extends Event> void addListener(Class<T> eventType, Consumer<T> listener) {
+        addRaw(eventType, EventPriority.NORMAL, (Consumer<Event>) listener);
+    }
+
+    @Override
+    @SuppressWarnings("unchecked")
+    public <T extends Event> void addListener(EventPriority priority, Class<T> eventType, Consumer<T> listener) {
+        addRaw(eventType, priority, (Consumer<Event>) listener);
+    }
+
+    @SuppressWarnings("unchecked")
+    private static Consumer<Event> asConsumer(EventListener<?> listener) {
+        return (Consumer<Event>) listener;
     }
 
     private static int priorityRank(EventPriority p) {
@@ -57,6 +106,7 @@ public final class SimpleEventBus implements IEventBus {
         // Идём по всей иерархии: в NeoForge @SubscribeEvent в родительском классе
         // подхватывается. Перекрытые методы не дублируем.
         var seen = new java.util.HashSet<String>();
+        var entries = new ArrayList<Entry>();
         for (Class<?> c = target.getClass(); c != null && c != Object.class; c = c.getSuperclass()) {
             for (Method m : c.getDeclaredMethods()) {
                 SubscribeEvent ann = m.getAnnotation(SubscribeEvent.class);
@@ -71,22 +121,27 @@ public final class SimpleEventBus implements IEventBus {
                 if (!Event.class.isAssignableFrom(param)) {
                     continue;
                 }
-                addRaw(param, ann.priority(), event -> {
+                entries.add(addRaw(param, ann.priority(), event -> {
                     try {
                         m.invoke(target, event);
                     } catch (ReflectiveOperationException e) {
                         throw new RuntimeException("Ошибка вызова слушателя " + m, e);
                     }
-                });
+                }));
             }
+        }
+        if (!entries.isEmpty()) {
+            registered.put(target, entries);
         }
     }
 
     @SuppressWarnings({ "unchecked", "rawtypes" })
-    private void addRaw(Class<?> eventType, EventPriority priority, EventListener listener) {
-        List<Entry<?>> list = listeners.computeIfAbsent(eventType, k -> new CopyOnWriteArrayList<>());
-        list.add(new Entry(listener, priority, list.size()));
-        list.sort(Comparator.comparingInt((Entry<?> e) -> priorityRank(e.priority())).thenComparingInt(Entry::order));
+    private Entry addRaw(Class<?> eventType, EventPriority priority, Consumer<Event> listener) {
+        List<Entry> list = listeners.computeIfAbsent(eventType, k -> new CopyOnWriteArrayList<>());
+        var entry = new Entry(listener, priority, list.size());
+        list.add(entry);
+        list.sort(Comparator.comparingInt((Entry e) -> priorityRank(e.priority())).thenComparingInt(Entry::order));
+        return entry;
     }
 
     /**
@@ -109,18 +164,41 @@ public final class SimpleEventBus implements IEventBus {
     @SuppressWarnings("unchecked")
     public <T extends Event> T post(T event) {
         for (Class<?> c = event.getClass(); c != null && Event.class.isAssignableFrom(c); c = c.getSuperclass()) {
-            List<Entry<?>> list = listeners.get(c);
+            List<Entry> list = listeners.get(c);
             if (list == null) {
                 continue;
             }
-            for (Entry<?> entry : new ArrayList<>(list)) {
-                ((EventListener<Event>) entry.listener()).accept(event);
+            for (Entry entry : new ArrayList<>(list)) {
+                entry.listener().accept(event);
             }
         }
+
+        dispatchFuzzy(event);
         return event;
     }
 
-        /**
+    /**
+     * Доставка слушателям, зарегистрированным как Consumer. Первое успешное принятие
+     * привязывает слушателя к классу события; дальше он вызывается только на нём и его
+     * наследниках.
+     */
+    private void dispatchFuzzy(Event event) {
+        for (var entry : fuzzy) {
+            var bound = entry.bound;
+            if (bound == null) {
+                try {
+                    entry.listener.accept(event);
+                    entry.bound = event.getClass();
+                } catch (ClassCastException notForThisEvent) {
+                    // чужая лямбда отбросила событие до выполнения тела — идём дальше
+                }
+            } else if (bound.isInstance(event)) {
+                entry.listener.accept(event);
+            }
+        }
+    }
+
+    /**
      * Достаёт тип события у слушателя.
      *
      * Важно: у лямбды нельзя брать impl-сигнатуру. javac дописывает захваченные

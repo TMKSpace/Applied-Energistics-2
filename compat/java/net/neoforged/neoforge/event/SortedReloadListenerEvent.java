@@ -84,7 +84,15 @@ public abstract class SortedReloadListenerEvent extends Event {
      * @see {@link VanillaServerListeners} for the keys of vanilla server listeners.
      */
     public void addDependency(Identifier first, Identifier second) {
-        this.graph.putEdge(this.getOrThrow(first), this.getOrThrow(second));
+        // nfcompat: список ванильных слушателей в событие не передаётся (Fabric его не
+        // отдаёт), поэтому ключи вида minecraft:block_entity_renderers заведомо неизвестны.
+        // Порядок относительно ванильных слушателей Fabric выдерживает сам — пропускаем.
+        PreparableReloadListener dependency = this.registry.get(first);
+        PreparableReloadListener dependent = this.registry.get(second);
+        if (dependency == null || dependent == null) {
+            return;
+        }
+        this.graph.putEdge(dependency, dependent);
     }
 
     /**

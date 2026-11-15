@@ -5,7 +5,8 @@
   "name": "Applied Energistics 2 (nfcompat probe)",
   "environment": "*",
   "mixins": [
-    "nfcompat.mixins.json"
+    "nfcompat.mixins.json",
+    "nfcompat.ae2.mixins.json"
   ],
   "entrypoints": {
     "main": [],

@@ -37,7 +37,21 @@ public final class ModelDataHooks {
      */
     public static ModelData get(Object getter, BlockPos pos) {
         if (getter instanceof BlockGetter blockGetter) {
-            return get(blockGetter.getBlockEntity(pos));
+            var data = get(blockGetter.getBlockEntity(pos));
+            if (data != ModelData.EMPTY) {
+                return data;
+            }
+        }
+
+        // Рендер-регион чанка BlockGetter'ом отдаёт null: block entity лежит за его
+        // пределами. Берём его из клиентского мира по той же позиции.
+        if (net.fabricmc.loader.api.FabricLoader.getInstance()
+                .getEnvironmentType() == net.fabricmc.api.EnvType.CLIENT) {
+            var fromClient = nfcompat.model.client.ClientModelDataLookup.lookup(pos);
+            if (fromClient == ModelData.EMPTY) {
+                nfcompat.Diagnostics.modelDataMissing(pos);
+            }
+            return fromClient;
         }
         return ModelData.EMPTY;
     }

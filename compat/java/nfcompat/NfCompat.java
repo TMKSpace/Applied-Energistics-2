@@ -41,11 +41,14 @@ public final class NfCompat {
 
     public static ModContainer container() {
         if (container == null) {
-            container = new ModContainer(
-                    new ModInfo(MOD_ID, "Applied Energistics 2", "26.3.1-probe"),
-                    NeoForge.EVENT_BUS);
+            container = container(MOD_ID, "Applied Energistics 2", "26.3.1-probe");
         }
         return container;
+    }
+
+    /** Контейнер для библиотек, которые на NeoForge были бы отдельными модами (GuideME). */
+    public static ModContainer container(String modId, String name, String version) {
+        return new ModContainer(new ModInfo(modId, name, version), NeoForge.EVENT_BUS);
     }
 
     /**
@@ -70,6 +73,11 @@ public final class NfCompat {
         bus.post(new RegisterEvent(Registries.POINT_OF_INTEREST_TYPE));
         bus.post(new RegisterEvent(AEKeyType.REGISTRY_KEY));
         bus.post(new RegisterEvent(Registries.TEST_INSTANCE_TYPE));
+
+        // 2a. «Запекаем» собственные реестры: в NeoForge колбэки реестра
+        //     срабатывают после всех регистраций. Без этого AEKeyTypes.getAll()
+        //     остаётся пустым набором и терминал отсекает все записи сетки.
+        nfcompat.registry.RegistryCallbacks.bakeAll();
 
         // 3. Провайдеры capability и сетевые каналы.
         bus.post(new RegisterCapabilitiesEvent());

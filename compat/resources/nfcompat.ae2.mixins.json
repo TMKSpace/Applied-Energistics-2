@@ -1,0 +1,23 @@
+{
+  "_comment": "Часть nfcompat. Курируемая подборка собственных миксинов AE2 (appeng.mixins). Полный конфиг AE2 (src/main/resources/ae2.mixins.json) не включаем: там есть миксины под патчи NeoForge к ванили, которые на Fabric не применимы. Здесь только те, что действительно нужны.",
+  "required": true,
+  "minVersion": "0.8.3",
+  "package": "appeng.mixins",
+  "compatibilityLevel": "JAVA_21",
+  "mixins": [
+    "ItemEntityMixin",
+    "EnchantmentHelperMixin",
+    "StructureTemplateMixin",
+    "spatial.MinecraftServerMixin"
+  ],
+  "client": [
+    "client.PartModelLoaderMixin",
+    "client.AbstractContainerScreenMixin",
+    "client.GuiGraphicsMixin",
+    "client.WrappedGenericStackTooltipModIdMixin",
+    "client.PickColorMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

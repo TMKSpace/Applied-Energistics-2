@@ -49,7 +49,7 @@
 |---|---|---|
 | `getModelData()` / `getModelData(BlockPos)` / `requestModelDataUpdate()` | 15 файлов | ваниль не знает такого понятия; правится на `ModelDataHooks` |
 | `RegistryFriendlyByteBuf(ByteBuf, RegistryAccess, ConnectionType)` | `AEBaseBlockEntity`, `MEInventoryUpdatePacket` | конструктор добавлен NeoForge |
-| `Registry#addCallback` + `makeRegistry`/`RegisterEvent`/`NewRegistryEvent`/`RegistryBuilder` | `AEKeyTypesInternal`, `AppEngBase`, `InitStructures` | нужен свой реестр (`NfRegistry implements Registry, IRegistryExtension`) — это работа по шиму, не патч |
+| `Registry#addCallback` + `makeRegistry`/`RegisterEvent`/`NewRegistryEvent`/`RegistryBuilder` | `AEKeyTypesInternal`, `AppEngBase`, `InitStructures` | `NfRegistry implements Registry, IRegistryExtension` + `RegistryCallbacks`; реестр сделали, но семантика `addCallback` отличается: на NeoForge bake срабатывает после всех регистраций, см. «Грабли рантайма» |
 | `ItemStack.isSameItemSameComponents(ItemStack, ItemStackTemplate)` | `InscriberTestPlots` | NeoForge расширяет `ItemStackTemplate` |
 | `KeyConflictContext` вместо `InputConstants.Type` в `KeyMapping` | `AppEngClient` | сигнатура `KeyMapping` — патч NeoForge |
 | `CreativeModeTab.builder(...)` | `MainCreativeTab`/`FacadeCreativeTab` | перегрузка NeoForge |
@@ -88,6 +88,28 @@
 | собственные реестры (`NewRegistryEvent`) не видны `RegisterEvent` | `NewRegistryEvent` запоминает созданные реестры, `RegisterEvent.getRegistry` сначала смотрит туда |
 | `RecipeType.register(...)` дублировал запись своего `DeferredRegister` | в FABRIC-ветке тип регистрируется только через `DR`, объект берётся из `DeferredHolder.get()` |
 | `CauldronInteraction.Dispatcher.put` пакетно-приватный | AW `accessible method` |
+
+## Найдено в рантайме клиента (компилируется, но не работает)
+
+| симптом | причина | как закрыли |
+|---|---|---|
+| пустая сетка ME-терминала: сеть живая, `ae2:me_inventory_update` доходит, `Repo` знает записи | `AEKeyTypesInternal.setRegistry()` вешает `BakeCallback`, который на NeoForge срабатывает **после всех регистраций**; наш `RegistryCallbacks` вызывал его немедленно — на `NewRegistryEvent`, когда `ae2:keytypes` ещё пуст (типы приходят позже, в `RegisterEvent(AEKeyType.REGISTRY_KEY)`). Пустой `AEKeyTypes.getAll()` → пустой `KeyTypeSelection` → `Repo.addEntriesToView` отсекает все записи по `typeFilter` | `RegistryCallbacks` копит колбэки, `NfCompat.runRegistrationPhases()` вызывает `bakeAll()` сразу после блока `RegisterEvent` |
+| блок-модели получали пустое model data при сборке меша чанка | `RenderChunkRegion.getBlockEntity()` в этом контексте всегда `null` | `nfcompat/model/client/ClientModelDataLookup` добирает block entity из клиентского мира по позиции |
+| `Platform.isClient()/isServer()` врали в одиночной игре | AE2 сравнивает `ThreadGroup`, а на Fabric группы клиента и встроенного сервера совпадают | `nfcompat.ServerThread` + маркеры в `appeng/util/Platform` |
+
+## Исключённые миксины AE2
+
+| миксин | почему |
+|---|---|
+| `AnvilMenuMixin` | целится в `createResultInternal`, которого в ванили нет — метод добавляет NeoForge. Mixin не может добавить public static член, значит intrinsic-чары наковальни остаются непокрытыми |
+
+## Временная диагностика, спрятанная за `//#if FABRIC`
+
+В двух местах `src/` остались диагностические вызовы (`nfcompat.Diagnostics`) — там, где ответ
+нужен в рантайме, а не при компиляции: `CableBusModel.collectParts` (model data пришла пустой)
+и `CableBusRenderer.submit` (рендерер вызван без состояний частей). Оба обёрнуты в `//#if FABRIC`,
+поэтому для NeoForge-сборки файлы остаются нетронутыми. Удалять вместе с `nfcompat/Diagnostics`,
+когда кабель заработает.
 
 ## Мост точек входа
 
