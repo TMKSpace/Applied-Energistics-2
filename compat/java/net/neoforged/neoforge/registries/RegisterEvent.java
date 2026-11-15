@@ -37,6 +37,12 @@ public class RegisterEvent extends Event implements IModBusEvent {
 
     @SuppressWarnings({ "unchecked", "rawtypes" })
     public <T> Registry<T> getRegistry(ResourceKey<? extends Registry<T>> key) {
+        // Сначала собственные реестры мода: они не попадают в BuiltInRegistries,
+        // потому что на Fabric тот уже заморожен.
+        Registry<T> custom = NewRegistryEvent.getCreated(key);
+        if (custom != null) {
+            return custom;
+        }
         // BuiltInRegistries.REGISTRY — Registry<? extends Registry<?>>, поэтому без сырого каста
         // не сходится; ключ и значение согласованы на стороне вызывающего.
         return (Registry<T>) ((Registry) BuiltInRegistries.REGISTRY).getValue((ResourceKey) key);

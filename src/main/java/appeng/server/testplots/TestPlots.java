@@ -725,7 +725,7 @@ public final class TestPlots {
             var patternProviders = grid.getMachines(PatternProviderPart.class).iterator();
             PatternProviderPart current = patternProviders.next();
             //#if FABRIC
-            var craftingRecipes = nfcompat.recipes.RecipeMaps.of(node.getLevel().recipeAccess()).byType(RecipeType.CRAFTING);
+            var craftingRecipes = nfcompat.recipes.RecipeMaps.of(node.getLevel()).byType(RecipeType.CRAFTING);
             //#else
             var craftingRecipes = node.getLevel().recipeAccess().recipeMap().byType(RecipeType.CRAFTING);
             //#endif

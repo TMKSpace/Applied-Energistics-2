@@ -50,6 +50,14 @@ public final class InitBiomes {
                 // Copied from the vanilla void biome
                 .temperature(0.5F).downfall(0.5F)
                 .specialEffects(specialEffects)
+//#if FABRIC
+                // nfcompat: neoforge:custom_{weather_effects,clouds,skybox} — атрибуты,
+                // которых нет в ванильном реестре environment_attribute, поэтому биом
+                // с ними не проходит загрузку реестров. Пространственное хранилище
+                // останется без своего неба/облаков, пока эти атрибуты не зарегистрированы.
+                .mobSpawnSettings(new MobSpawnSettings.Builder().build())
+                .build();
+//#else
                 .mobSpawnSettings(new MobSpawnSettings.Builder().build())
                 .setAttribute(NeoForgeEnvironmentAttributes.CUSTOM_WEATHER_EFFECTS,
                         SpatialStorageDimensionIds.CUSTOM_RENDERER_ID)
@@ -58,6 +66,7 @@ public final class InitBiomes {
                 .setAttribute(NeoForgeEnvironmentAttributes.CUSTOM_SKYBOX,
                         SpatialStorageDimensionIds.CUSTOM_RENDERER_ID)
                 .build();
+//#endif
 
         context.register(SpatialStorageDimensionIds.BIOME_KEY, biome);
     }

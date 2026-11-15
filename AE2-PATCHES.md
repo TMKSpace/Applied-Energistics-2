@@ -76,3 +76,26 @@
   `SimpleParticleType.<init>`, `ModelTemplates.create/createItem`, `Player.closeContainer()`,
   `Options.keyMappings`, `RespawnConfig.getDimensionOrDefault`, `BlockEntityType.validBlocks`,
   `EquipmentSlot.countLimit`, `BucketItem.content`, `ItemStackLinkedSet.TYPE_AND_TAG`.
+
+## Найдено при первом запуске сервера (не видно при компиляции)
+
+| что | как закрыли |
+|---|---|
+| `neoforge:custom_{clouds,skybox,weather_effects}` — атрибуты окружения, которых нет в ванильном реестре `environment_attribute` | убрали из `InitBiomes` (маркер) и из сгенерированного `data/ae2/worldgen/biome/spatial_storage.json` |
+| 64 тега `c:nuggets/*` не существуют на Fabric | сгенерировали пустые теги в `compat/resources/data/c/tags/item/nuggets/*.json` (таких металлов нет — пустой тег семантически верен) |
+| 5 рецептов используют `neoforge:ingredient_type: neoforge:difference` | развернули в явный список предметов (ровно то, что сделал бы наш `DifferenceIngredient` на датагене) |
+| `RecipeMap` **есть в ванили** (в common-джарнике), а наш одноимённый класс в `net.minecraft.*` ломал миксин Fabric recipe API | свой класс удалён; `RecipeMaps.of(level/RegistryAccess)` использует `RecipeMap.create(lookup)` |
+| собственные реестры (`NewRegistryEvent`) не видны `RegisterEvent` | `NewRegistryEvent` запоминает созданные реестры, `RegisterEvent.getRegistry` сначала смотрит туда |
+| `RecipeType.register(...)` дублировал запись своего `DeferredRegister` | в FABRIC-ветке тип регистрируется только через `DR`, объект берётся из `DeferredHolder.get()` |
+| `CauldronInteraction.Dispatcher.put` пакетно-приватный | AW `accessible method` |
+
+## Мост точек входа
+
+`nfcompat.NfCompat` + `NfCompatServer` / `NfCompatClient`: создают `ModContainer`, вызывают конструктор AE2
+(`AppEngServer`/`AppEngClient`), затем вручную проходят этапы, которые на NeoForge делает загрузчик —
+`NewRegistryEvent`, `RegisterEvent` по каждому нужному реестру, `RegisterCapabilitiesEvent`,
+`RegisterPayloadHandlersEvent`, `RegisterTicketControllersEvent`, `FMLCommonSetupEvent`,
+`InterModEnqueueEvent` (на клиенте ещё `RegisterClientPayloadHandlersEvent` и `FMLClientSetupEvent`).
+
+Порядок важен: реестр `AEKeyType` создаётся в `NewRegistryEvent`, и без него одноимённый `RegisterEvent`
+нечего обрабатывать.
