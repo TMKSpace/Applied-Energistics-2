@@ -342,7 +342,7 @@ public abstract class AppEngBase implements AppEng {
     public RecipeMap getRecipeMapForType(Level level, RecipeType<?> recipeType) {
         if (level instanceof ServerLevel serverLevel) {
             //#if FABRIC
-            return nfcompat.recipes.RecipeMaps.of(serverLevel.recipeAccess());
+            return nfcompat.recipes.RecipeMaps.of(serverLevel);
             //#else
             return serverLevel.recipeAccess().recipeMap();
             //#endif

@@ -67,7 +67,7 @@ public final class TransformLogic {
                 .filter(e -> e instanceof ItemEntity && !e.isRemoved()).map(e -> (ItemEntity) e).toList();
 
         //#if FABRIC
-        for (var holder : nfcompat.recipes.RecipeMaps.of(level.recipeAccess()).byType(AERecipeTypes.TRANSFORM)) {
+        for (var holder : nfcompat.recipes.RecipeMaps.of(level).byType(AERecipeTypes.TRANSFORM)) {
         //#else
         for (var holder : level.recipeAccess().recipeMap().byType(AERecipeTypes.TRANSFORM)) {
         //#endif
@@ -149,7 +149,7 @@ public final class TransformLogic {
         return fluidCache.computeIfAbsent(fluid, f -> {
             List<HolderSet<Item>> holderSets = new ArrayList<>();
             //#if FABRIC
-            for (var holder : nfcompat.recipes.RecipeMaps.of(level.recipeAccess()).byType(AERecipeTypes.TRANSFORM)) {
+            for (var holder : nfcompat.recipes.RecipeMaps.of(level).byType(AERecipeTypes.TRANSFORM)) {
             //#else
             for (var holder : level.recipeAccess().recipeMap().byType(AERecipeTypes.TRANSFORM)) {
             //#endif
@@ -173,7 +173,7 @@ public final class TransformLogic {
         if (ret == null) {
             List<HolderSet<Item>> holderSets = new ArrayList<>();
             //#if FABRIC
-            for (var holder : nfcompat.recipes.RecipeMaps.of(level.recipeAccess()).byType(AERecipeTypes.TRANSFORM)) {
+            for (var holder : nfcompat.recipes.RecipeMaps.of(level).byType(AERecipeTypes.TRANSFORM)) {
             //#else
             for (var holder : level.recipeAccess().recipeMap().byType(AERecipeTypes.TRANSFORM)) {
             //#endif
@@ -200,7 +200,7 @@ public final class TransformLogic {
         if (ret == null) {
             List<HolderSet<Item>> holderSets = new ArrayList<>();
             //#if FABRIC
-            for (var holder : nfcompat.recipes.RecipeMaps.of(level.recipeAccess()).byType(AERecipeTypes.TRANSFORM)) {
+            for (var holder : nfcompat.recipes.RecipeMaps.of(level).byType(AERecipeTypes.TRANSFORM)) {
             //#else
             for (var holder : level.recipeAccess().recipeMap().byType(AERecipeTypes.TRANSFORM)) {
             //#endif

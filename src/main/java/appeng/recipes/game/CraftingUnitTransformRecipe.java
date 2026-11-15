@@ -70,7 +70,7 @@ public class CraftingUnitTransformRecipe extends MechanicsRecipe<RecipeInput> {
         var recipeManager = level.recipeAccess();
 
         //#if FABRIC
-        for (var holder : nfcompat.recipes.RecipeMaps.of(recipeManager).byType(AERecipeTypes.CRAFTING_UNIT_TRANSFORM)) {
+        for (var holder : nfcompat.recipes.RecipeMaps.of(level).byType(AERecipeTypes.CRAFTING_UNIT_TRANSFORM)) {
         //#else
         for (var holder : recipeManager.recipeMap().byType(AERecipeTypes.CRAFTING_UNIT_TRANSFORM)) {
         //#endif
@@ -87,7 +87,7 @@ public class CraftingUnitTransformRecipe extends MechanicsRecipe<RecipeInput> {
      */
     public static Block getUpgradedBlock(ServerLevel level, ItemStack upgradeItem) {
         //#if FABRIC
-for (var holder : nfcompat.recipes.RecipeMaps.of(level.recipeAccess()).byType(AERecipeTypes.CRAFTING_UNIT_TRANSFORM)) {
+for (var holder : nfcompat.recipes.RecipeMaps.of(level).byType(AERecipeTypes.CRAFTING_UNIT_TRANSFORM)) {
 //#else
 for (var holder : level.recipeAccess().recipeMap().byType(AERecipeTypes.CRAFTING_UNIT_TRANSFORM)) {
 //#endif

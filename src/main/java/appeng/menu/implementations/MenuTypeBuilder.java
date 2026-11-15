@@ -168,9 +168,16 @@ public final class MenuTypeBuilder<M extends AEBaseMenu, I> {
         }
 
 //#if FABRIC
-        // nfcompat: ванильный openMenu не умеет передавать доп. данные, поэтому меню
-        // откроется без locator/initialData. TODO: ExtendedScreenHandlerType.
-        player.openMenu(new AppEngMenuProvider());
+        // openMenu с данными в NeoForge патчит ServerPlayer; на Fabric оборачиваем
+        // провайдер в ExtendedMenuProvider и передаём тот же writer.
+        player.openMenu(nfcompat.menu.Menus.withData(new AppEngMenuProvider(), buffer -> {
+            MenuLocators.writeToPacket(buffer, locator);
+            buffer.writeBoolean(fromSubMenu);
+
+            if (initialDataSerializer != null) {
+                initialDataSerializer.serializeInitialData(accessInterface, buffer);
+            }
+        }));
 //#else
         player.openMenu(new AppEngMenuProvider(), buffer -> {
             MenuLocators.writeToPacket(buffer, locator);

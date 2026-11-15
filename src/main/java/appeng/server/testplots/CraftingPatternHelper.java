@@ -89,7 +89,7 @@ public class CraftingPatternHelper {
 
         RecipeHolder<StonecutterRecipe> foundRecipe = null;
         //#if FABRIC
-        var it = nfcompat.recipes.RecipeMaps.of(level.recipeAccess()).getRecipesFor(RecipeType.STONECUTTING, input, level).iterator();
+        var it = nfcompat.recipes.RecipeMaps.of(level).getRecipesFor(RecipeType.STONECUTTING, input, level).iterator();
         //#else
         var it = level.recipeAccess().recipeMap().getRecipesFor(RecipeType.STONECUTTING, input, level).iterator();
         //#endif

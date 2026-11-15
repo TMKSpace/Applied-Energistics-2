@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "id": "appliedenergistics2",
+  "id": "ae2",
   "version": "26.3-nfcompat",
   "name": "Applied Energistics 2 (nfcompat probe)",
   "environment": "*",
@@ -10,10 +10,10 @@
   "entrypoints": {
     "main": [],
     "server": [
-      "nfcompat.NfCompatInit"
+      "nfcompat.NfCompatServer"
     ],
     "client": [
-      "nfcompat.NfCompatInit"
+      "nfcompat.NfCompatClient"
     ]
   },
   "depends": {

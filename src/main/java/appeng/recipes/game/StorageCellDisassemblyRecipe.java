@@ -77,7 +77,7 @@ public class StorageCellDisassemblyRecipe extends MechanicsRecipe<SingleRecipeIn
         var recipeManager = level.recipeAccess();
 
         //#if FABRIC
-        for (var holder : nfcompat.recipes.RecipeMaps.of(recipeManager).byType(AERecipeTypes.CELL_DISASSEMBLY)) {
+        for (var holder : nfcompat.recipes.RecipeMaps.of(level).byType(AERecipeTypes.CELL_DISASSEMBLY)) {
         //#else
         for (var holder : recipeManager.recipeMap().byType(AERecipeTypes.CELL_DISASSEMBLY)) {
         //#endif

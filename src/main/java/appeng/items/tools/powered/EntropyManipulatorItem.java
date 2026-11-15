@@ -285,7 +285,7 @@ block.onCaughtFire(level.getBlockState(pos), level, pos, side, p, item);
     private static EntropyRecipe findRecipe(ServerLevel level, EntropyMode mode, BlockState blockState,
             FluidState fluidState) {
         //#if FABRIC
-        for (var holder : nfcompat.recipes.RecipeMaps.of(level.recipeAccess()).byType(AERecipeTypes.ENTROPY)) {
+        for (var holder : nfcompat.recipes.RecipeMaps.of(level).byType(AERecipeTypes.ENTROPY)) {
         //#else
         for (var holder : level.recipeAccess().recipeMap().byType(AERecipeTypes.ENTROPY)) {
         //#endif

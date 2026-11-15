@@ -34,12 +34,16 @@ public final class AERecipeTypes {
             "storage_cell_disassembly");
 
     private static <T extends Recipe<?>> RecipeType<T> register(String id) {
-        //#if FABRIC
-        RecipeType<T> type = RecipeType.register(AppEng.makeId(id).toString());
-        //#else
+//#if FABRIC
+        // Наш DeferredRegister регистрирует сразу, поэтому ванильный RecipeType.register()
+        // создал бы вторую запись с тем же именем («Adding duplicate value»). Регистрируем
+        // только через DR и берём готовый объект.
+        RecipeType<T> type = DR.<RecipeType<T>>register(id, () -> new RecipeType<T>() {
+        }).get();
+//#else
         RecipeType<T> type = RecipeType.simple(AppEng.makeId(id));
-        //#endif
         DR.register(id, () -> type);
+//#endif
         return type;
     }
 }
