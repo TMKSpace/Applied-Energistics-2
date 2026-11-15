@@ -32,7 +32,10 @@ public interface BasicUnbakedModel extends UnbakedModel {
         return Collections.emptyList();
     }
 
+    //#if FABRIC
+    //#else
     @Override
+    //#endif
     default void resolveDependencies(Resolver resolver) {
         for (Identifier dependency : getDependencies()) {
             resolver.markDependency(dependency);

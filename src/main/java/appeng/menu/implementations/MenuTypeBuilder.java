@@ -157,7 +157,10 @@ public final class MenuTypeBuilder<M extends AEBaseMenu, I> {
                 return m;
             }
 
+            //#if FABRIC
+            //#else
             @Override
+            //#endif
             public boolean shouldTriggerClientSideContainerClosingOnOpen() {
                 // Do not send close packets when switching between AE menus
                 return !(player.containerMenu instanceof AEBaseMenu);

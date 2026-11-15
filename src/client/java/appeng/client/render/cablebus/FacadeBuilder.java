@@ -304,7 +304,10 @@ public class FacadeBuilder {
             return originalPart.useAmbientOcclusion();
         }
 
+        //#if FABRIC
+        //#else
         @Override
+        //#endif
         public TriState ambientOcclusion() {
             return originalPart.ambientOcclusion();
         }

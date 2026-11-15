@@ -411,9 +411,17 @@ public class AppEngClient extends AppEngBase {
 
             if (player != null) {
                 var isDown = event.getAction() == InputConstants.PRESS || event.getAction() == InputConstants.REPEAT;
+                //#if FABRIC
+                var previousIsDown = nfcompat.attachments.Attachments.get(player, AEAttachmentTypes.HOLDING_CTRL);
+                //#else
                 var previousIsDown = player.getData(AEAttachmentTypes.HOLDING_CTRL);
+                //#endif
                 if (previousIsDown != isDown) {
+                    //#if FABRIC
+                    nfcompat.attachments.Attachments.set(player, AEAttachmentTypes.HOLDING_CTRL, isDown);
+                    //#else
                     player.setData(AEAttachmentTypes.HOLDING_CTRL, isDown);
+                    //#endif
                     ClientPacketDistributor.sendToServer(new UpdateHoldingCtrlPacket(isDown));
                 }
             }

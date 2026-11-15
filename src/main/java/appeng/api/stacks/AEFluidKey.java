@@ -157,7 +157,11 @@ public final class AEFluidKey extends AEKey {
     public boolean isTagged(TagKey<?> tag) {
         // This will just return false for incorrectly cast tags
         //#if FABRIC
+        //#if FABRIC
+        return stack.getFluid().builtInRegistryHolder().is((TagKey<Fluid>) tag);
+        //#else
         return stack.getFluid().builtInRegistryHolder().is(tag);
+        //#endif
         //#else
         return stack.is((TagKey<Fluid>) tag);
         //#endif

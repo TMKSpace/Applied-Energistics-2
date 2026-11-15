@@ -299,7 +299,11 @@ public abstract class AEBaseScreen<T extends AEBaseMenu> extends AbstractContain
         var emptyingAction = ContainerItemStrategies.getEmptyingAction(carried);
         if (emptyingAction != null) {
             var wrappedStack = GenericStack.wrapInItemStack(new GenericStack(emptyingAction.what(), 1));
+//#if FABRIC
+            if (configInv.isItemValid(nfcompat.menu.SlotIndices.get(slot), wrappedStack)) {
+//#else
             if (configInv.isItemValid(slot.getSlotIndex(), wrappedStack)) {
+//#endif
                 return emptyingAction;
             }
         }
@@ -781,8 +785,13 @@ public abstract class AEBaseScreen<T extends AEBaseMenu> extends AbstractContain
                 if (getMinecraft().options.keyHotbarSlots[j].matches(event)) {
                     final List<Slot> slots = this.getInventorySlots();
                     for (Slot s : slots) {
+//#if FABRIC
+                        if (nfcompat.menu.SlotIndices.get(s) == j && s.container == this.menu.getPlayerInventory()
+                                && !s.mayPickup(this.menu.getPlayerInventory().player)) {
+//#else
                         if (s.getSlotIndex() == j && s.container == this.menu.getPlayerInventory()
                                 && !s.mayPickup(this.menu.getPlayerInventory().player)) {
+//#endif
                             return false;
                         }
                     }
@@ -792,7 +801,11 @@ public abstract class AEBaseScreen<T extends AEBaseMenu> extends AbstractContain
                         return true;
                     } else {
                         for (Slot s : slots) {
+//#if FABRIC
+                            if (nfcompat.menu.SlotIndices.get(s) == j
+//#else
                             if (s.getSlotIndex() == j
+//#endif
                                     && s.container == this.menu.getPlayerInventory()) {
                                 ServerboundPacket message = new SwapSlotsPacket(s.index, theSlot.index);
                                 ClientPacketDistributor.sendToServer(message);

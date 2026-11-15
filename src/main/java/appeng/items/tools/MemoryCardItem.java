@@ -326,7 +326,10 @@ public class MemoryCardItem extends AEBaseItem implements IMemoryCard {
         }
     }
 
+    //#if FABRIC
+    //#else
     @Override
+    //#endif
     public boolean doesSneakBypassUse(ItemStack stack, LevelReader level, BlockPos pos, Player player) {
         return true;
     }

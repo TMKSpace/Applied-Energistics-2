@@ -86,7 +86,10 @@ public class TinyTNTBlock extends AEBaseBlock {
         return super.useItemOn(heldItem, state, level, pos, player, hand, hit);
     }
 
+    //#if FABRIC
+    //#else
     @Override
+    //#endif
     public boolean onCaughtFire(BlockState state, Level level, BlockPos pos, @Nullable Direction direction,
             @Nullable LivingEntity igniter, ItemStack ignitionItem) {
         this.startFuse(level, pos, igniter);

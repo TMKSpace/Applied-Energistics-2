@@ -106,7 +106,11 @@ public class MolecularAssemblerMenu extends UpgradeableMenu<MolecularAssemblerBl
                         enabledSlots |= mask;
 
                         var currentItem = slot.getItem();
+                        //#if FABRIC
+                        if (!currentItem.isEmpty() && !isValidItemForSlot(nfcompat.menu.SlotIndices.get(slot), currentItem)) {
+                        //#else
                         if (!currentItem.isEmpty() && !isValidItemForSlot(slot.getSlotIndex(), currentItem)) {
+                        //#endif
                             invalidSlots |= mask;
                         }
                     }

@@ -88,7 +88,10 @@ public class EncodedPatternItem<T extends IPatternDetails> extends AEBaseItem {
         return InteractionResult.SUCCESS;
     }
 
+    //#if FABRIC
+    //#else
     @Override
+    //#endif
     public InteractionResult onItemUseFirst(ItemStack stack, UseOnContext context) {
         return this.clearPattern(stack, context.getPlayer())
                 ? InteractionResult.SUCCESS

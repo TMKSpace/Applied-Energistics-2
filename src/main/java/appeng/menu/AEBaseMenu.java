@@ -897,7 +897,11 @@ public abstract class AEBaseMenu extends AbstractContainerMenu {
 
     protected final void sendPacketToClient(ClientboundPacket packet) {
         if (getPlayer() instanceof ServerPlayer serverPlayer) {
+            //#if FABRIC
+            nfcompat.network.Payloads.send(serverPlayer, packet);
+            //#else
             serverPlayer.connection.send(packet);
+            //#endif
         }
     }
 
