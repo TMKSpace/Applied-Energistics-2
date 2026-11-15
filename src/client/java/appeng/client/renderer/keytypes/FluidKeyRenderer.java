@@ -45,9 +45,17 @@ public class FluidKeyRenderer implements AEKeyRenderer<AEFluidKey, FluidKeyRende
         var fluidStack = what.toStack(1);
         var fluidModel = Minecraft.getInstance().getModelManager().getFluidStateModelSet()
                 .get(what.getFluid().defaultFluidState());
-        var tintSource = fluidModel.fluidTintSource();
+        //#if FABRIC
+var tintSource = fluidModel.tintSource();
+//#else
+var tintSource = fluidModel.fluidTintSource();
+//#endif
         if (tintSource != null) {
-            state.color = tintSource.colorAsStack(fluidStack);
+            //#if FABRIC
+state.color = -1; // nfcompat: тинт жидкости недоступен (BlockTintSource работает с ItemStack)
+//#else
+state.color = tintSource.colorAsStack(fluidStack);
+//#endif
         } else {
             state.color = -1;
         }

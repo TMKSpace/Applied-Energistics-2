@@ -107,11 +107,28 @@ var model = nfcompat.client.StandaloneModels.get(modelManager, cellModelKey);
 //#else
 var model = modelManager.getStandaloneModel(cellModelKey);
 //#endif
+//#if FABRIC
         var blockAndTintGetter = (BlockAndTintGetter) be.getLevel();
+        var modelParts = state.cellModel.setupModel(IDENTITY,
+                model.hasMaterialFlag(BakedQuad.FLAG_TRANSLUCENT));
+        //#else
+        var blockAndTintGetter = (BlockAndTintGetter) be.getLevel();
+//#if FABRIC
+        var modelParts = state.cellModel.setupModel(IDENTITY, model.hasMaterialFlag(
+        //#else
         var modelParts = state.cellModel.setupModel(IDENTITY, model.hasMaterialFlag(blockAndTintGetter,
+        //#endif
                 be.getBlockPos(), be.getBlockState(), BakedQuad.FLAG_TRANSLUCENT));
+        //#endif
+//#if FABRIC
+        if (model instanceof net.neoforged.neoforge.client.model.DynamicBlockStateModel dynamic) {
+            dynamic.collectParts(blockAndTintGetter, be.getBlockPos(), be.getBlockState(),
+                    state.cellModel.scratchRandomSource(42L), modelParts);
+        }
+        //#else
         model.collectParts(blockAndTintGetter, be.getBlockPos(), be.getBlockState(),
                 state.cellModel.scratchRandomSource(42L), modelParts);
+        //#endif
     }
 
     @Override

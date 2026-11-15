@@ -51,9 +51,17 @@ public final class FluidBlitter {
         TextureAtlasSprite sprite = fluidModel.stillMaterial().sprite();
 
         var color = -1;
-        var tintSource = fluidModel.fluidTintSource();
+        //#if FABRIC
+var tintSource = fluidModel.tintSource();
+//#else
+var tintSource = fluidModel.fluidTintSource();
+//#endif
         if (tintSource != null) {
-            color = tintSource.colorAsStack(stack);
+            //#if FABRIC
+color = -1; // nfcompat: тинт жидкости по стеку недоступен (BlockTintSource работает с ItemStack)
+//#else
+color = tintSource.colorAsStack(stack);
+//#endif
         }
 
         return Blitter.sprite(sprite)

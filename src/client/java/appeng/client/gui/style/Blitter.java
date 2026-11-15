@@ -45,10 +45,16 @@ import appeng.util.Icon;
  * Utility class for drawing rectangular textures in the UI.
  */
 public final class Blitter {
+//#if FABRIC
+    // nfcompat: toBuilder отсутствует в ванили — используем базовый пайплайн.
+    // Непрозрачный вариант (без блендинга) не применяется; TODO: собрать свой пайплайн.
+    public static final RenderPipeline GUI_TEXTURED_OPAQUE = RenderPipelines.GUI_TEXTURED;
+    //#else
     public static final RenderPipeline GUI_TEXTURED_OPAQUE = RenderPipelines.GUI_TEXTURED.toBuilder()
             .withLocation(AppEng.makeId("pipeline/gui_textured_opaque"))
             .withColorTargetState(ColorTargetState.DEFAULT)
             .build();
+    //#endif
 
     // This assumption is obviously bogus, but currently all textures are this size,
     // and it's impossible to get the texture size from an already loaded texture.
@@ -325,6 +331,17 @@ public final class Blitter {
 
         var pipeline = blending ? RenderPipelines.GUI_TEXTURED : GUI_TEXTURED_OPAQUE;
         var texture = Minecraft.getInstance().getTextureManager().getTexture(this.texture);
+//#if FABRIC
+        // nfcompat: вместо ручной сборки BlitRenderState (submitGuiElementRenderState —
+        // метод NeoForge) рисуем ванильным blit. UV у AE2 нормированные, поэтому
+        // переводим их в пиксели предполагаемого размера текстуры.
+        guiGraphics.blit(pipeline, this.texture,
+                (int) x1, (int) y1,
+                minU * DEFAULT_TEXTURE_WIDTH, minV * DEFAULT_TEXTURE_HEIGHT,
+                (int) (x2 - x1), (int) (y2 - y1),
+                DEFAULT_TEXTURE_WIDTH, DEFAULT_TEXTURE_HEIGHT,
+                ARGB.color(a, r, g, b));
+        //#else
         guiGraphics.submitGuiElementRenderState(new BlitRenderState(
                 pipeline,
                 TextureSetup.singleTexture(texture.getTextureView(), texture.getSampler()),
@@ -335,6 +352,7 @@ public final class Blitter {
                 minV, maxV,
                 ARGB.color(a, r, g, b),
                 guiGraphics.peekScissorStack()));
+        //#endif
 
     }
 
