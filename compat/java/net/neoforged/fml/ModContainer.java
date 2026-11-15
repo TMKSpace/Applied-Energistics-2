@@ -1,17 +1,31 @@
 /*
  * Часть nfcompat. Контейнер мода.
  *
- * В NeoForge сюда стекается всё, что относится к моду: метаданные, шина, конфиги, ресурсы.
- * Нам нужны метаданные, шина и регистрация конфигов — последняя уходит в
- * Forge Config API Port (net.neoforged.fml.config/ModConfigSpec он предоставляет сам).
+ * В NeoForge сюда стекается всё, что относится к моду: метаданные, шина, конфиги.
+ * Нам нужны метаданные, шина и регистрация конфигов.
+ *
+ * Конфиги сделаны как в NeoForge: TOML-файл на диске через night-config,
+ * спецификация (`ModConfigSpec`) приводится к файлу через `correct`, а затем
+ * привязывается через `acceptConfig`. Значения читаются из файла, а `save()`
+ * (который зовёт, например, `ConfigValue.set`) пишет файл обратно.
  */
 package net.neoforged.fml;
 
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
+import com.electronwill.nightconfig.core.CommentedConfig;
+import com.electronwill.nightconfig.core.file.CommentedFileConfig;
+import com.electronwill.nightconfig.toml.TomlFormat;
+
+import net.fabricmc.loader.api.FabricLoader;
 import net.neoforged.bus.api.IEventBus;
+import net.neoforged.fml.config.IConfigSpec;
 import net.neoforged.fml.config.ModConfig;
+import net.neoforged.fml.event.config.ModConfigEvent;
 import net.neoforged.fml.loading.moddiscovery.ModInfo;
 import net.neoforged.neoforge.common.ModConfigSpec;
 import org.jetbrains.annotations.Nullable;
@@ -20,7 +34,7 @@ public class ModContainer {
     private final ModInfo modInfo;
     private final IEventBus eventBus;
     private final List<ModConfig> configs = new ArrayList<>();
-    private final java.util.Map<Class<?>, net.neoforged.fml.IExtensionPoint> extensions = new java.util.HashMap<>();
+    private final java.util.Map<Class<?>, IExtensionPoint> extensions = new java.util.HashMap<>();
 
     public ModContainer(ModInfo modInfo, IEventBus eventBus) {
         this.modInfo = modInfo;
@@ -45,14 +59,33 @@ public class ModContainer {
 
     public void registerConfig(ModConfig.Type type, ModConfigSpec spec, @Nullable String fileName) {
         String name = fileName != null ? fileName : getModId() + "-" + type.getSerializedName() + ".toml";
-        var config = new ModConfig(type, spec, getModId(), name, null);
-        // Проверка самой спецификации: ловит значения, объявленные с restart-типом,
-        // недопустимым для этого вида конфига, и валидаторы, отвергающие свой дефолт.
+        Path path = FabricLoader.getInstance().getConfigDir().resolve(name);
+
+        var config = new ModConfig(type, spec, getModId(), name, path);
+
+        // Проверка самой спецификации: ловит restart-типы, недопустимые для этого вида
+        // конфига, и валидаторы, отвергающие свой же дефолт.
         spec.validateSpec(config);
+
+        try {
+            Files.createDirectories(path.getParent());
+        } catch (Exception e) {
+            throw new RuntimeException("nfcompat: не удалось создать каталог конфигов " + path.getParent(), e);
+        }
+
+        CommentedFileConfig fileConfig = CommentedFileConfig.of(path, TomlFormat.instance());
+        // Файл может отсутствовать — correct() допишет дефолты по спецификации.
+        if (Files.exists(path)) {
+            fileConfig.load();
+        }
+        spec.correct(fileConfig);
+        config.setConfig(new FileLoadedConfig(fileConfig));
+        spec.acceptConfig(config.getLoadedConfig());
+
         this.configs.add(config);
-        // TODO: прочитать <name> с диска через nightconfig TOML, вызвать
-        // spec.acceptConfig(loadedConfig) и запостить ModConfigEvent.Loading.
-        // Пока значения конфигов остаются дефолтными.
+
+        // AE2 подписана на Loading и в этот момент синхронизирует свои кэши.
+        eventBus.post(new ModConfigEvent.Loading(config));
     }
 
     public List<ModConfig> getConfigs() {
@@ -60,18 +93,26 @@ public class ModContainer {
     }
 
     /** Регистрация точки расширения мода (в NeoForge — экран конфигов и т.п.). */
-    public <T extends net.neoforged.fml.IExtensionPoint> T registerExtensionPoint(Class<? extends T> point) {
+    public <T extends IExtensionPoint> T registerExtensionPoint(Class<? extends T> point) {
         return registerExtensionPoint(point, null);
     }
 
-    public <T extends net.neoforged.fml.IExtensionPoint> T registerExtensionPoint(Class<? extends T> point, T impl) {
+    public <T extends IExtensionPoint> T registerExtensionPoint(Class<? extends T> point, T impl) {
         if (impl != null) {
             extensions.put(point, impl);
         }
         return impl;
     }
 
-    public <T extends net.neoforged.fml.IExtensionPoint> java.util.Optional<T> getCustomExtension(Class<T> point) {
-        return java.util.Optional.ofNullable(point.cast(extensions.get(point)));
+    public <T extends IExtensionPoint> Optional<T> getCustomExtension(Class<T> point) {
+        return Optional.ofNullable(point.cast(extensions.get(point)));
+    }
+
+    /** Привязанный конфиг, который умеет сохранить себя на диск. */
+    private record FileLoadedConfig(CommentedFileConfig config) implements IConfigSpec.ILoadedConfig {
+        @Override
+        public void save() {
+            config.save();
+        }
     }
 }

@@ -222,6 +222,8 @@ dependencies {
 	// --- Сторонние API только для компиляции ---
 	// nightconfig: движок конфигов, на нём построен вендоренный ModConfigSpec.
 	implementation "com.electronwill.night-config:core:3.6.7"
+	// TOML-формат для конфигов: как в NeoForge, файл на диске + CommentedFileConfig
+	implementation "com.electronwill.night-config:toml:3.6.7"
 
 	// JEI 31.17.0.113 (fabric, 26.3)
 	compileOnly "maven.modrinth:jei:zX75GFgt"
