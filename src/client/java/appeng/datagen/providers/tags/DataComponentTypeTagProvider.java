@@ -25,7 +25,12 @@ public class DataComponentTypeTagProvider extends TagsProvider<DataComponentType
     public DataComponentTypeTagProvider(PackOutput output,
             CompletableFuture<HolderLookup.Provider> registries,
             LocalizationProvider localization) {
+        //#if FABRIC
+        // Vanilla derives the pack directory from the tag namespace and has no mod-id parameter.
+        super(output, Registries.DATA_COMPONENT_TYPE, registries);
+        //#else
         super(output, Registries.DATA_COMPONENT_TYPE, registries, AppEng.MOD_ID);
+        //#endif
         this.localization = localization;
     }
 
@@ -36,7 +41,12 @@ public class DataComponentTypeTagProvider extends TagsProvider<DataComponentType
 
         Map<DataComponentType<?>, ResourceKey<DataComponentType<?>>> componentKeys = new IdentityHashMap<>();
         for (var entry : AEComponents.DR.getEntries()) {
+            //#if FABRIC
+            // Vanilla MC 26.3's Holder API has no getKey(); unwrapKey() is the equivalent accessor.
+            componentKeys.put(entry.get(), entry.unwrapKey().orElseThrow());
+            //#else
             componentKeys.put(entry.get(), entry.getKey());
+            //#endif
         }
 
         addExportedComponentCategory("Filter", AEComponents.EXPORTED_CONFIG_INV);
@@ -50,8 +60,15 @@ public class DataComponentTypeTagProvider extends TagsProvider<DataComponentType
         addExportedComponentCategory("Settings", AEComponents.EXPORTED_SETTINGS);
         addExportedComponentCategory("Upgrades", AEComponents.EXPORTED_UPGRADES);
 
+        //#if FABRIC
+        // Vanilla MC 26.3's Holder API has no getKey(); unwrapKey() is the equivalent accessor.
+        tag(ConventionTags.EXPORTED_SETTINGS).add(
+                BuiltInRegistries.DATA_COMPONENT_TYPE.wrapAsHolder(AEComponents.EXPORTED_SETTINGS_SOURCE)
+                        .unwrapKey().orElseThrow());
+        //#else
         tag(ConventionTags.EXPORTED_SETTINGS).add(
                 BuiltInRegistries.DATA_COMPONENT_TYPE.wrapAsHolder(AEComponents.EXPORTED_SETTINGS_SOURCE).getKey());
+        //#endif
     }
 
     private void addExportedComponentCategory(String englishCategoryName, DataComponentType<?>... types) {

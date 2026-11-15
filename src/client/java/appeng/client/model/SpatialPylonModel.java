@@ -44,6 +44,9 @@ import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.block.state.BlockState;
 import net.neoforged.neoforge.client.model.DynamicBlockStateModel;
 import net.neoforged.neoforge.client.model.block.CustomUnbakedBlockStateModel;
+//#if FABRIC
+import nfcompat.model.ModelDataHooks;
+//#endif
 
 import appeng.blockentity.spatial.SpatialPylonBlockEntity;
 import appeng.client.render.CubeBuilder;
@@ -74,7 +77,11 @@ public class SpatialPylonModel implements DynamicBlockStateModel {
     public void collectParts(BlockAndTintGetter level, BlockPos pos, BlockState blockState, RandomSource random,
             List<BlockStateModelPart> parts) {
         var state = Objects.requireNonNullElse(
+//#if FABRIC
+                ModelDataHooks.get(level, pos).get(SpatialPylonBlockEntity.STATE),
+//#else
                 level.getModelData(pos).get(SpatialPylonBlockEntity.STATE),
+//#endif
                 SpatialPylonBlockEntity.ClientState.DEFAULT);
 
         var quadCollection = new QuadCollection.Builder();

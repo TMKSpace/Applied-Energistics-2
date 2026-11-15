@@ -18,6 +18,11 @@
 
 package appeng.api.features;
 
+//#if FABRIC
+import net.minecraft.util.datafix.DataFixTypes;
+import net.neoforged.neoforge.server.ServerLifecycleHooks;
+//#endif
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -58,11 +63,21 @@ final class PlayerRegistryInternal extends SavedData implements IPlayerRegistry 
                     .apply(builder, PlayerRegistryData::new));
 
     private static final SavedDataType<PlayerRegistryInternal> TYPE = new SavedDataType<>(
+//#if FABRIC
+            // в ванили нет уровнезависимых фабрик — сервер берём из хука старта
+            ID,
+            () -> new PlayerRegistryInternal(ServerLifecycleHooks.getCurrentServer()),
+            RecordCodecBuilder.create(builder -> builder.group(
+                    PLAYER_REGISTRY_DATA_CODEC.fieldOf("players").forGetter(PlayerRegistryInternal::getData))
+                    .apply(builder, data -> new PlayerRegistryInternal(ServerLifecycleHooks.getCurrentServer(), data))),
+            DataFixTypes.LEVEL);
+//#else
             ID,
             level -> new PlayerRegistryInternal(level.getServer()),
             level -> RecordCodecBuilder.create(builder -> builder.group(
                     PLAYER_REGISTRY_DATA_CODEC.fieldOf("players").forGetter(PlayerRegistryInternal::getData))
                     .apply(builder, data -> new PlayerRegistryInternal(level.getServer(), data))));
+//#endif
 
     private final BiMap<UUID, Integer> mapping = HashBiMap.create();
 

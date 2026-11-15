@@ -30,7 +30,12 @@ import appeng.datagen.providers.IAE2DataProvider;
 public class FluidTagsProvider extends net.minecraft.data.tags.FluidTagsProvider implements IAE2DataProvider {
 
     public FluidTagsProvider(PackOutput output, CompletableFuture<HolderLookup.Provider> registries) {
+        //#if FABRIC
+        // Vanilla derives the pack directory from the tag namespace and has no mod-id parameter.
+        super(output, registries);
+        //#else
         super(output, registries, AppEng.MOD_ID);
+        //#endif
     }
 
     @Override

@@ -1,5 +1,10 @@
 package appeng.server.services;
 
+//#if FABRIC
+import net.minecraft.util.datafix.DataFixTypes;
+import net.neoforged.neoforge.server.ServerLifecycleHooks;
+//#endif
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -37,11 +42,24 @@ class ChunkLoadState extends SavedData {
     }
 
     private static final SavedDataType<ChunkLoadState> TYPE = new SavedDataType<>(
+//#if FABRIC
+            // ИЗВЕСТНОЕ РАСХОЖДЕНИЕ: в ванили кодек не получает уровень, поэтому берём
+            // overworld. Для состояния форс-лоада чанков это неверно, если данные принадлежат
+            // другому измерению. Нужен хук на DimensionDataStorage — TODO.
+            AppEng.makeId("chunk_load_state"),
+            ChunkLoadState::new,
+            RecordCodecBuilder.create(builder -> builder.group(
+                    ForcedChunk.CODEC.listOf().fieldOf("forcedChunks").forGetter(ChunkLoadState::getForcedChunks))
+                    .apply(builder, data -> new ChunkLoadState(
+                            ServerLifecycleHooks.getCurrentServer().overworld(), data))),
+            DataFixTypes.LEVEL);
+//#else
             AppEng.makeId("chunk_load_state"),
             ChunkLoadState::new,
             level -> RecordCodecBuilder.create(builder -> builder.group(
                     ForcedChunk.CODEC.listOf().fieldOf("forcedChunks").forGetter(ChunkLoadState::getForcedChunks))
                     .apply(builder, data -> new ChunkLoadState(level, data))));
+//#endif
 
     public static ChunkLoadState get(ServerLevel level) {
         return level.getDataStorage().computeIfAbsent(TYPE);

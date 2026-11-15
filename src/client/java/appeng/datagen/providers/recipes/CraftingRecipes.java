@@ -32,9 +32,14 @@ public class CraftingRecipes extends AE2RecipeProvider {
         super(recipeOutput, advancementOutput);
     }
 
+    //#if FABRIC
+    // Vanilla's RecipeProvider declares buildRecipes() as public (NeoForge narrows it to protected), and AE2 calls it
+    // from AE2RecipeProvider#create, so it has to stay public here.
+    public void buildRecipes() {
+    //#else
     @Override
     protected void buildRecipes() {
-
+    //#endif
         // ====================================================
         // Basic Cards
         // ====================================================

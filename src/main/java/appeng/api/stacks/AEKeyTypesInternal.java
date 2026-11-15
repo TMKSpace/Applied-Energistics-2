@@ -33,6 +33,16 @@ public final class AEKeyTypesInternal {
     public static void setRegistry(Registry<AEKeyType> registry) {
         Preconditions.checkState(AEKeyTypesInternal.registry == null);
         AEKeyTypesInternal.registry = registry;
+//#if FABRIC
+        // в ванильном Registry нет addCallback — идём через хелпер шима
+        nfcompat.registry.RegistryCallbacks.onBake(registry, ignored -> {
+            var types = new HashSet<AEKeyType>();
+            for (var aeKeyType : registry) {
+                types.add(aeKeyType);
+            }
+            allTypes = Set.copyOf(types);
+        });
+//#else
         registry.addCallback((BakeCallback<AEKeyType>) (ignored -> {
             var types = new HashSet<AEKeyType>();
             for (var aeKeyType : registry) {
@@ -40,6 +50,7 @@ public final class AEKeyTypesInternal {
             }
             allTypes = Set.copyOf(types);
         }));
+//#endif
     }
 
     public static Set<AEKeyType> getAllTypes() {

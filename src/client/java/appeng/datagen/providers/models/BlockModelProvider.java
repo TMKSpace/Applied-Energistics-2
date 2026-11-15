@@ -188,7 +188,11 @@ public class BlockModelProvider extends ModelSubProvider {
         var driveModel = customBlockStateModel(driveUnbaked);
         blockStateOutput.accept(
                 MultiVariantGenerator.dispatch(AEBlocks.DRIVE.block(), driveModel)
+                        //#if FABRIC
+                        .with(createFacingSpinDispatch()));
+        //#else
                         .withUnbaked(createFacingSpinDispatch()));
+        //#endif
 
         blockModels.registerSimpleItemModel(AEBlocks.DRIVE.block(), AppEng.makeId("block/drive_base"));
     }
@@ -213,7 +217,18 @@ public class BlockModelProvider extends ModelSubProvider {
                 modelOutput);
         var onlineBlock = CONTROLLER_BLOCK_LIGHTS.createWithSuffix(block, "_block_online", texturesBlock, modelOutput);
         var conflictedBlock = CONTROLLER_BLOCK_LIGHTS.createWithSuffix(block, "_block_conflicted",
-                texturesBlock.copy().put(LIGHTS, makeMaterial("block/controller_conflict")), modelOutput);
+                //#if FABRIC
+                // Vanilla TextureMapping has no copy(); rebuild the mapping with the conflicted lights texture.
+                new TextureMapping()
+                        .put(TextureSlot.ALL, makeMaterial("block/controller"))
+                        .put(TextureSlot.SIDE, makeMaterial("block/controller_column"))
+                        .put(TextureSlot.END, makeMaterial("block/controller"))
+                        .put(BLOCK, makeMaterial("block/controller_powered"))
+                        .put(LIGHTS, makeMaterial("block/controller_conflict")),
+                //#else
+                texturesBlock.copy().put(LIGHTS, makeMaterial("block/controller_conflict")),
+                //#endif
+                modelOutput);
 
         var texturesColumn = new TextureMapping()
                 .put(TextureSlot.ALL, makeMaterial("block/controller"))
@@ -226,7 +241,18 @@ public class BlockModelProvider extends ModelSubProvider {
         var onlineColumn = CONTROLLER_COLUMN_LIGHTS.createWithSuffix(block, "_column_online", texturesColumn,
                 modelOutput);
         var conflictedColumn = CONTROLLER_COLUMN_LIGHTS.createWithSuffix(block, "_column_conflicted",
-                texturesColumn.copy().put(LIGHTS, makeMaterial("block/controller_column_conflict")), modelOutput);
+                //#if FABRIC
+                // Vanilla TextureMapping has no copy(); rebuild the mapping with the conflicted lights texture.
+                new TextureMapping()
+                        .put(TextureSlot.ALL, makeMaterial("block/controller"))
+                        .put(TextureSlot.SIDE, makeMaterial("block/controller_column"))
+                        .put(TextureSlot.END, makeMaterial("block/controller"))
+                        .put(BLOCK, makeMaterial("block/controller_column_powered"))
+                        .put(LIGHTS, makeMaterial("block/controller_column_conflict")),
+                //#else
+                texturesColumn.copy().put(LIGHTS, makeMaterial("block/controller_column_conflict")),
+                //#endif
+                modelOutput);
 
         var insideA = ModelTemplates.CUBE_ALL.createWithSuffix(block, "_inside_a",
                 TextureMapping.cube(makeMaterial("block/controller_inside_a")), modelOutput);
@@ -474,11 +500,23 @@ public class BlockModelProvider extends ModelSubProvider {
                 .put(TextureSlot.WEST, getBlockTexture(block, "_side"));
         var offModel = ModelTemplates.CUBE.create(block, textureMapping, modelOutput);
 
+        //#if FABRIC
+        // Vanilla TextureMapping has no copy(); build the "on" mapping from scratch instead.
+        var textureMappingOn = TextureMapping.cube(block)
+                .put(TextureSlot.DOWN, MACHINE_BOTTOM)
+                .put(TextureSlot.EAST, getBlockTexture(block, "_side"))
+                .put(TextureSlot.WEST, getBlockTexture(block, "_side"))
+                .put(TextureSlot.UP, getBlockTexture(block, "_top_on"))
+                .put(TextureSlot.NORTH, getBlockTexture(block, "_front_on"))
+                .put(TextureSlot.SOUTH, getBlockTexture(block, "_back_on"))
+                .put(TextureSlot.PARTICLE, getBlockTexture(block, "_front_on"));
+        //#else
         var textureMappingOn = textureMapping.copy()
                 .put(TextureSlot.UP, getBlockTexture(block, "_top_on"))
                 .put(TextureSlot.NORTH, getBlockTexture(block, "_front_on"))
                 .put(TextureSlot.SOUTH, getBlockTexture(block, "_back_on"))
                 .put(TextureSlot.PARTICLE, getBlockTexture(block, "_front_on"));
+        //#endif
         var onModel = ModelTemplates.CUBE.createWithSuffix(block, "_on", textureMappingOn, modelOutput);
 
         blockStateOutput.accept(
@@ -487,7 +525,11 @@ public class BlockModelProvider extends ModelSubProvider {
                                 PropertyDispatch.initial(VibrationChamberBlock.ACTIVE)
                                         .select(false, plainSpinnableVariant(offModel))
                                         .select(true, plainSpinnableVariant(onModel)))
+                        //#if FABRIC
+                        .with(createFacingSpinDispatch()));
+        //#else
                         .withUnbaked(createFacingSpinDispatch()));
+        //#endif
 
         // TODO itemModels().withExistingParent(modelPath(AEBlocks.VIBRATION_CHAMBER), offModel);
     }
@@ -544,7 +586,11 @@ public class BlockModelProvider extends ModelSubProvider {
                                 PropertyDispatch.initial(IOPortBlock.POWERED)
                                         .select(false, plainSpinnableVariant(offModel))
                                         .select(true, plainSpinnableVariant(onModel)))
+                        //#if FABRIC
+                        .with(createFacingSpinDispatch()));
+        //#else
                         .withUnbaked(createFacingSpinDispatch()));
+        //#endif
         // TODO itemModels().withExistingParent(modelPath(AEBlocks.IO_PORT), offModel);
     }
 
@@ -558,7 +604,11 @@ public class BlockModelProvider extends ModelSubProvider {
                                 PropertyDispatch.initial(SpatialIOPortBlock.POWERED)
                                         .select(false, plainSpinnableVariant(offModel))
                                         .select(true, plainSpinnableVariant(onModel)))
+                        //#if FABRIC
+                        .with(createFacingSpinDispatch()));
+        //#else
                         .withUnbaked(createFacingSpinDispatch()));
+        //#endif
         // TODO itemModels().withExistingParent(modelPath(AEBlocks.SPATIAL_IO_PORT), offModel);
     }
 
@@ -635,10 +685,16 @@ public class BlockModelProvider extends ModelSubProvider {
                 .accept(
                         MultiVariantGenerator.dispatch(
                                 block,
+                                //#if FABRIC
+                                // Vanilla ModelTemplate has no extend() builder; the template is already complete.
+                                plainVariant(ModelTemplates.CROSS
+                                        .create(block, TextureMapping.cross(block), modelOutput)))
+                        //#else
                                 plainVariant(ModelTemplates.CROSS
                                         .extend()
                                         .build()
                                         .create(block, TextureMapping.cross(block), modelOutput)))
+                        //#endif
                                 .with(ROTATIONS_COLUMN_WITH_FACING));
         var model = ModelTemplates.FLAT_ITEM.create(quartz.asItem(), TextureMapping.layer0(quartz.block()),
                 itemModels.modelOutput);

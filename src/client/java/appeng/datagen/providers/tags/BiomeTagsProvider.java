@@ -32,13 +32,24 @@ import appeng.worldgen.meteorite.MeteoriteStructure;
 
 public class BiomeTagsProvider extends net.minecraft.data.tags.BiomeTagsProvider implements IAE2DataProvider {
     public BiomeTagsProvider(PackOutput packOutput, CompletableFuture<HolderLookup.Provider> registries) {
+        //#if FABRIC
+        // Vanilla derives the pack directory from the tag namespace and has no mod-id parameter.
+        super(packOutput, registries);
+        //#else
         super(packOutput, registries, AppEng.MOD_ID);
+        //#endif
     }
 
     @Override
     protected void addTags(HolderLookup.Provider registries) {
         tag(MeteoriteStructure.BIOME_TAG_KEY).addOptionalTag(BiomeTags.IS_OVERWORLD);
+        //#if FABRIC
+        // Vanilla's TagAppender has no add(TagEntry); the dimension key can be added directly instead.
+        tag(BiomeTags.WITHOUT_WANDERING_TRADER_SPAWNS)
+                .add(SpatialStorageDimensionIds.BIOME_KEY);
+        //#else
         tag(BiomeTags.WITHOUT_WANDERING_TRADER_SPAWNS)
                 .add(TagEntry.element(SpatialStorageDimensionIds.BIOME_KEY.identifier()));
+        //#endif
     }
 }

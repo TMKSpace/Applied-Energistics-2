@@ -225,11 +225,20 @@ public final class AEBlockEntities {
             BlockEntityType.BlockEntitySupplier<T> supplier = (blockPos, blockState) -> factory.create(typeHolder.get(),
                     blockPos, blockState);
 
+//#if FABRIC
+            // ванильный конструктор берёт Set<Block>, NeoForge добавляет вариант с varargs
+            var blocks = Arrays.stream(blockDefinitions)
+                    .map(d -> (net.minecraft.world.level.block.Block) d.block())
+                    .collect(java.util.stream.Collectors.toSet());
+
+            var type = new BlockEntityType<>(supplier, blocks);
+//#else
             var blocks = Arrays.stream(blockDefinitions)
                     .map(BlockDefinition::block)
                     .toArray(AEBaseEntityBlock[]::new);
 
             var type = new BlockEntityType<>(supplier, blocks);
+//#endif
             typeHolder.setPlain(type); // Makes it available to the supplier used above
 
             AEBaseBlockEntity.registerBlockEntityItem(type, blockDefinitions[0].asItem());

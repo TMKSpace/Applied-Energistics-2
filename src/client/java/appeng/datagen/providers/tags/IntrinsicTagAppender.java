@@ -21,9 +21,74 @@ package appeng.datagen.providers.tags;
 import net.minecraft.core.Registry;
 import net.minecraft.data.tags.TagAppender;
 import net.minecraft.resources.ResourceKey;
+//#if FABRIC
+import net.minecraft.tags.TagBuilder;
+//#endif
 import net.minecraft.tags.TagEntry;
 import net.minecraft.tags.TagKey;
 
+//#if FABRIC
+/**
+ * Vanilla's {@link TagAppender} only accepts resource keys since 26.2 and has no way to append a raw
+ * {@link TagEntry}. This wrapper restores both: it adds the registered-object overload AE2 uses everywhere and
+ * keeps the backing {@link TagBuilder} around to append pre-built entries.
+ * <p>
+ * Fabric note: NeoForge's {@code TagAppender} also gained {@code remove(...)}. Vanilla's {@link TagBuilder} has no
+ * removal support at all, so those methods do not exist here - tag entries can only be appended.
+ */
+public record IntrinsicTagAppender<T>(TagAppender<T> delegate, TagBuilder builder, Registry<T> registry)
+        implements TagAppender<T> {
+    @SafeVarargs
+    public final IntrinsicTagAppender<T> add(T... values) {
+        for (var value : values) {
+            delegate.add(registry.getResourceKey(value)
+                    .orElseThrow(() -> new IllegalArgumentException("Unregistered object: " + value)));
+        }
+        return this;
+    }
+
+    @Override
+    public IntrinsicTagAppender<T> add(ResourceKey<T> element) {
+        delegate.add(element);
+        return this;
+    }
+
+    @Override
+    public IntrinsicTagAppender<T> addOptional(ResourceKey<T> element) {
+        delegate.addOptional(element);
+        return this;
+    }
+
+    @Override
+    public IntrinsicTagAppender<T> addTag(TagKey<T> tag) {
+        delegate.addTag(tag);
+        return this;
+    }
+
+    @Override
+    public IntrinsicTagAppender<T> addOptionalTag(TagKey<T> tag) {
+        delegate.addOptionalTag(tag);
+        return this;
+    }
+
+    /**
+     * Appends a fully built tag entry (element, optional element, tag or optional tag).
+     */
+    public IntrinsicTagAppender<T> add(TagEntry entry) {
+        builder.add(entry);
+        return this;
+    }
+
+    /**
+     * Replacement for vanilla's {@code TagsProvider#tag(TagKey, boolean)}, which AE2 needs combined with the
+     * object-based {@code add} overloads above.
+     */
+    public IntrinsicTagAppender<T> replace(boolean value) {
+        builder.setReplace(value);
+        return this;
+    }
+}
+//#else
 /**
  * Vanilla's {@link TagAppender} only accepts resource keys since 26.2. This wrapper restores the ability to add
  * registered objects directly by looking up their key in the given registry.
@@ -86,3 +151,4 @@ public record IntrinsicTagAppender<T>(TagAppender<T> delegate, Registry<T> regis
         return this;
     }
 }
+//#endif

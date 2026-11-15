@@ -21,8 +21,13 @@ public class QuartzCuttingRecipesProvider extends AE2RecipeProvider {
         super(recipeOutput, advancementOutput);
     }
 
+    //#if FABRIC
+    // Vanilla's RecipeProvider declares buildRecipes() as public (NeoForge narrows it to protected).
+    public void buildRecipes() {
+    //#else
     @Override
     protected void buildRecipes() {
+    //#endif
         output.accept(
                 makeKey("network/parts/cable_anchor"),
                 new QuartzCuttingRecipe(

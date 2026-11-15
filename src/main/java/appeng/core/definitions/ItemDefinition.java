@@ -66,7 +66,11 @@ public class ItemDefinition<T extends Item> implements ItemLike, Supplier<T> {
     }
 
     public ItemStackTemplate template(int stackSize) {
+        //#if FABRIC
+        return new ItemStackTemplate(item.asItem(), stackSize);
+        //#else
         return new ItemStackTemplate(item, stackSize);
+        //#endif
     }
 
     public ItemStackTemplate template(Consumer<DataComponentPatch.Builder> customizer) {

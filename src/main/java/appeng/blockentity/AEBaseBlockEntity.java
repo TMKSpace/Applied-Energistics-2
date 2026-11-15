@@ -73,6 +73,9 @@ import net.minecraft.world.phys.BlockHitResult;
 import net.neoforged.neoforge.common.util.FriendlyByteBufUtil;
 import net.neoforged.neoforge.model.data.ModelData;
 import net.neoforged.neoforge.network.connection.ConnectionType;
+//#if FABRIC
+import nfcompat.model.ModelDataProvider;
+//#endif
 
 import it.unimi.dsi.fastutil.objects.Reference2IntMap;
 
@@ -94,8 +97,15 @@ import appeng.util.Platform;
 import appeng.util.SettingsFrom;
 import appeng.util.helpers.ItemComparisonHelper;
 
+//#if FABRIC
+// На Fabric getModelData()/requestModelDataUpdate() не существуют у BlockEntity (это патчи
+// NeoForge), поэтому роль базового контракта играет nfcompat.model.ModelDataProvider.
+public class AEBaseBlockEntity extends BlockEntity
+        implements Nameable, ISegmentedInventory, Clearable, IDebugExportable, ModelDataProvider {
+//#else
 public class AEBaseBlockEntity extends BlockEntity
         implements Nameable, ISegmentedInventory, Clearable, IDebugExportable {
+//#endif
     private static final Logger LOG = LoggerFactory.getLogger(AEBaseBlockEntity.class);
 
     private static final Map<BlockEntityType<?>, Item> REPRESENTATIVE_ITEMS = new HashMap<>();
@@ -440,8 +450,14 @@ public class AEBaseBlockEntity extends BlockEntity
         return null;
     }
 
+//#if FABRIC
+    // В NeoForge это переопределение BlockEntity#getModelData(), а у нас — реализация
+    // ModelDataProvider, поэтому @Override тут не к чему прицепиться.
+    public ModelData getModelData() {
+//#else
     @Override
     public ModelData getModelData() {
+//#endif
         return AEModelData.create();
     }
 

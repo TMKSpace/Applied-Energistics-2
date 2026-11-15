@@ -1,520 +1,278 @@
-/*
- * This file is part of Applied Energistics 2.
- * Copyright (c) 2013 - 2015, AlgorithmX2, All rights reserved.
- *
- * Applied Energistics 2 is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * Applied Energistics 2 is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public License
- * along with Applied Energistics 2.  If not, see <http://www.gnu.org/licenses/lgpl>.
- */
-
 plugins {
-    id 'net.neoforged.moddev'
-    id 'maven-publish'
-    id 'signing'
-    id 'com.diffplug.spotless'
+	id 'net.fabricmc.fabric-loom' version "${loom_version}"
 }
 
-apply plugin: ProjectDefaultsPlugin
-apply plugin: CrowdinPlugin
-apply plugin: JmhPlugin
-
-base {
-    archivesName = "appliedenergistics2"
+repositories {
+	mavenCentral()
+	maven {
+		url = 'https://central.sonatype.com/repository/maven-snapshots/'
+		content {
+			includeModule('org.appliedenergistics', 'guideme')
+		}
+	}
+	// Сторонние API для компиляции интеграций AE2.
+	// ВАЖНО: maven.blamejared.com (JEI, Jade) и maven.shedaniel.me (REI) с этой машины
+	// не отвечают (таймаут TLS), поэтому берём те же моды с Modrinth, где они лежат
+	// как обычные файлы. MC 26.x не обфусцирован, поэтому production-джар мода
+	// годится в compileClasspath напрямую: в нём имена MC-классов уже настоящие
+	// (проверено: в JEI 0 ссылок на intermediary class_XXXX).
+	maven {
+		name = 'Modrinth'
+		url = 'https://api.modrinth.com/maven'
+		content {
+			includeGroup('maven.modrinth')
+		}
+	}
 }
 
-neoForge.enable {
-    version = project.neoforge_version
-    // Disable recompilation if the "CI" environment variable is set to true. It is automatically set by GitHub Actions.
-    disableRecompilation = System.getenv("CI") == "true"
+// ВАЖНО: splitEnvironmentSourceSets НЕ включаем.
+// AE2 держит весь клиентский код в main (appeng.client.*), а не в отдельном client-сорсете,
+// и спокойно использует com.mojang.blaze3d / gui-классы из main. Разделение окружений
+// на Fabric выкинуло бы из main весь client-only API MC.
+loom {
+	mods {
+		"appliedenergistics2" {
+			sourceSet sourceSets.main
+		}
+	}
+	// AT из NeoForge-сборки сконвертирован в accesswidener (31 запись + 6 для шима)
+	accessWidenerPath = file("src/main/resources/ae2.accesswidener")
 }
 
 sourceSets {
-    main {
-        // TODO 1.21.11
-        java {
-            exclude 'appeng/integration/modules/rei/**'
-            exclude 'appeng/integration/modules/theoneprobe/**'
-        }
-        resources {
-            srcDir 'src/generated/resources'
-        }
-    }
-    client {
-        compileClasspath += main.output
-        runtimeClasspath += main.output
+	main {
+		java {
+			// Исходники AE2 идут не напрямую, а через препроцессор (см. задачу preprocessSources).
+			// Он разворачивает маркеры //#if FABRIC / //#else / //#endif, чтобы в одном файле
+			// жили оба варианта: NeoForge-овский и наш. Для NeoForge-сборки маркеры — просто
+			// комментарии, поэтому файлы остаются валидными и там.
+			//
+			// ВАЖНО: именно присваивание, а не srcDir — иначе остаётся дефолтный src/main/java
+			// и дерево компилируется дважды.
+			srcDirs = [
+				layout.buildDirectory.dir('nfcompatSrc').get().asFile.path,
+				'src/main/flatbuffers/generated',
+				'compat/java'       // <- ШИМ: net.neoforged.* поверх Fabric (извлекаемый)
+			]
 
-        // TODO 1.21.11
-        java {
-            exclude 'appeng/client/integration/rei/**'
-            exclude 'appeng/client/integration/emi/**'
-        }
-    }
-    test {
-        compileClasspath += sourceSets.client.output
-        runtimeClasspath += sourceSets.client.output
-    }
-    buildtools
+			// WTHIT на Fabric не существует — интеграция вырезана целиком.
+			// Ссылок на её классы снаружи нет, только упоминания в javadoc.
+			exclude 'appeng/integration/modules/wthit/**'
+
+			// EMI: официальных сборок под 26.3 нет вообще (на Modrinth максимум 1.21.1).
+			// Единственная точка касания — два файла конвертеров, снаружи ссылок нет.
+			exclude 'appeng/client/api/integrations/emi/**'
+		}
+		resources {
+			srcDir 'src/generated/resources'
+			srcDir 'src/client/resources'
+			srcDir 'compat/resources'   // fabric.mod.json шима и прочие его ресурсы
+		}
+	}
 }
 
-configurations {
-    localRuntimeOnly
-    buildtoolsImplementation.extendsFrom(compileClasspath)
-    runtimeClasspath.extendsFrom localRuntimeOnly
-    clientRuntimeClasspath.extendsFrom localRuntimeOnly
-}
-
-import appengbuild.*
-import com.diffplug.gradle.spotless.JsonExtension
-
-dependencies {
-    // Dependencies only used for the guide export, but not shipped
-    localRuntimeOnly("org.bytedeco:ffmpeg-platform:${ffmpeg_version}")
-
-    implementation("org.appliedenergistics:guideme:${guideme_version}")
-    clientImplementation("org.appliedenergistics:guideme:${guideme_version}")
-
-    // compile against provided APIs
-    clientCompileOnly "dev.emi:emi-neoforge:${emi_version}:api"
-    clientCompileOnly "me.shedaniel:RoughlyEnoughItems-neoforge:${project.rei_version}"
-    compileOnly "me.shedaniel:RoughlyEnoughItems-neoforge:${project.rei_version}"
-    compileOnly "mcp.mobius.waila:wthit-api:neo-${project.wthit_version}"
-    compileOnly "curse.maven:jade-324717:${project.jade_file_id}"
-    clientCompileOnly "mezz.jei:jei-${project.jei_minecraft_version}-neoforge-api:${project.jei_version}"
-
-    switch (project.runtime_itemlist_mod) {
-        case "emi":
-            localRuntimeOnly "dev.emi:emi-neoforge:${emi_version}"
-            break
-        case "rei":
-            localRuntimeOnly "me.shedaniel:RoughlyEnoughItems-neoforge:${project.rei_version}"
-            break
-        case "jei":
-            localRuntimeOnly "mezz.jei:jei-${project.jei_minecraft_version}-neoforge:${project.jei_version}"
-            break
-    }
-
-    switch (project.runtime_tooltip_mod) {
-        case "wthit":
-            localRuntimeOnly "mcp.mobius.waila:wthit:neo-${project.wthit_version}"
-            break
-        case "jade":
-            localRuntimeOnly "curse.maven:jade-324717:${project.jade_file_id}"
-            break
-    }
-
-    // Only referenced from appeng.integration.modules.curios.CuriosEntrypoint, which is never loaded without Curios
-    compileOnly "top.theillusivec4.curios:curios-neoforge:${project.curios_version}:api"
-    if (project.runtime_curio == "true") {
-        localRuntimeOnly("top.theillusivec4.curios:curios-neoforge:${project.curios_version}")
-    }
-
-    // Athena
-    if (project.runtime_athena == "true") {
-        localRuntimeOnly("curse.maven:athena-841890:${project.athena_file_id}")
-    }
-
-    // Iris
-    if (project.runtime_iris == "true") {
-        localRuntimeOnly("maven.modrinth:iris:${project.iris_version}")
-        localRuntimeOnly("maven.modrinth:sodium:${project.sodium_version}")
-    }
-
-    // unit test dependencies
-    testImplementation(platform("org.junit:junit-bom:${project.junit_version}"))
-    testImplementation(platform("org.assertj:assertj-bom:${project.assertj_version}"))
-    testImplementation("org.junit.jupiter:junit-jupiter-api")
-    testImplementation("org.junit.jupiter:junit-jupiter-params")
-    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine")
-    testImplementation("org.junit.platform:junit-platform-launcher")
-    testImplementation("org.assertj:assertj-core")
-    testImplementation("com.google.guava:guava-testlib:21.0")
-    testImplementation("org.mockito:mockito-junit-jupiter:${project.mockito_version}")
-    testImplementation("net.neoforged:testframework:${project.neoforge_version}")
-}
-
-test {
-    useJUnitPlatform()
-
-    // Might not need this anymore...
-    systemProperty "guideme.ae2.guide.sources", file("guidebook").absolutePath
-}
-
-dependencies {
-    buildtoolsImplementation 'de.siegmar:fastcsv:2.1.0'
-    buildtoolsImplementation 'com.google.code.gson:gson:2.8.9'
-}
-
-neoForge {
-    validateAccessTransformers = true
-
-    addModdingDependenciesTo sourceSets.client
-
-    mods {
-        ae2 {
-            sourceSet sourceSets.main
-            sourceSet sourceSets.client
-        }
-    }
-
-    runs {
-        configureEach {
-            gameDirectory = project.file('run')
-            systemProperty('appeng.tests', 'true')
-            // systemProperty('mixin.debug.export', 'true')
-            logLevel = org.slf4j.event.Level.INFO
-            systemProperty('guideme.ae2.guide.sources', file('guidebook').absolutePath)
-            if (project.runtime_iris == "true") {
-                // Iris fails the additional validation that only runs in dev
-                systemProperty('neoforge.disableBlaze3DValidation', 'true')
-            }
-        }
-        client {
-            client()
-            systemProperty('appeng.tests', 'true')
-            sourceSet = sourceSets.client
-        }
-        gametestWorld {
-            client()
-            programArguments = [
-                    '--username', 'AE2Dev', '--quickPlaySingleplayer', 'GametestWorld'
-            ]
-            systemProperty('appeng.tests', 'true')
-            sourceSet = sourceSets.client
-        }
-        guide {
-            client()
-
-            systemProperty('guideme.showOnStartup', 'ae2:guide')
-            sourceSet = sourceSets.client
-        }
-        server {
-            server()
-        }
-        data {
-            clientData()
-            programArguments = [
-                    '--mod', 'ae2',
-                    '--all',
-                    '--output', file('src/generated/resources/').absolutePath,
-                    '--existing', file('src/main/resources').absolutePath
-            ]
-            sourceSet = sourceSets.client
-        }
-        guideexport {
-            client()
-            systemProperty('guideme.exportOnStartupAndExit', 'ae2:guide')
-            systemProperty('guideme.exportDestination.ae2.guide', file('build/guide').absolutePath)
-            systemProperty('guideme.exportModVersion.ae2.guide', project.version)
-            sourceSet = sourceSets.client
-        }
-        // Use to run the tests
-        gametest {
-            type = 'gameTestServer'
-            gameDirectory = project.file('build/gametest')
-        }
-    }
-
-    unitTest {
-        enable()
-        testedMod = mods.ae2
-    }
-}
-
-//////////////
-// Artifacts
-final generateModMetadata = tasks.register('generateModMetadata', ProcessResources) {
-    group = 'build'
-    from('src/main/neoforge.mods.toml') {
-        rename '(.*)', 'META-INF/$1'
-    }
-    into 'build/generated/modMetadata'
-
-    // Exposed project properties
-    Map<String, String> projectProperties = [
-            'version',
-            'minecraft_version',
-            'neoforge_version_range',
-            'jade_version_range',
-            'jei_version',
-            'guideme_version'
-    ].collectEntries { [it, project[it]] }
-
-    // Ensure the resources get re-evaluate when the version changes
-    inputs.properties projectProperties
-    expand projectProperties
-}
-sourceSets.main.resources.srcDir generateModMetadata
-neoForge.ideSyncTask generateModMetadata
-
-tasks.named('jar', Jar) {
-    from(sourceSets.client.output)
-    exclude '/.cache'
-    from('guidebook') {
-        into 'assets/ae2/ae2guide'
-    }
-}
-
-static void publicApiIncludePatterns(PatternFilterable spec) {
-    spec.exclude "**/*Internal.*"
-    spec.exclude "**/*Internal\$*.*"
-    spec.include "appeng/api/**"
-    spec.include "appeng/client/api/**"
-}
-
-tasks.named('javadoc', Javadoc) {
-    source = sourceSets.main.allJava
-    source sourceSets.client.allJava
-    classpath = sourceSets.client.compileClasspath + sourceSets.client.output
-
-    options.addStringOption('Xdoclint:none', '-quiet')
-    options.encoding = 'UTF-8'
-    options.charSet = 'UTF-8'
-    publicApiIncludePatterns(it)
-}
-
-tasks.named('sourcesJar', Jar) {
-    from sourceSets.client.allSource
-}
-
-tasks.register('apiJar', Jar) {
-    archiveClassifier = "api"
-    // api jar ist just a development aid and serves as both a binary and source jar simultaneously
-    from sourceSets.main.output
-    from sourceSets.main.allJava
-    from sourceSets.client.output
-    from sourceSets.client.allJava
-    publicApiIncludePatterns(it)
-}
-
-//////////////////
-// Maven publish
-publishing {
-    publications {
-        maven(MavenPublication) {
-            artifactId = "appliedenergistics2"
-            version = project.version
-            pom {
-                name = "Applied Energistics 2"
-                description = "A Minecraft mod about Matter, Energy and using them to conquer the world..."
-                url = "https://appliedenergistics.org"
-                scm {
-                    connection = "scm:git:git://github.com/AppliedEnergistics/Applied-Energistics-2.git"
-                    developerConnection = "scm:git:ssh://github.com:AppliedEnergistics/Applied-Energistics-2.git"
-                    url = "https://github.com/AppliedEnergistics/Applied-Energistics-2/tree/main"
-                }
-                licenses {
-                    license {
-                        name = "LGPLv3, MIT, CC BY-NC-SA 3.0"
-                        url = "https://github.com/AppliedEnergistics/Applied-Energistics-2?tab=readme-ov-file#license"
-                    }
-                }
-                developers {
-                    developer {
-                        name = "Technici4n"
-                        email = "team@appliedenergistics.org"
-                        organization = "Applied Energistics"
-                        organizationUrl = "https://github.com/AppliedEnergistics/"
-                    }
-                    developer {
-                        name = "shartte"
-                        email = "team@appliedenergistics.org"
-                        organization = "Applied Energistics"
-                        organizationUrl = "https://github.com/AppliedEnergistics/"
-                    }
-                }
-            }
-
-            from(components.java)
-            artifact apiJar
-        }
-    }
-    repositories {
-        maven {
-            name = "Local"
-            url = file("build/repo").toURI()
-        }
-    }
-}
-
-/////////////
-// Spotless
-spotless {
-
-    java {
-        target 'src/*/java/appeng/**/*.java'
-
-        endWithNewline()
-        indentWithSpaces()
-        removeUnusedImports()
-        toggleOffOn()
-        eclipse().configFile 'codeformat/codeformat.xml'
-        importOrderFile 'codeformat/ae2.importorder'
-
-        // courtesy of diffplug/spotless#240
-        // https://github.com/diffplug/spotless/issues/240#issuecomment-385206606
-        custom 'noWildcardImports', {
-            if (it.contains('*;\n')) {
-                throw new Error('No wildcard imports allowed')
-            }
-
-            it
-        }
-        bumpThisNumberIfACustomStepChanges(1)
-    }
-
-   json {
-        target 'src/*/resources/**/*.json'
-        targetExclude 'src/generated/resources/**'
-        var biomeConfig = it.new JsonExtension.BiomeJson(null)
-        try {
-            biomeConfig.downloadDir(new File(rootDir, ".gradle/biome").absolutePath)
-        } catch (Exception ignored) {
-        }
-        addStep(biomeConfig.createStep())
-        indentWithSpaces(2)
-        endWithNewline()
-    }
-}
-
-//////////////// Add static site export
-tasks.named('runGuideexport').configure {
-    outputs.dir('build/guide')
-}
-
-// Generates the guide website from the guide export, i.e. ./gradlew runGuideexport renderGuideWebsite
-// Use -PguideWebsiteArgs to pass additional arguments, i.e. "--site-url https://guide.appliedenergistics.org --base-path /1.21.1/"
-// Use -PguideWebsiteData and -PguideWebsiteOutput to render a guide export from elsewhere, i.e. of an older release
-// Use -PguideWebsiteVersions=<folder> instead to render a website with all guide versions, where the folder contains
-// the export of each version in a sub-folder (as published at https://guide.appliedenergistics.org)
-def guideWebsiteVersions = findProperty('guideWebsiteVersions')?.with { file(it) }
-def guideWebsiteData = guideWebsiteVersions ?: file(findProperty('guideWebsiteData') ?: 'build/guide')
-def guideWebsiteOutput = file(findProperty('guideWebsiteOutput') ?: 'build/website')
-tasks.register('renderGuideWebsite', JavaExec) {
-    group = 'mod development'
-    description = 'Generates the guide website from a guide export (defaults to build/guide).'
-    mustRunAfter 'runGuideexport'
-    inputs.dir(guideWebsiteData)
-    inputs.dir('src/client/web')
-    outputs.dir(guideWebsiteOutput)
-    classpath.from(sourceSets.client.runtimeClasspath)
-    mainClass = 'guideme.web.WebSiteGenerator'
-    args guideWebsiteVersions ? '--versions' : '--data', guideWebsiteData.absolutePath,
-            '--output', guideWebsiteOutput.absolutePath,
-            '--title', 'Applied Energistics 2',
-            '--logo', file('src/client/web/logo.png').absolutePath,
-            '--favicon', file('src/client/web/favicon.png').absolutePath,
-            '--stylesheet', file('src/client/web/guide.css').absolutePath,
-            '--page-subdirectories',
-            '--clean'
-    def extraArgs = findProperty('guideWebsiteArgs')?.toString()?.trim()
-    if (extraArgs) {
-        args extraArgs.split(/\s+/)
-    }
-}
-
-// Serves the generated guide website on a random local port
-tasks.register('serveGuideWebsite', JavaExec) {
-    group = 'mod development'
-    description = 'Serves the guide website generated by renderGuideWebsite locally.'
-    mustRunAfter 'renderGuideWebsite'
-    classpath.from(sourceSets.client.runtimeClasspath)
-    mainClass = 'guideme.web.WebSiteServer'
-    args guideWebsiteOutput.absolutePath
-}
-
-////////////////
-check.dependsOn tasks.register('validateResources', JavaExec) {
-    group = "verification"
-    classpath = sourceSets.buildtools.runtimeClasspath
-    mainClass = 'ValidateResourceIds'
-    workingDir "."
-    args "guidebook"
-    javaLauncher.set(javaToolchains.launcherFor(java.toolchain))
-}
-
-signing {
-    String signingKey = findProperty("signingKey")
-    String signingPassword = findProperty("signingPassword")
-    if (signingKey && signingPassword) {
-        useInMemoryPgpKeys(signingKey, signingPassword)
-        sign publishing.publications.maven
-    }
-}
-
-/////////////
-// JMH benchmarks (see JmhPlugin)
-// The benchmarks (src/jmh) run in forked JVMs inside the game, and are loaded by FML as part of the ae2 mod, together
-// with JMH itself. The JMH host JVM runs outside the game. It passes its JVM arguments on to the forked JVMs, including
-// ForkAgent (src/jmhForkAgent), which starts the game there before running the benchmarks.
+// ---------------------------------------------------------------------------
+// Сорсет shimTest: тесты шима и core-механик, которые запускаются СЕЙЧАС.
+//
+// Зачем отдельный сорсет: main красный (сотни ошибок в ещё не отрефакторенных
+// исходниках AE2), а стандартный src/test/java зависит от main.output через
+// testCompileClasspath -> compileJava. То есть обычные тесты не стартуют вообще.
+// shimTest компилирует ТОЛЬКО шим (compat/java) и свои тесты: compileClasspath
+// взят у main (MC 26.3, fabric-loader, fabric-api, nightconfig, jspecify,
+// jetbrains-annotations; mixin приезжает транзитивно с loader'ом), но main.output
+// в него сознательно не входит. Задача shimTest от compileJava не зависит.
+// ---------------------------------------------------------------------------
 sourceSets {
-    jmh {
-        compileClasspath += client.output
-        runtimeClasspath += client.output
-    }
-    jmhForkAgent
+	shimTest {
+		java.srcDirs = ['compat/java', 'src/shimTest/java']
+		// Ресурсы шима для тестов не нужны (fabric.mod.json, mixins.json и т.п.)
+		resources.srcDirs = []
+		compileClasspath = sourceSets.main.compileClasspath + configurations.shimTestCompileClasspath
+		runtimeClasspath = output + compileClasspath + configurations.shimTestRuntimeClasspath
+	}
 }
 
-configurations {
-    // JMH and its dependencies, which have to be loaded by the game class loader
-    jmhGameLibraries
+// ---------------------------------------------------------------------------
+// Препроцессор: //#if FABRIC / //#if NEOFORGE / //#else / //#endif
+//
+// Java препроцессора не имеет, а сигнатуры ванильных конструкторов NeoForge меняет,
+// поэтому часть мест физически не собрать одним и тем же кодом. Маркеры — комментарии,
+// так что файл остаётся валидным и для NeoForge; исключённые строки заменяются пустыми,
+// чтобы номера строк не съезжали.
+//
+// Поддерживается вложенность и отрицание: //#if !FABRIC
+// ---------------------------------------------------------------------------
+def preprocessSourceDirs = [file('src/main/java'), file('src/client/java')]
+
+tasks.register('preprocessSources') {
+	def outDir = layout.buildDirectory.dir('nfcompatSrc')
+	inputs.files(preprocessSourceDirs)
+	inputs.property('flavor', 'FABRIC')
+	outputs.dir(outDir)
+
+	doLast {
+		def dest = outDir.get().asFile
+		dest.deleteDir()
+		dest.mkdirs()
+
+		int total = 0
+		int marked = 0
+
+		preprocessSourceDirs.each { dir ->
+			if (!dir.exists()) {
+				return
+			}
+			fileTree(dir).matching { include '**/*.java' }.each { src ->
+				def rel = dir.toPath().relativize(src.toPath()).toString()
+				def dst = new File(dest, rel)
+				dst.parentFile.mkdirs()
+
+				def lines = src.getText('UTF-8').split('\n', -1)
+				def sb = new StringBuilder()
+				// кадр: [активность снаружи, условие кадра]
+				def frames = new ArrayDeque<List>()
+				boolean active = true
+				boolean fileMarked = false
+
+				for (String line : lines) {
+					def t = line.trim()
+					if (t.startsWith('//#if ')) {
+						def cond = evaluateCondition(t.substring('//#if '.length()).trim())
+						frames.push([active, cond])
+						active = active && cond
+						fileMarked = true
+						sb.append('\n')
+					} else if (t.startsWith('//#else')) {
+						if (frames.isEmpty()) {
+							throw new GradleException("//#else без //#if: " + src)
+						}
+						def f = frames.pop()
+						def cond = !f[1]
+						frames.push([f[0], cond])
+						active = f[0] && cond
+						fileMarked = true
+						sb.append('\n')
+					} else if (t.startsWith('//#endif')) {
+						if (frames.isEmpty()) {
+							throw new GradleException("//#endif без //#if: " + src)
+						}
+						active = frames.pop()[0]
+						fileMarked = true
+						sb.append('\n')
+					} else {
+						sb.append(active ? line : '').append('\n')
+					}
+				}
+
+				if (!frames.isEmpty()) {
+					throw new GradleException("незакрытый //#if: " + src)
+				}
+
+				// у split(-1) последний элемент — хвост после финального \n
+				def text = sb.toString()
+				if (text.endsWith('\n')) {
+					text = text.substring(0, text.length() - 1)
+				}
+				dst.setText(text, 'UTF-8')
+
+				total++
+				if (fileMarked) {
+					marked++
+				}
+			}
+		}
+		logger.lifecycle("preprocess: файлов ${total}, с маркерами ${marked}")
+	}
+}
+
+static boolean evaluateCondition(String cond) {
+	switch (cond) {
+		case 'FABRIC':
+			return true
+		case 'NEOFORGE':
+			return false
+		case '!FABRIC':
+			return false
+		case '!NEOFORGE':
+			return true
+		default:
+			throw new GradleException("неизвестное условие препроцессора: " + cond)
+	}
+}
+
+tasks.named('compileJava') {
+	dependsOn 'preprocessSources'
 }
 
 dependencies {
-    // Provides a server for data-driven registries (EphemeralTestServerProvider)
-    jmhImplementation("net.neoforged:testframework:${project.neoforge_version}")
-    jmhImplementation(platform("org.junit:junit-bom:${project.junit_version}"))
-    jmhImplementation("org.junit.jupiter:junit-jupiter-api")
+	minecraft "com.mojang:minecraft:${project.minecraft_version}"
+	// MC 26.x поставляется необфусцированным — mappings не задаются вообще
+	implementation "net.fabricmc:fabric-loader:${project.loader_version}"
+	implementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_api_version}"
 
-    jmhGameLibraries("org.openjdk.jmh:jmh-core:${project.jmh_version}")
+	implementation("org.appliedenergistics:guideme:${project.guideme_version}")
+
+	implementation "org.yaml:snakeyaml:${project.snakeyaml_version}"
+	implementation "io.methvin:directory-watcher:${project.directory_watcher_version}"
+	implementation "com.google.flatbuffers:flatbuffers-java:${project.flatbuffers_version}"
+
+	implementation "org.jspecify:jspecify:1.0.0"
+	implementation "org.jetbrains:annotations:26.0.2"
+
+	// --- Сторонние API только для компиляции ---
+	// nightconfig: движок конфигов, на нём построен вендоренный ModConfigSpec.
+	implementation "com.electronwill.night-config:core:3.6.7"
+
+	// JEI 31.17.0.113 (fabric, 26.3)
+	compileOnly "maven.modrinth:jei:zX75GFgt"
+
+	// Jade 26.3.5+fabric
+	compileOnly "maven.modrinth:jade:71CTWqdE"
+
+	// REI 26.3.824+fabric
+	compileOnly "maven.modrinth:rei:rKsAE6bX"
+
+	// --- тесты ---
+	// JUnit 5 + AssertJ: тесты шима и core-механик не требуют запуска игры
+	testImplementation "org.junit.jupiter:junit-jupiter:5.11.4"
+	testImplementation "org.assertj:assertj-core:3.26.3"
+	testRuntimeOnly "org.junit.platform:junit-platform-launcher:1.11.4"
+
+	// то же для сорсета shimTest (см. блок sourceSets выше)
+	shimTestImplementation "org.junit.jupiter:junit-jupiter:5.11.4"
+	shimTestImplementation "org.assertj:assertj-core:3.26.3"
+	shimTestRuntimeOnly "org.junit.platform:junit-platform-launcher:1.11.4"
 }
 
-neoForge {
-    addModdingDependenciesTo sourceSets.jmh
-    addModdingDependenciesTo sourceSets.jmhForkAgent
+tasks.register('shimTest', Test) {
+	group = 'verification'
+	description = 'Тесты шима nfcompat: без бутстрапа игры и без сборки AE2.'
+	testClassesDirs = sourceSets.shimTest.output.classesDirs
+	classpath = sourceSets.shimTest.runtimeClasspath
+	useJUnitPlatform()
+	testLogging {
+		events 'passed', 'failed', 'skipped'
+		exceptionFormat = 'full'
+	}
 }
 
-def jmhForkAgentJar = tasks.register('jmhForkAgentJar', Jar) {
-    archiveClassifier = 'jmh-fork-agent'
-    destinationDirectory = layout.buildDirectory.dir('jmh')
-    from sourceSets.jmhForkAgent.output
-    manifest {
-        attributes 'Premain-Class': 'appeng.benchmark.agent.ForkAgent'
-    }
+tasks.named('test') {
+	useJUnitPlatform()
+	testLogging {
+		events 'passed', 'failed', 'skipped'
+		exceptionFormat = 'full'
+	}
 }
 
-tasks.named('jmh', RunJmh) {
-    javaLauncher.set(javaToolchains.launcherFor(java.toolchain))
+tasks.withType(JavaCompile).configureEach {
+	it.options.release = 25
+	it.options.encoding = 'UTF-8'
+	it.options.compilerArgs << "-Xmaxerrs" << "200000"
+	it.options.compilerArgs << "-Xmaxwarns" << "1000"
+	it.options.deprecation = false
+}
 
-    // Pass additional JMH arguments with -Pjmh.args, i.e. -Pjmh.args="fullCell -prof gc"
-
-    // JMH copies the JVM arguments of this JVM to the forked JVMs, which start FML with the same launch configuration
-    // as the unit tests
-    def prepareTestFiles = tasks.named('prepareNeoForgeTestFiles')
-    def vmArgsFile = prepareTestFiles.flatMap { it.vmArgsFile }
-    def programArgsFile = prepareTestFiles.flatMap { it.programArgsFile }
-    def forkAgentJar = jmhForkAgentJar.flatMap { it.archiveFile }
-    // JMH loads the benchmark classes through its own class loader, so it has to be loaded by the game class loader
-    // as well. The game class loader delegates to the application class loader only for classes it doesn't own.
-    def modFolders = files(sourceSets.main.output, sourceSets.client.output, sourceSets.jmh.output,
-            configurations.jmhGameLibraries)
-    inputs.file(vmArgsFile)
-    inputs.file(programArgsFile)
-    inputs.file(forkAgentJar)
-    jvmArgumentProviders.add({
-        [
-                "@${vmArgsFile.get().asFile.absolutePath}",
-                "-Dfml.junit.argsfile=${programArgsFile.get().asFile.absolutePath}",
-                "-Dfml.modFolders=" + modFolders.files.collect { "ae2%%${it.absolutePath}" }.join(File.pathSeparator),
-                "-javaagent:${forkAgentJar.get().asFile.absolutePath}",
-        ]*.toString()
-    } as CommandLineArgumentProvider)
+java {
+	sourceCompatibility = JavaVersion.VERSION_25
+	targetCompatibility = JavaVersion.VERSION_25
 }

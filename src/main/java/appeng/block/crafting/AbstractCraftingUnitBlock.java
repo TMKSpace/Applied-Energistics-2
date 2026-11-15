@@ -42,6 +42,9 @@ import net.minecraft.world.level.block.state.StateDefinition.Builder;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.block.state.properties.BooleanProperty;
 import net.minecraft.world.phys.BlockHitResult;
+//#if FABRIC
+import nfcompat.model.ModelDataHooks;
+//#endif
 
 import appeng.block.AEBaseEntityBlock;
 import appeng.blockentity.crafting.CraftingBlockEntity;
@@ -79,7 +82,11 @@ public abstract class AbstractCraftingUnitBlock<T extends CraftingBlockEntity> e
             BlockPos pos, Direction direction, BlockPos neighborPos, BlockState neighborState, RandomSource random) {
         BlockEntity te = level.getBlockEntity(pos);
         if (te != null) {
+//#if FABRIC
+            ModelDataHooks.requestUpdate(te);
+//#else
             te.requestModelDataUpdate();
+//#endif
         }
         var cp = this.getBlockEntity(level, pos);
         if (cp != null) {

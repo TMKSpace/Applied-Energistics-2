@@ -18,6 +18,10 @@
 
 package appeng.server.services.compass;
 
+//#if FABRIC
+import net.minecraft.util.datafix.DataFixTypes;
+//#endif
+
 import java.util.BitSet;
 import java.util.HashMap;
 import java.util.List;
@@ -56,11 +60,20 @@ final class CompassRegion extends SavedData {
 
     private static final BiFunction<Integer, Integer, SavedDataType<CompassRegion>> TYPE = Util
             .memoize((regionX, regionZ) -> new SavedDataType<>(
+//#if FABRIC
+                    AppEng.makeId("compass_" + regionX + "_" + regionZ),
+                    () -> new CompassRegion(regionX, regionZ),
+                    RecordCodecBuilder.create(builder -> builder.group(
+                            SECTION_CODEC.listOf().fieldOf("sections").forGetter(CompassRegion::sections))
+                            .apply(builder, sections -> new CompassRegion(regionX, regionZ, sections))),
+                    DataFixTypes.LEVEL));
+//#else
                     AppEng.makeId("compass_" + regionX + "_" + regionZ),
                     () -> new CompassRegion(regionX, regionZ),
                     RecordCodecBuilder.create(builder -> builder.group(
                             SECTION_CODEC.listOf().fieldOf("sections").forGetter(CompassRegion::sections))
                             .apply(builder, sections -> new CompassRegion(regionX, regionZ, sections)))));
+//#endif
 
     /**
      * The number of chunks that get saved in a region on each axis.
