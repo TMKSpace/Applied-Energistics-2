@@ -144,7 +144,11 @@ public class StorageBusPart extends UpgradeablePart
         super.addToWorld();
         if (getLevel() instanceof ServerLevel serverLevel) {
             var targetPos = getBlockEntity().getBlockPos().relative(getSide());
-            serverLevel.registerCapabilityListener(targetPos, this.capabilityListener);
+            //#if FABRIC
+nfcompat.capabilities.CapabilityInvalidation.registerListener(serverLevel, targetPos, this.capabilityListener);
+//#else
+serverLevel.registerCapabilityListener(targetPos, this.capabilityListener);
+//#endif
         }
     }
 

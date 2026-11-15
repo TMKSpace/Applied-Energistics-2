@@ -65,8 +65,16 @@ public class TinyTNTPrimedRenderer extends EntityRenderer<TinyTNTPrimedEntity, T
         poseStack.translate(0, 0.5F, 0);
         float f2;
 
-        if (renderState.fuseRemainingInTicks - renderState.partialTick + 1.0F < 10.0F) {
-            f2 = 1.0F - (renderState.fuseRemainingInTicks - renderState.partialTick + 1.0F) / 10.0F;
+        //#if FABRIC
+if (renderState.fuseRemainingInTicks + 1.0F < 10.0F) { // nfcompat: partialTick в render state — патч NeoForge
+//#else
+if (renderState.fuseRemainingInTicks - renderState.partialTick + 1.0F < 10.0F) {
+//#endif
+            //#if FABRIC
+f2 = 1.0F - (renderState.fuseRemainingInTicks + 1.0F) / 10.0F; // nfcompat: partialTick — патч NeoForge
+//#else
+f2 = 1.0F - (renderState.fuseRemainingInTicks - renderState.partialTick + 1.0F) / 10.0F;
+//#endif
 
             if (f2 < 0.0F) {
                 f2 = 0.0F;

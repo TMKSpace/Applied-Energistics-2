@@ -25,6 +25,16 @@ public class RegisterEvent extends Event implements IModBusEvent {
         return registryKey;
     }
 
+    /**
+     * NeoForge'вская форма регистрации элемента датапак-реестра вместе с его кодеком.
+     * У нас датапак-реестры не наполняются этим путём, поэтому вызов принимается
+     * и ничего не делает — соответствующие записи должны приходить из данных.
+     */
+    public void register(ResourceKey<? extends Registry<?>> registryKey, net.minecraft.resources.Identifier id,
+            java.util.function.Supplier<?> codec) {
+        // no-op
+    }
+
     @SuppressWarnings({ "unchecked", "rawtypes" })
     public <T> Registry<T> getRegistry(ResourceKey<? extends Registry<T>> key) {
         // BuiltInRegistries.REGISTRY — Registry<? extends Registry<?>>, поэтому без сырого каста

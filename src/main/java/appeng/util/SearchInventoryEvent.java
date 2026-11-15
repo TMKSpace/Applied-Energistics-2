@@ -32,7 +32,11 @@ public class SearchInventoryEvent extends PlayerEvent {
             event.getStacks().addAll(event.getEntity().getInventory().getNonEquipmentItems());
         });
         NeoForge.EVENT_BUS.addListener((SearchInventoryEvent event) -> {
-            var cap = event.getEntity().getCapability(CuriosIntegration.ITEM_HANDLER);
+    //#if FABRIC
+        var cap = CuriosIntegration.ITEM_HANDLER.getCapability(event.getEntity(), null);
+        //#else
+        var cap = event.getEntity().getCapability(CuriosIntegration.ITEM_HANDLER);
+        //#endif
             if (cap == null)
                 return;
             for (int i = 0; i < cap.size(); i++) {

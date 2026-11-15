@@ -22,6 +22,8 @@ public final class SimpleEventBus implements IEventBus {
     }
 
     private final Map<Class<?>, List<Entry<?>>> listeners = new ConcurrentHashMap<>();
+    /** Слушатели, добавленные через {@link #register(Object)}: нужно для unregister. */
+    private final Map<Object, List<Entry<?>>> registered = new ConcurrentHashMap<>();
 
     @Override
     public <T extends Event> void addListener(EventListener<T> listener) {
@@ -85,6 +87,22 @@ public final class SimpleEventBus implements IEventBus {
         List<Entry<?>> list = listeners.computeIfAbsent(eventType, k -> new CopyOnWriteArrayList<>());
         list.add(new Entry(listener, priority, list.size()));
         list.sort(Comparator.comparingInt((Entry<?> e) -> priorityRank(e.priority())).thenComparingInt(Entry::order));
+    }
+
+    /**
+     * Отписывает всё, что было подписано через {@link #register(Object)} для этого объекта.
+     * В NeoForge `unregister` снимает слушателей, привязанных к экземпляру; нашей
+     * регистрации по методу этого достаточно.
+     */
+    @Override
+    public void unregister(Object target) {
+        var entries = registered.remove(target);
+        if (entries == null) {
+            return;
+        }
+        for (var list : listeners.values()) {
+            list.removeAll(entries);
+        }
     }
 
     @Override

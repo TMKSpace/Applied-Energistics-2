@@ -19,7 +19,11 @@ public record CuriosHotkeyAction(Predicate<ItemStack> locatable,
 
     @Override
     public boolean run(Player player) {
+//#if FABRIC
+        var cap = CuriosIntegration.ITEM_HANDLER.getCapability(player, null);
+        //#else
         var cap = player.getCapability(CuriosIntegration.ITEM_HANDLER);
+        //#endif
         if (cap == null)
             return false;
         for (int i = 0; i < cap.size(); i++) {

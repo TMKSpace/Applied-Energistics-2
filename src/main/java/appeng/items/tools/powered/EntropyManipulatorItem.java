@@ -168,7 +168,11 @@ public class EntropyManipulatorItem extends AEBasePoweredItem implements IBlockT
         if (tryBoth || !InteractionUtil.isInAlternateUseMode(p)) {
             if (block instanceof TntBlock) {
                 level.removeBlock(pos, false);
-                block.onCaughtFire(level.getBlockState(pos), level, pos, side, p, item);
+                //#if FABRIC
+// nfcompat: Block#onCaughtFire — патч NeoForge, ванильного хука нет
+//#else
+block.onCaughtFire(level.getBlockState(pos), level, pos, side, p, item);
+//#endif
                 return true;
             }
 

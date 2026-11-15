@@ -207,7 +207,15 @@ public class FacadeBuilder {
 
             var random = new SingleThreadedRandomSource(blockState.getSeed(pos));
             var parts = new ArrayList<BlockStateModelPart>();
-            model.collectParts(level, pos, blockState, random, parts);
+            //#if FABRIC
+if (model instanceof net.neoforged.neoforge.client.model.DynamicBlockStateModel dynamic) {
+            dynamic.collectParts(level, pos, blockState, random, parts);
+        } else {
+            model.collectParts(random, parts);
+        }
+//#else
+model.collectParts(level, pos, blockState, random, parts);
+//#endif
 
             // Transform each part emitted by the block model
             for (var part : parts) {
@@ -247,7 +255,11 @@ public class FacadeBuilder {
                             // side the facade is attached to, but clear it for anything that faces inwards
                             quad.setDirection(originalQuad.direction());
                             quad.setShadeOverride(originalQuad.materialInfo().shadeDirectionOverride());
-                            quad.setAmbientOcclusion(originalQuad.materialInfo().ambientOcclusion());
+                            //#if FABRIC
+quad.setAmbientOcclusion(false); // nfcompat: AO-флага в ванильном MaterialInfo нет
+//#else
+quad.setAmbientOcclusion(originalQuad.materialInfo().ambientOcclusion());
+//#endif
                             interpolator.setInputQuad(quad);
 
                             QuadClamper clamper = new QuadClamper(box);
@@ -309,7 +321,15 @@ public class FacadeBuilder {
         @Override
         //#endif
         public TriState ambientOcclusion() {
-            return originalPart.ambientOcclusion();
+            //#if FABRIC
+//#if FABRIC
+return net.minecraft.util.TriState.FALSE; // nfcompat: AO-флага в ванильном BlockStateModelPart нет
+//#else
+return false; // nfcompat: AO-флага в ванильном BlockStateModelPart нет
+//#endif
+//#else
+return originalPart.ambientOcclusion();
+//#endif
         }
 
         @Override

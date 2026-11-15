@@ -41,6 +41,17 @@ public final class ModList {
         return Optional.ofNullable(byId.get(modId));
     }
 
+    /**
+     * NeoForge собирает при сканировании модов их scan data (аннотации, цели и т.п.),
+     * и AE2 этим ищет классы, помеченные её аннотациями (`@TestPlotClass`).
+     * На Fabric такого сканирования нет, поэтому список пуст: тест-плоты просто
+     * не будут найдены автоматически. Появится, если понадобится — через
+     * `ClassGraph`/индекс Fabric, либо явным списком.
+     */
+    public List<net.neoforged.neoforgespi.language.ModFileScanData> getAllScanData() {
+        return List.of();
+    }
+
     public List<ModContainer> getMods() {
         return new ArrayList<>(byId.values());
     }

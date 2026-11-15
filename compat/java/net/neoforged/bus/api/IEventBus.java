@@ -18,4 +18,7 @@ public interface IEventBus {
     void register(Object target);
 
     <T extends Event> T post(T event);
+
+    /** Снимает слушателей, подписанных через {@link #register(Object)}. */
+    void unregister(Object target);
 }

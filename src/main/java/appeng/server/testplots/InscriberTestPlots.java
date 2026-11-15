@@ -29,7 +29,11 @@ public final class InscriberTestPlots {
                 .template(patch -> patch.set(AEComponents.NAME_PRESS_NAME, Component.literal("HELLO WORLD")));
         ;
         var ironIngots = new ItemStackTemplate(Items.IRON_INGOT, 2);
+        //#if FABRIC
+        var namedIngots = new ItemStackTemplate(Items.IRON_INGOT.builtInRegistryHolder(), 2, DataComponentPatch.builder()
+        //#else
         var namedIngots = new ItemStackTemplate(Items.IRON_INGOT, 2, DataComponentPatch.builder()
+        //#endif
                 .set(DataComponents.CUSTOM_NAME, Component.literal("HELLO WORLD"))
                 .build());
 
@@ -93,19 +97,35 @@ public final class InscriberTestPlots {
                         var inscriber = plotTestHelper.getBlockEntity(BlockPos.ZERO, InscriberBlockEntity.class);
                         var inv = inscriber.getInternalInventory();
                         plotTestHelper.check(
+                                //#if FABRIC
+                                ItemStack.isSameItemSameComponents(inv.getStackInSlot(0), expectedTopSlot.create()),
+                                //#else
                                 ItemStack.isSameItemSameComponents(inv.getStackInSlot(0), expectedTopSlot),
+                                //#endif
                                 "Top slot is not as expected",
                                 BlockPos.ZERO);
                         plotTestHelper.check(
+                                //#if FABRIC
+                                ItemStack.isSameItemSameComponents(inv.getStackInSlot(1), expectedBottomSlot.create()),
+                                //#else
                                 ItemStack.isSameItemSameComponents(inv.getStackInSlot(1), expectedBottomSlot),
+                                //#endif
                                 "Bottom slot is not as expected",
                                 BlockPos.ZERO);
                         plotTestHelper.check(
+                                //#if FABRIC
+                                ItemStack.isSameItemSameComponents(inv.getStackInSlot(2), expectedMiddleSlot.create()),
+                                //#else
                                 ItemStack.isSameItemSameComponents(inv.getStackInSlot(2), expectedMiddleSlot),
+                                //#endif
                                 "Middle slot is not as expected",
                                 BlockPos.ZERO);
                         plotTestHelper.check(
+                                //#if FABRIC
+                                ItemStack.isSameItemSameComponents(inv.getStackInSlot(3), expectedResult.create()),
+                                //#else
                                 ItemStack.isSameItemSameComponents(inv.getStackInSlot(3), expectedResult),
+                                //#endif
                                 "Result slot is not as expected",
                                 BlockPos.ZERO);
                     })

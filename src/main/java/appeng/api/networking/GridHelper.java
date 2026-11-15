@@ -130,7 +130,11 @@ public final class GridHelper {
      */
     @Nullable
     public static IInWorldGridNodeHost getNodeHost(Level level, BlockPos pos) {
+//#if FABRIC
+        return AECapabilities.IN_WORLD_GRID_NODE_HOST.getCapability(level, pos, null, null, null);
+        //#else
         return level.getCapability(AECapabilities.IN_WORLD_GRID_NODE_HOST, pos, null);
+        //#endif
     }
 
     /**

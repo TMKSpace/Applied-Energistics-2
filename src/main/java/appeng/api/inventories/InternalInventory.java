@@ -49,7 +49,11 @@ public interface InternalInventory extends Iterable<ItemStack>, ItemTransfer {
 
     @Nullable
     static ItemTransfer wrapExternal(Level level, BlockPos pos, Direction side) {
+//#if FABRIC
+        var handler = Capabilities.Item.BLOCK.getCapability(level, pos, null, null, side);
+        //#else
         var handler = level.getCapability(Capabilities.Item.BLOCK, pos, side);
+        //#endif
         if (handler != null) {
             return new PlatformInventoryWrapper(handler);
         }

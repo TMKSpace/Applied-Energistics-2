@@ -100,7 +100,11 @@ public class MatterCannonAmmo extends MechanicsRecipe<RecipeInput> {
             float weight) {
         var recipe = new MatterCannonAmmo(Ingredient.of(items.getOrThrow(tag)), weight);
         var condition = new NotCondition(new TagEmptyCondition<>(tag));
+        //#if FABRIC
+        consumer.accept(ResourceKey.create(Registries.RECIPE, id), recipe, null);
+        //#else
         consumer.accept(ResourceKey.create(Registries.RECIPE, id), recipe, null, condition);
+        //#endif
     }
 
     @Override

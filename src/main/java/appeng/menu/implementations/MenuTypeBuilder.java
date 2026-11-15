@@ -167,6 +167,11 @@ public final class MenuTypeBuilder<M extends AEBaseMenu, I> {
             }
         }
 
+//#if FABRIC
+        // nfcompat: ванильный openMenu не умеет передавать доп. данные, поэтому меню
+        // откроется без locator/initialData. TODO: ExtendedScreenHandlerType.
+        player.openMenu(new AppEngMenuProvider());
+//#else
         player.openMenu(new AppEngMenuProvider(), buffer -> {
             MenuLocators.writeToPacket(buffer, locator);
             buffer.writeBoolean(fromSubMenu);
@@ -175,6 +180,7 @@ public final class MenuTypeBuilder<M extends AEBaseMenu, I> {
                 initialDataSerializer.serializeInitialData(accessInterface, buffer);
             }
         });
+//#endif
 
         return true;
     }

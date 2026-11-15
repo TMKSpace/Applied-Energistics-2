@@ -113,6 +113,10 @@ public class UpgradeCardItem extends AEBaseItem {
             }
         }
 
-        return super.onItemUseFirst(stack, context);
+        //#if FABRIC
+return net.minecraft.world.InteractionResult.PASS; // nfcompat: onItemUseFirst — метод NeoForge
+//#else
+return super.onItemUseFirst(stack, context);
+//#endif
     }
 }

@@ -86,7 +86,11 @@ public class CraftingUnitTransformRecipe extends MechanicsRecipe<RecipeInput> {
      * Search for the resulting upgraded block when upgrading a crafting unit with the given upgrade item.
      */
     public static Block getUpgradedBlock(ServerLevel level, ItemStack upgradeItem) {
-        for (var holder : level.recipeAccess().recipeMap().byType(AERecipeTypes.CRAFTING_UNIT_TRANSFORM)) {
+        //#if FABRIC
+for (var holder : nfcompat.recipes.RecipeMaps.of(level.recipeAccess()).byType(AERecipeTypes.CRAFTING_UNIT_TRANSFORM)) {
+//#else
+for (var holder : level.recipeAccess().recipeMap().byType(AERecipeTypes.CRAFTING_UNIT_TRANSFORM)) {
+//#endif
             if (upgradeItem.is(holder.value().getUpgradeItem())) {
                 return holder.value().upgradedBlock;
             }

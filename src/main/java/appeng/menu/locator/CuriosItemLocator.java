@@ -16,7 +16,11 @@ import appeng.integration.modules.curios.CuriosIntegration;
  */
 record CuriosItemLocator(int curioSlot, @Nullable BlockHitResult hitResult) implements ItemMenuHostLocator {
     public ItemStack locateItem(Player player) {
+//#if FABRIC
+        var cap = CuriosIntegration.ITEM_HANDLER.getCapability(player, null);
+        //#else
         var cap = player.getCapability(CuriosIntegration.ITEM_HANDLER);
+        //#endif
         if (cap == null || curioSlot >= cap.size()) {
             return ItemStack.EMPTY;
         }

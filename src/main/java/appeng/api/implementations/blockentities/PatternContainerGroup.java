@@ -84,11 +84,19 @@ public record PatternContainerGroup(
         }
 
         // Heuristic: If it doesn't allow item or fluid transfers, ignore it
+//#if FABRIC
+        var itemHandler = Capabilities.Item.BLOCK.getCapability(level, pos, target.getBlockState(), target, side);
+        //#else
         var itemHandler = level.getCapability(Capabilities.Item.BLOCK, pos, target.getBlockState(), target,
                 side);
+        //#endif
         if (itemHandler == null || itemHandler.size() <= 0) {
+//#if FABRIC
+            var fluidHandler = Capabilities.Fluid.BLOCK.getCapability(level, pos, target.getBlockState(), target, side);
+            //#else
             var fluidHandler = level.getCapability(Capabilities.Fluid.BLOCK, pos, target.getBlockState(), target,
                     side);
+            //#endif
             if (fluidHandler == null || fluidHandler.size() == 0) {
                 return null;
             }
@@ -115,9 +123,15 @@ public record PatternContainerGroup(
         } else {
             // Try to wrestle an item from the adjacent block entity
             var targetBlock = target.getBlockState().getBlock();
+//#if FABRIC
+            var targetItem = level instanceof ServerLevel ? targetBlock.getCloneItemStack(level, pos,
+                    target.getBlockState(), true)
+                    : new ItemStack(targetBlock);
+            //#else
             var targetItem = level instanceof ServerLevel serverLevel ? targetBlock.getCloneItemStack(level, pos,
                     target.getBlockState(), true, Platform.getFakePlayer(serverLevel, null))
                     : new ItemStack(targetBlock);
+            //#endif
             icon = AEItemKey.of(targetItem);
 
             if (target instanceof Nameable nameable && nameable.hasCustomName()) {

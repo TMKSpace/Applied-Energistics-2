@@ -27,7 +27,12 @@ import net.minecraft.resources.Identifier;
 /**
  * An unbaked model that has standard models as a dependency and produces a custom baked model as a result.
  */
+//#if FABRIC
+public interface BasicUnbakedModel extends UnbakedModel,
+        net.minecraft.client.resources.model.ResolvableModel {
+//#else
 public interface BasicUnbakedModel extends UnbakedModel {
+//#endif
     default Collection<Identifier> getDependencies() {
         return Collections.emptyList();
     }

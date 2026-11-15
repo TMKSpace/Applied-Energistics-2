@@ -39,7 +39,11 @@ public class CrankRenderer implements BlockEntityRenderer<CrankBlockEntity, Cran
 
     public CrankRenderer(BlockEntityRendererProvider.Context context) {
         var modelManager = Minecraft.getInstance().getModelManager();
-        handleModel = new SingleVariant(Objects.requireNonNull(modelManager.getStandaloneModel(HANDLE_MODEL)));
+        //#if FABRIC
+handleModel = new SingleVariant(nfcompat.client.StandaloneModels.get(modelManager, HANDLE_MODEL));
+//#else
+handleModel = new SingleVariant(Objects.requireNonNull(modelManager.getStandaloneModel(HANDLE_MODEL)));
+//#endif
     }
 
     @Override

@@ -217,7 +217,11 @@ public class PlotTestHelper extends GameTestHelper {
     }
 
     public <T, C> T getCapability(BlockPos ref, BlockCapability<T, C> cap, C context) {
+//#if FABRIC
+        return cap.getCapability(getLevel(), absolutePos(ref), null, null, context);
+        //#else
         return getLevel().getCapability(cap, absolutePos(ref), context);
+        //#endif
     }
 
     public void assertEquals(BlockPos ref, Object expected, Object actual) {

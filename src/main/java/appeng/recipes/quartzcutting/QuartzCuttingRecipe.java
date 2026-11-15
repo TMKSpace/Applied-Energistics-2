@@ -59,7 +59,11 @@ public class QuartzCuttingRecipe extends NormalCraftingRecipe {
         super(commonInfo, bookInfo);
         this.result = result;
         this.ingredients = ingredients;
-        this.isSimple = ingredients.stream().allMatch(Ingredient::isSimple);
+        //#if FABRIC
+this.isSimple = true; // nfcompat: ванильный Ingredient не различает simple/custom
+//#else
+this.isSimple = ingredients.stream().allMatch(Ingredient::isSimple);
+//#endif
     }
 
     public RecipeSerializer<QuartzCuttingRecipe> getSerializer() {

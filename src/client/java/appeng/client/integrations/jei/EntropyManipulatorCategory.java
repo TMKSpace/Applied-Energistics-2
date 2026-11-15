@@ -160,11 +160,12 @@ public class EntropyManipulatorCategory extends ViewBasedCategory<RecipeHolder<E
                 slot.addRichTooltipCallback((recipeSlotView, tooltip) -> {
                     tooltip.getLines().set(
                             0,
-                            //#if FABRIC
-                            Either.left(ItemModText.FLOWING_FLUID_NAME.text(fluid.getFluidType().getDescription(fluid))));
-                            //#else
+//#if FABRIC
+                            Either.left(ItemModText.FLOWING_FLUID_NAME.text(
+                                    net.neoforged.neoforge.fluids.FluidType.of(fluid).getDescription())));
+//#else
                             Either.left(ItemModText.FLOWING_FLUID_NAME.text(fluid.getFluidType().getDescription())));
-                            //#endif
+//#endif
                 });
             } else {
                 slot.add(fluid, fluidHelper.bucketVolume());
