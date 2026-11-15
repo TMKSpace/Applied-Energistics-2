@@ -71,7 +71,11 @@ public final class AERenderPipelines {
      * Pipelines used for {@link #AREA_OVERLAY_FACE} when improved transparency (OIT) is enabled.
      */
     public static final OitPipelineSet OIT_AREA_OVERLAY_FACE = OitPipelineSet
+            //#if FABRIC
+            .builder(AppEng.makeId("area_overlay_face").toString(),
+            //#else
             .builder(AppEng.makeId("area_overlay_face"),
+            //#endif
                     RenderPipeline.builder(RenderPipelines.OIT_DEBUG_FILLED_SNIPPET)
                             .withVertexBinding(0, DefaultVertexFormat.POSITION_COLOR_NORMAL))
             .build();
@@ -87,7 +91,11 @@ public final class AERenderPipelines {
      * additively, so they do not contribute to the transmittance.
      */
     public static final OitPipelineSet OIT_AREA_OVERLAY_LINE = OitPipelineSet
+            //#if FABRIC
+            .builder(AppEng.makeId("area_overlay_line").toString(), RenderPipeline.builder(RenderPipelines.OIT_LINES_SNIPPET)
+            //#else
             .builder(AppEng.makeId("area_overlay_line"), RenderPipeline.builder(RenderPipelines.OIT_LINES_SNIPPET)
+            //#endif
                     .withShaderDefine("OIT_ADDITIVE"))
             .build();
 
@@ -104,7 +112,11 @@ public final class AERenderPipelines {
      * other geometry.
      */
     public static final OitPipelineSet OIT_LINES_OCCLUDED = OitPipelineSet
+            //#if FABRIC
+            .builder(AppEng.makeId("lines_occluded").toString(),
+            //#else
             .builder(AppEng.makeId("lines_occluded"),
+            //#endif
                     RenderPipeline.builder(RenderPipelines.OIT_LINES_SNIPPET))
             .withDepthBoundsModifier(AERenderPipelines::invertDepthTest)
             .withTransmittanceModifier(AERenderPipelines::invertDepthTest)
@@ -133,7 +145,11 @@ public final class AERenderPipelines {
      * Pipelines used for {@link #LIGHTNING_FX} when improved transparency (OIT) is enabled.
      */
     public static final OitPipelineSet OIT_LIGHTNING_FX = OitPipelineSet
+            //#if FABRIC
+            .builder(AppEng.makeId("lightning_fx").toString(), RenderPipeline.builder(RenderPipelines.OIT_PARTICLE_SNIPPET)
+            //#else
             .builder(AppEng.makeId("lightning_fx"), RenderPipeline.builder(RenderPipelines.OIT_PARTICLE_SNIPPET)
+            //#endif
                     .withCull(false))
             .build();
 

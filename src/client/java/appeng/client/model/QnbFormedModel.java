@@ -43,6 +43,9 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 import net.neoforged.neoforge.client.model.DynamicBlockStateModel;
 import net.neoforged.neoforge.client.model.block.CustomUnbakedBlockStateModel;
+//#if FABRIC
+import nfcompat.model.ModelDataHooks;
+//#endif
 
 import appeng.block.qnb.QnbFormedState;
 import appeng.blockentity.qnb.QuantumBridgeBlockEntity;
@@ -110,7 +113,11 @@ public class QnbFormedModel implements DynamicBlockStateModel {
     @Override
     public void collectParts(BlockAndTintGetter level, BlockPos pos, BlockState state, RandomSource random,
             List<BlockStateModelPart> parts) {
+//#if FABRIC
+        var modelData = ModelDataHooks.get(level, pos);
+//#else
         var modelData = level.getModelData(pos);
+//#endif
         var formedState = modelData.get(QuantumBridgeBlockEntity.FORMED_STATE);
 
         if (formedState == null) {

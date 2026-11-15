@@ -16,6 +16,9 @@ import net.minecraft.client.renderer.item.CompositeModel;
 import net.minecraft.client.renderer.item.EmptyModel;
 import net.minecraft.client.renderer.item.ItemModel;
 import net.minecraft.client.resources.model.sprite.Material;
+//#if FABRIC
+import net.minecraft.core.registries.BuiltInRegistries;
+//#endif
 import net.minecraft.resources.Identifier;
 import net.minecraft.util.ARGB;
 import net.minecraft.world.level.ItemLike;
@@ -277,7 +280,14 @@ public class ItemModelProvider extends ModelSubProvider {
     }
 
     private void builtInItemModel(ItemLike item, ItemModel.Unbaked unbaked) {
+        //#if FABRIC
+        // Vanilla item model json cannot reference AE2's custom unbaked item models (NeoForge registers those codecs
+        // in its own item model registry). Register an empty model instead and report the stub.
+        ModelSubProvider.STUBBED_ITEM_MODELS.add(String.valueOf(BuiltInRegistries.ITEM.getKey(item.asItem())));
+        blockModels.itemModelOutput.accept(item.asItem(), new EmptyModel.Unbaked());
+        //#else
         blockModels.itemModelOutput.accept(item.asItem(), unbaked);
+        //#endif
     }
 
     private static Identifier makeId(String id) {

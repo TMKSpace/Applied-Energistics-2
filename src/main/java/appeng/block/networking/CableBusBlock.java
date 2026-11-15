@@ -62,6 +62,9 @@ import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import net.neoforged.neoforge.model.data.ModelData;
+//#if FABRIC
+import nfcompat.model.ModelDataHooks;
+//#endif
 
 import appeng.api.parts.IFacadeContainer;
 import appeng.api.parts.IFacadePart;
@@ -354,9 +357,17 @@ public class CableBusBlock extends AEBaseEntityBlock<CableBusBlockEntity> implem
         if (renderView instanceof ServerLevel) {
             // We're on the server, use BE directly
             BlockEntity be = renderView.getBlockEntity(pos);
+//#if FABRIC
+            modelData = ModelDataHooks.get(be);
+//#else
             modelData = be != null ? be.getModelData() : ModelData.EMPTY;
+//#endif
         } else {
+//#if FABRIC
+            modelData = ModelDataHooks.get(renderView, pos);
+//#else
             modelData = renderView.getModelData(pos);
+//#endif
         }
 
         var cableBusRenderState = modelData.get(CableBusRenderState.PROPERTY);

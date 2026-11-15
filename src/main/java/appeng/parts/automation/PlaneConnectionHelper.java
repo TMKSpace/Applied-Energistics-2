@@ -24,6 +24,9 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
+//#if FABRIC
+import nfcompat.model.ModelDataHooks;
+//#endif
 
 import appeng.api.parts.IPart;
 import appeng.api.parts.IPartCollisionHelper;
@@ -150,7 +153,11 @@ public final class PlaneConnectionHelper {
     public void updateConnections() {
         BlockEntity host = getHostBlockEntity();
         if (host != null) {
+//#if FABRIC
+            ModelDataHooks.requestUpdate(host);
+//#else
             host.requestModelDataUpdate();
+//#endif
         }
     }
 

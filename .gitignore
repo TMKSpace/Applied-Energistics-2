@@ -1,49 +1,47 @@
-# exclude all
-/*
+# gradle
 
-# include important folders
-# need gradle 
-!gradle/
-!gradlew
-!gradlew.bat
-!build.gradle
-!settings.gradle
-!gradle.properties
-!crowdin.yml
+.gradle/
+build/
+out/
+classes/
 
-# Scripts
-!/scripts
-/scripts/node_modules
-!/buildSrc
-/buildSrc/build
-/buildSrc/.gradle
+# eclipse
 
-# include markdowns
-!*.md
-!LICENSE
+*.launch
 
-# include sourcecode
-!docs/
-!src/
-src/jmh/generated
-src/generated/resources/.cache
-out
-build
-!/libs/
-!/guidebook
-/guidebook/sandbox
+# idea
 
-# include git important files
-!.gitmodules
-!.gitignore
-!.gitattributes
-!.git-blame-ignore-revs
+.idea/
+*.iml
+*.ipr
+*.iws
 
-# code format to reduce noise in git commits
-!codeformat/
+# vscode
 
-# Github specific files and directories
-!.github/
+.settings/
+.vscode/
+bin/
+.classpath
+.project
 
-# Explicit ignores
-Thumbs.db
+# macos
+
+*.DS_Store
+
+# fabric
+
+run/
+
+# java
+
+hs_err_*.log
+replay_*.log
+*.hprof
+*.jfr
+
+# логи прогонов компиляции
+
+.opencode/
+
+# локальные логи
+/logs/

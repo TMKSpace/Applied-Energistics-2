@@ -53,7 +53,11 @@ public class ItemTagsProvider extends BlockTagCopyingItemTagProvider implements 
 
     @Override
     protected IntrinsicTagAppender<Item> tag(TagKey<Item> tag) {
+        //#if FABRIC
+        return new IntrinsicTagAppender<>(super.tag(tag), getOrCreateRawBuilder(tag), BuiltInRegistries.ITEM);
+        //#else
         return new IntrinsicTagAppender<>(super.tag(tag), BuiltInRegistries.ITEM);
+        //#endif
     }
 
     @Override
@@ -178,10 +182,19 @@ public class ItemTagsProvider extends BlockTagCopyingItemTagProvider implements 
                 .addOptionalTag(Tags.Items.INGOTS_COPPER)
                 .addOptionalTag(Tags.Items.INGOTS_IRON)
                 .addOptionalTag(Tags.Items.INGOTS_GOLD)
+                //#if FABRIC
+                // Vanilla has no ItemTags#create helper since the tag registry rework; TagKey.create is the
+                // equivalent.
+                .addOptionalTag(TagKey.create(Registries.ITEM, Identifier.parse("c:ingots/tin")))
+                .addOptionalTag(TagKey.create(Registries.ITEM, Identifier.parse("c:ingots/brass")))
+                .addOptionalTag(TagKey.create(Registries.ITEM, Identifier.parse("c:ingots/nickel")))
+                .addOptionalTag(TagKey.create(Registries.ITEM, Identifier.parse("c:ingots/aluminium")));
+        //#else
                 .addOptionalTag(ItemTags.create(Identifier.parse("c:ingots/tin")))
                 .addOptionalTag(ItemTags.create(Identifier.parse("c:ingots/brass")))
                 .addOptionalTag(ItemTags.create(Identifier.parse("c:ingots/nickel")))
                 .addOptionalTag(ItemTags.create(Identifier.parse("c:ingots/aluminium")));
+        //#endif
 
         tag(ConventionTags.PATTERN_PROVIDER)
                 .add(AEParts.PATTERN_PROVIDER.asItem())

@@ -14,7 +14,12 @@ import appeng.init.InitVillager;
 
 public class VillagerTradeTagsProvider extends TagsProvider<VillagerTrade> {
     public VillagerTradeTagsProvider(PackOutput output, CompletableFuture<HolderLookup.Provider> lookupProvider) {
+        //#if FABRIC
+        // Vanilla derives the pack directory from the tag namespace and has no mod-id parameter.
+        super(output, Registries.VILLAGER_TRADE, lookupProvider);
+        //#else
         super(output, Registries.VILLAGER_TRADE, lookupProvider, AppEng.MOD_ID);
+        //#endif
     }
 
     @Override

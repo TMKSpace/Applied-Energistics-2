@@ -49,6 +49,9 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.neoforged.neoforge.client.model.ComposedModelState;
 import net.neoforged.neoforge.client.model.DynamicBlockStateModel;
 import net.neoforged.neoforge.client.model.block.CustomUnbakedBlockStateModel;
+//#if FABRIC
+import nfcompat.model.ModelDataHooks;
+//#endif
 
 import appeng.api.client.StorageCellModels;
 import appeng.block.storage.DriveModelData;
@@ -111,7 +114,11 @@ public class DriveModel implements DynamicBlockStateModel {
             List<BlockStateModelPart> parts) {
         parts.add(baseModel);
 
+//#if FABRIC
+        var cells = ModelDataHooks.get(level, pos).get(DriveModelData.STATE);
+//#else
         var cells = level.getModelData(pos).get(DriveModelData.STATE);
+//#endif
 
         // Add cell models on top of the base model, if possible
         if (cells != null) {

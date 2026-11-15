@@ -12,7 +12,12 @@ import appeng.init.InitVillager;
 
 public class PoiTypeTagsProvider extends net.minecraft.data.tags.PoiTypeTagsProvider implements IAE2DataProvider {
     public PoiTypeTagsProvider(PackOutput packOutput, CompletableFuture<HolderLookup.Provider> registries) {
+        //#if FABRIC
+        // Vanilla derives the pack directory from the tag namespace and has no mod-id parameter.
+        super(packOutput, registries);
+        //#else
         super(packOutput, registries, AppEng.MOD_ID);
+        //#endif
     }
 
     @Override

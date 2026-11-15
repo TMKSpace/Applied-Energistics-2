@@ -79,8 +79,13 @@ public class BlockDropProvider extends BlockLootSubProvider {
         super(Set.of(), FeatureFlags.REGISTRY.allFlags(), output);
     }
 
+    //#if FABRIC
+    // Vanilla's BlockLootSubProvider has no getKnownBlocks() hook; AE2 only uses this as its own block iterator.
+    private Iterable<Block> getKnownBlocks() {
+    //#else
     @Override
     protected Iterable<Block> getKnownBlocks() {
+    //#endif
         return BuiltInRegistries.BLOCK
                 .stream()
                 .filter(entry -> {

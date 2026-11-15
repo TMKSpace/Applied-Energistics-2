@@ -43,12 +43,21 @@ import appeng.datagen.providers.IAE2DataProvider;
 
 public class BlockTagsProvider extends TagsProvider<Block> implements IAE2DataProvider {
     public BlockTagsProvider(PackOutput packOutput, CompletableFuture<HolderLookup.Provider> registries) {
+        //#if FABRIC
+        // Vanilla derives the pack directory from the tag namespace and has no mod-id parameter.
+        super(packOutput, Registries.BLOCK, registries);
+        //#else
         super(packOutput, Registries.BLOCK, registries, AppEng.MOD_ID);
+        //#endif
     }
 
     @Override
     protected IntrinsicTagAppender<Block> tag(TagKey<Block> tag) {
+        //#if FABRIC
+        return new IntrinsicTagAppender<>(super.tag(tag), getOrCreateRawBuilder(tag), BuiltInRegistries.BLOCK);
+        //#else
         return new IntrinsicTagAppender<>(super.tag(tag), BuiltInRegistries.BLOCK);
+        //#endif
     }
 
     @Override
