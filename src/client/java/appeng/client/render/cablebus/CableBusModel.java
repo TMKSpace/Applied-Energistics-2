@@ -115,6 +115,10 @@ public class CableBusModel implements DynamicBlockStateModel {
 
         var renderState = data.get(CableBusRenderState.PROPERTY);
         if (renderState == null) {
+            //#if FABRIC
+            // nfcompat-диагностика: модель вызвана, но model data пустая
+            nfcompat.Diagnostics.cableBusNoRenderState(pos);
+            //#endif
             return;
         }
 

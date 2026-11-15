@@ -193,7 +193,12 @@ public class Platform {
      * returns true if the code is on the client.
      */
     public static boolean isClient() {
+//#if FABRIC
+        // группы потоков в одиночной игре совпадают — сравниваем сам поток
+        return nfcompat.ServerThread.isClient();
+        //#else
         return Thread.currentThread().getThreadGroup() != SidedThreadGroups.SERVER;
+        //#endif
     }
 
     public static boolean hasPermissions(DimensionalBlockPos dc, Player player) {
@@ -218,14 +223,22 @@ public class Platform {
      * returns true if the code is on the server.
      */
     public static boolean isServer() {
+//#if FABRIC
+        return nfcompat.ServerThread.isServer();
+        //#else
         return Thread.currentThread().getThreadGroup() == SidedThreadGroups.SERVER;
+        //#endif
     }
 
     /**
      * Throws an exception if the current thread is not one of the server threads.
      */
     public static void assertServerThread() {
+//#if FABRIC
+        if (!nfcompat.ServerThread.isServer()) {
+            //#else
         if (Thread.currentThread().getThreadGroup() != serverThreadGroup) {
+            //#endif
             throw new UnsupportedOperationException(
                     "This code can only be called server-side and this is most likely a bug.");
         }

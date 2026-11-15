@@ -219,6 +219,14 @@ dependencies {
 	implementation "org.jspecify:jspecify:1.0.0"
 	implementation "org.jetbrains:annotations:26.0.2"
 
+	// --- Моды в рантайме dev-клиента ---
+	// Те же артефакты, что и compileOnly ниже, но подключённые в рантайм: иначе
+	// Fabric их не увидит при запуске. В Loom 1.19 (MC 26.x, без обфускации) mod*
+	// конфигураций больше нет — dev-рантайм набирается через localRuntime.
+	localRuntime "maven.modrinth:jei:zX75GFgt"                    // 31.17.0.113 fabric
+	localRuntime "maven.modrinth:jade:71CTWqdE"                   // 26.3.5+fabric
+	localRuntime "maven.modrinth:modmenu:xckkBHD5"                // 21.0.1 fabric
+
 	// --- Сторонние API только для компиляции ---
 	// nightconfig: движок конфигов, на нём построен вендоренный ModConfigSpec.
 	implementation "com.electronwill.night-config:core:3.6.7"
@@ -233,6 +241,7 @@ dependencies {
 
 	// REI 26.3.824+fabric
 	compileOnly "maven.modrinth:rei:rKsAE6bX"
+	compileOnly "maven.modrinth:modmenu:xckkBHD5"
 
 	// --- тесты ---
 	// JUnit 5 + AssertJ: тесты шима и core-механик не требуют запуска игры

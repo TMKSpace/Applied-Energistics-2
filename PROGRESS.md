@@ -314,20 +314,66 @@ Forge Config API Port **не подошёл**: его `net.neoforged.fml.config`
 5. `BlockAndTintGetter.getModelData(BlockPos)` — под `model.data`.
 6. `ModConfig.Type.LOCAL`/`SYNCED` — см. выше.
 
+## Рантайм: что уже работает
+
+- **Сеть AE2** — payload'ы через `PayloadRegistrar` (`ClientPlayNetworking`/`ServerPlayNetworking`).
+  `Exporting 1 grids`, контроллер создаёт grid, терминал получает `ae2:me_inventory_update`.
+- **Тултипы и ёмкость ячейки** — `nfcompat.ServerThread` + маркеры в `appeng/util/Platform.java`
+  (`isClient`/`isServer`/`assertServerThread`): AE2 сравнивает ThreadGroup, а в одиночной игре
+  на Fabric группы клиента и встроенного сервера совпадают.
+- **blockstate-модели** — 0 ошибок (было 30): `BlockStateModelHooks` + `NeoForgeExtraCodecs.dispatchMapOrElse`
+  + `@Redirect` в `SimpleModelSelectorsMixin`/`MultipartSelectorMixin`. Поле-интерфейс
+  (`BlockStateModel.Unbaked.CODEC`) нельзя `@Shadow @Mutable` — JVM кидает `ClassFormatError`,
+  поэтому подменяются только чтения.
+- **item-модели** — 0 ошибок (было 96): AW на 5 полей `ID_MAPPER` + постинг `RegisterItemModelsEvent`,
+  `ItemTintSources`, `RangeSelectItemModelPropertyEvent`.
+- **Клиентские события** — `nfcompat/ClientEventBridge` + 8 миксинов (`Options`, `EntityRenderers`,
+  `BlockEntityRenderers`, `LayerDefinitions`, `KeyboardHandler`, `MouseHandler`, `BlockColors`,
+  `ParticleResources`): тики, вход/выход, команды, клавиши, BER/слои, ввод, тинты, частицы, пайплайны.
+- **Серверные события** — `nfcompat/LifecycleBridge`: тики сервера/измерений,
+  `ServerStarting/Started/Stopping/Stopped`, выгрузка измерения и чанков, `RegisterCommandsEvent`.
+- **reload-слушатели** — `AddClientReloadListenersEvent` → `ResourceManagerHelper`
+  (`ShimReloadListener`/`ReloadListeners`).
+- **Экраны меню** — AW на `MenuScreens.register` + постинг `RegisterMenuScreensEvent`.
+- **Model data в рендер-регионе** — `RenderChunkRegion.getBlockEntity()` при сборке меша чанка
+  всегда отдаёт `null`, поэтому `nfcompat/model/client/ClientModelDataLookup` добирает block entity
+  из клиентского мира по позиции.
+- **GuideME не поднимаем** — его статическая инициализация требует `ArgumentTypeInfos.registerByClass`
+  (патч NeoForge), а Mixin не может добавить non-private static метод. Кнопка «?» погашена `GuidesCommonMixin`.
+
+## Долг: `AEKeyTypes` запекался пустым (пустая сетка терминала)
+
+Симптом: сетка ME-терминала пустая, но связь и сеть живые — `ae2:me_inventory_update` доходит,
+`Repo` знает записи с сервера.
+
+Причина: `AEKeyTypesInternal.setRegistry()` в NeoForge вешает `BakeCallback`, который срабатывает
+**после всех регистраций**. Наш шим `nfcompat/registry/RegistryCallbacks` вызывал колбэк немедленно —
+на `NewRegistryEvent`, когда реестр `ae2:keytypes` ещё пуст (сами типы регистрируются позже, в
+`RegisterEvent(AEKeyType.REGISTRY_KEY)`). В результате `AEKeyTypes.getAll()` навсегда оставался пустым
+набором: `KeyTypeSelection` у хоста терминала получался пустым, `Repo.addEntriesToView` отсекал все
+записи по `typeFilter`, клиент видел `visible=0 total=4` — и ни одна запись не попадала в слот.
+
+Фикс: `RegistryCallbacks` копит колбэки, а `NfCompat.runRegistrationPhases()` вызывает
+`RegistryCallbacks.bakeAll()` сразу после блока `RegisterEvent`.
+
+Чем ловили (приём на будущее): одна строка в лог на тип payload'а при первом получении (в
+`PayloadRegistrar`), плюс временный миксин на `MEStorageScreen.extractSlot`, печатавший
+`entry/visible/total`. По этим числам сразу видно, где рвётся: сеть, фильтр представления или слот.
+
 ## Next
 
-1. ~~AW-заход~~ — сделан (‑53 ошибки): `RecipeProvider.items`, `imageWidth/imageHeight`, `Slot.x/y`,
-   `Screen.renderables`, `SimpleParticleType(boolean)`, `ModelTemplates.create/createItem`.
-   Осталось из той же серии: `Player.closeContainer()` (2).
-2. **`model.data`** (126) — `ModelData`, `ModelProperty`, `ModelData.Builder`, плюс миксин
-   на `BlockAndTintGetter`/`BlockEntity` для `getModelData`.
-3. **datagen** (~148) — покрыть шимом: `GatherDataEvent`, `DataMapProvider`, `TagsProvider`
-   в NF-стиле.
-4. **сеть** (80) — `network.codec.NeoForgeStreamCodecs`, `client.network` (payload-регистрация),
-   `PacketDistributor`.
-5. **`client.model.quad`** (26) — обёртка квадов над Fabric.
-6. Миксины для MC-патчей из списка выше.
-7. Потом серверные геймтесты (55 файлов `src/test/java` → Fabric Gametest API).
+1. **Кабель**: BER регистрируется (`cable_bus: true`), но геометрии нет — смотреть
+   `CableBusDynamicRenderState`, `PartModels` (`clientParts`), `CableBusModel.collectParts`
+   и quad-шим (`client/model/quad` — нормали не трансформируются).
+2. **Terminal Options**: обрезанные переключатели/иконки — `Blitter` (extract + `peekScissorStack`)
+   и `WidgetContainer`/`AECheckbox` (не нулевая ли ширина).
+3. **Гэп-список**: `Player#getDestroySpeed` (скайстоун ×50), `LivingEntity#onClimbable` (лазание
+   по кабелю), `OnDatapackSyncEvent`/`RecipesReceivedEvent` (рецепты на клиенте), capability наружу
+   (`ItemStorage/FluidStorage/EnergyStorage.SIDED`), `FabricExternalStorageStrategy` (пустой файл),
+   `StandaloneModels` (null), чтение TOML в шиме, entrypoints JEI/REI/Jade.
+4. **Наковальня**: `AnvilMenuMixin` AE2 целится в `createResultInternal`, которого в ванили нет
+   (метод добавляет NeoForge) — миксин исключён, intrinsic-чары наковальни остаются непокрытыми.
+5. **GuideME** — нужен патч джара на сборке (отложено).
 
 ## Инструменты стенда
 

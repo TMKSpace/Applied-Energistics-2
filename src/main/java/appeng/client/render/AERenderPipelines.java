@@ -79,7 +79,7 @@ public final class AERenderPipelines {
      */
     public static final OitPipelineSet OIT_AREA_OVERLAY_FACE = OitPipelineSet
             //#if FABRIC
-            .builder(AppEng.makeId("area_overlay_face").toString(),
+            .builder(AppEng.makeId("area_overlay_face").getPath(),
             //#else
             .builder(AppEng.makeId("area_overlay_face"),
             //#endif
@@ -99,7 +99,7 @@ public final class AERenderPipelines {
      */
     public static final OitPipelineSet OIT_AREA_OVERLAY_LINE = OitPipelineSet
             //#if FABRIC
-            .builder(AppEng.makeId("area_overlay_line").toString(), RenderPipeline.builder(RenderPipelines.OIT_LINES_SNIPPET)
+            .builder(AppEng.makeId("area_overlay_line").getPath(), RenderPipeline.builder(RenderPipelines.OIT_LINES_SNIPPET)
             //#else
             .builder(AppEng.makeId("area_overlay_line"), RenderPipeline.builder(RenderPipelines.OIT_LINES_SNIPPET)
             //#endif
@@ -120,7 +120,7 @@ public final class AERenderPipelines {
      */
     public static final OitPipelineSet OIT_LINES_OCCLUDED = OitPipelineSet
             //#if FABRIC
-            .builder(AppEng.makeId("lines_occluded").toString(),
+            .builder(AppEng.makeId("lines_occluded").getPath(),
             //#else
             .builder(AppEng.makeId("lines_occluded"),
             //#endif
@@ -158,7 +158,7 @@ public final class AERenderPipelines {
      */
     public static final OitPipelineSet OIT_LIGHTNING_FX = OitPipelineSet
             //#if FABRIC
-            .builder(AppEng.makeId("lightning_fx").toString(), RenderPipeline.builder(RenderPipelines.OIT_PARTICLE_SNIPPET)
+            .builder(AppEng.makeId("lightning_fx").getPath(), RenderPipeline.builder(RenderPipelines.OIT_PARTICLE_SNIPPET)
             //#else
             .builder(AppEng.makeId("lightning_fx"), RenderPipeline.builder(RenderPipelines.OIT_PARTICLE_SNIPPET)
             //#endif

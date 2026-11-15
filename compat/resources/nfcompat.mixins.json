@@ -7,7 +7,18 @@
     "BlockEntityMixin"
   ],
   "client": [
-    "ClientTooltipComponentMixin"
+    "ClientTooltipComponentMixin",
+    "GuidesCommonMixin",
+    "MultipartSelectorMixin",
+    "SimpleModelSelectorsMixin",
+    "client.BlockColorsMixin",
+    "client.BlockEntityRenderersMixin",
+    "client.EntityRenderersMixin",
+    "client.KeyboardHandlerMixin",
+    "client.LayerDefinitionsMixin",
+    "client.MouseHandlerMixin",
+    "client.OptionsMixin",
+    "client.ParticleResourcesMixin"
   ],
   "injectors": {
     "defaultRequire": 1

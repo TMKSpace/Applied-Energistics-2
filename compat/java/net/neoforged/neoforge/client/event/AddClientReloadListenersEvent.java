@@ -29,6 +29,15 @@ public class AddClientReloadListenersEvent extends SortedReloadListenerEvent imp
         super(java.util.List.of(), AddClientReloadListenersEvent::lookupName);
     }
 
+    /**
+     * nfcompat: на Fabric нет ReloadableResourceManager, в который NeoForge складывает
+     * слушателей. Событие нужно только как сборщик — его результат регистрируется
+     * в ResourceManagerHelper (см. nfcompat.client.ReloadListeners).
+     */
+    public AddClientReloadListenersEvent() {
+        this(null);
+    }
+
     private static Identifier lookupName(PreparableReloadListener listener) {
         Identifier key = VanillaClientListeners.getNameForClass(listener.getClass());
         if (key == null) {

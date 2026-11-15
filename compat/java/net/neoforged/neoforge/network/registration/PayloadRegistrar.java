@@ -52,6 +52,9 @@ public class PayloadRegistrar {
      */
     private static final Set<String> REGISTERED = ConcurrentHashMap.newKeySet();
 
+    /** Диагностика: какие типы payload'ов уже приходили на клиент. */
+    private static final Set<String> SEEN = ConcurrentHashMap.newKeySet();
+
     private String version;
     private boolean optional = false;
     private HandlerThread thread = HandlerThread.MAIN;
@@ -195,6 +198,11 @@ public class PayloadRegistrar {
             }
             boolean fresh = net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking.registerGlobalReceiver(type,
                     (payload, context) -> {
+                        if (SEEN.add(type.id().toString())) {
+                            // Диагностика: одна строка на тип пакета — сразу видно,
+                            // доходят ли до клиента серверные сообщения AE2.
+                            System.out.println("[nfcompat/net] получен payload " + type.id());
+                        }
                         var payloadContext = new net.neoforged.neoforge.client.network.handling.ClientPayloadContext(
                                 context.player());
                         if (onMainThread) {
