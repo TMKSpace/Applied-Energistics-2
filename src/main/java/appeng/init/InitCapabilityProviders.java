@@ -109,8 +109,13 @@ public final class InitCapabilityProviders {
         event.registerBlock(
                 capability,
                 (level, pos, state, blockEntity, context) -> {
+//#if FABRIC
+                    var genericInv = AECapabilities.GENERIC_INTERNAL_INV.getCapability(level, pos, state, blockEntity,
+                            context);
+                    //#else
                     var genericInv = level.getCapability(AECapabilities.GENERIC_INTERNAL_INV, pos, state,
                             blockEntity, context);
+                    //#endif
                     if (genericInv != null) {
                         return adapter.apply(genericInv);
                     }

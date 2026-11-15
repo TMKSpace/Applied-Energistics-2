@@ -40,7 +40,11 @@ public class SkyStoneTankBlockEntity extends AEBaseBlockEntity {
     @Override
     public void saveAdditional(ValueOutput data) {
         super.saveAdditional(data);
-        data.putChild("tank", tank);
+        //#if FABRIC
+tank.serialize(data.child("tank"));
+//#else
+data.putChild("tank", tank);
+//#endif
     }
 
     @Override

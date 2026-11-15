@@ -19,4 +19,13 @@ public final class CapabilityInvalidation {
     public static void invalidate(@Nullable Object holder) {
         // no-op: кэша нет
     }
+
+    /**
+     * NeoForge позволяет подписаться на изменение capability у позиции
+     * (`ServerLevel#registerCapabilityListener`). Кэша нет — слушать нечего,
+     * поэтому вызов принимается и игнорируется.
+     */
+    public static void registerListener(Object level, Object pos, @Nullable Object listener) {
+        // no-op
+    }
 }

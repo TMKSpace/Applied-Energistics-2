@@ -216,12 +216,22 @@ public class AppEngClient extends AppEngBase {
      * This modifier key has to be held to activate mouse wheel items.
      */
     private static final KeyMapping MOUSE_WHEEL_ITEM_MODIFIER = new KeyMapping(
+//#if FABRIC
+            "key.ae2.mouse_wheel_item_modifier", InputConstants.Type.KEYBOARD,
+            InputConstants.KEY_LSHIFT, Hotkeys.CATEGORY);
+            //#else
             "key.ae2.mouse_wheel_item_modifier", KeyConflictContext.IN_GAME, InputConstants.Type.KEYBOARD,
             InputConstants.KEY_LSHIFT, Hotkeys.CATEGORY);
+            //#endif
 
     private static final KeyMapping PART_PLACEMENT_OPPOSITE = new KeyMapping(
+//#if FABRIC
+            "key.ae2.part_placement_opposite", InputConstants.Type.KEYBOARD,
+            InputConstants.KEY_LCONTROL, Hotkeys.CATEGORY);
+            //#else
             "key.ae2.part_placement_opposite", KeyConflictContext.IN_GAME, InputConstants.Type.KEYBOARD,
             InputConstants.KEY_LCONTROL, Hotkeys.CATEGORY);
+            //#endif
 
     private static AppEngClient INSTANCE;
 
@@ -406,7 +416,11 @@ public class AppEngClient extends AppEngBase {
     }
 
     private void ctrlEvent(InputEvent.Key event) {
-        if (event.getKey() == PART_PLACEMENT_OPPOSITE.getKey().getValue()) {
+        //#if FABRIC
+if (event.getKey() == PART_PLACEMENT_OPPOSITE.getDefaultKey().getValue()) {
+//#else
+if (event.getKey() == PART_PLACEMENT_OPPOSITE.getKey().getValue()) {
+//#endif
             var player = Minecraft.getInstance().player;
 
             if (player != null) {

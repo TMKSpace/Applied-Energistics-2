@@ -142,7 +142,11 @@ public class AEClientboundPacketHandler {
             // This code is based on what BucketItem does
             Fluid fluid = packet.blockState().getFluidState().getType();
             //#if FABRIC
+            //#if FABRIC
+            soundEvent = null; // nfcompat: звуков жидкостей в шиме нет
+            //#else
             soundEvent = fluid.getFluidType().getSound(fluid, SoundActions.BUCKET_FILL);
+            //#endif
             //#else
             soundEvent = fluid.getFluidType().getSound(SoundActions.BUCKET_FILL);
             //#endif

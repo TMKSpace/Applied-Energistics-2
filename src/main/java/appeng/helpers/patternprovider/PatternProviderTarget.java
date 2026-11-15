@@ -51,9 +51,17 @@ public interface PatternProviderTarget {
         // our capability first: allows any storage channel
         MEStorage storage;
         if (be != null) {
+//#if FABRIC
+            storage = AECapabilities.ME_STORAGE.getCapability(l, be.getBlockPos(), be.getBlockState(), be, side);
+            //#else
             storage = l.getCapability(AECapabilities.ME_STORAGE, be.getBlockPos(), be.getBlockState(), be, side);
+            //#endif
         } else {
+//#if FABRIC
+            storage = AECapabilities.ME_STORAGE.getCapability(l, pos, null, null, side);
+            //#else
             storage = l.getCapability(AECapabilities.ME_STORAGE, pos, side);
+            //#endif
         }
         if (storage != null) {
             return wrapMeStorage(storage, src);

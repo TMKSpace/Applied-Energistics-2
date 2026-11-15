@@ -25,6 +25,15 @@ public interface DynamicBlockStateModel extends BlockStateModel {
     void collectParts(BlockAndTintGetter level, BlockPos pos, BlockState state, RandomSource random,
             List<BlockStateModelPart> parts);
 
+    /**
+     * NeoForge добавляет контекстный вариант `materialFlags`: модель может ответить,
+     * какие материалы ей нужны в этой позиции. Ванильный `BlockStateModel` такого не имеет,
+     * поэтому по умолчанию — 0 (без флагов).
+     */
+    default int materialFlags(BlockAndTintGetter level, BlockPos pos, BlockState state) {
+        return 0;
+    }
+
     @Override
     default void collectParts(RandomSource random, List<BlockStateModelPart> parts) {
         collectParts(BlockAndTintGetter.EMPTY, BlockPos.ZERO, Blocks.AIR.defaultBlockState(), random, parts);

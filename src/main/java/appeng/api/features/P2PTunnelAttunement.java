@@ -115,7 +115,11 @@ public final class P2PTunnelAttunement {
     public synchronized static void registerAttunementApi(ItemLike tunnelPart, ItemCapability<?, Void> cap,
             Component description) {
         Objects.requireNonNull(cap, "cap");
-        Predicate<ItemStack> test = stack -> stack.getCapability(cap) != null;
+        //#if FABRIC
+Predicate<ItemStack> test = stack -> cap.getCapability(stack, null) != null;
+//#else
+Predicate<ItemStack> test = stack -> stack.getCapability(cap) != null;
+//#endif
         apiAttunements.add(new ApiAttunement(test, cap, validateTunnelPartItem(tunnelPart), description));
     }
 
@@ -129,7 +133,11 @@ public final class P2PTunnelAttunement {
             ItemCapability<?, ItemAccess> cap,
             Component description) {
         Objects.requireNonNull(cap, "cap");
-        Predicate<ItemStack> test = stack -> stack.getCapability(cap, ItemAccess.forStack(stack)) != null;
+        //#if FABRIC
+Predicate<ItemStack> test = stack -> cap.getCapability(stack, ItemAccess.forStack(stack)) != null;
+//#else
+Predicate<ItemStack> test = stack -> stack.getCapability(cap, ItemAccess.forStack(stack)) != null;
+//#endif
         apiAttunements.add(new ApiAttunement(test, cap, validateTunnelPartItem(tunnelPart), description));
     }
 

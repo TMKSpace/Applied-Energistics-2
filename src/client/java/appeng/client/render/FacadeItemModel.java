@@ -86,7 +86,11 @@ public class FacadeItemModel implements ItemModel {
         }
 
         var facadeBlockState = itemFacade.getTextureBlockState(stack);
-        if (facadeBlockState.isEmpty()) {
+        //#if FABRIC
+if (facadeBlockState.is(net.minecraft.world.level.block.Blocks.AIR)) {
+//#else
+if (facadeBlockState.isEmpty()) {
+//#endif
             missingItemModel.update(renderState, stack, itemModelResolver, displayContext, level, owner, seed);
             return;
         }

@@ -47,7 +47,11 @@ class ChunkLoadState extends SavedData {
             // overworld. Для состояния форс-лоада чанков это неверно, если данные принадлежат
             // другому измерению. Нужен хук на DimensionDataStorage — TODO.
             AppEng.makeId("chunk_load_state"),
-            ChunkLoadState::new,
+//#if FABRIC
+                        () -> new ChunkLoadState(ServerLifecycleHooks.getCurrentServer().overworld()),
+            //#else
+                        ChunkLoadState::new,
+            //#endif
             RecordCodecBuilder.create(builder -> builder.group(
                     ForcedChunk.CODEC.listOf().fieldOf("forcedChunks").forGetter(ChunkLoadState::getForcedChunks))
                     .apply(builder, data -> new ChunkLoadState(

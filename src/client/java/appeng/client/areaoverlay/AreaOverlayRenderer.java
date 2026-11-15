@@ -64,13 +64,21 @@ public class AreaOverlayRenderer {
                 areasInThisLevel.add(visibleArea);
             }
         }
-        event.getRenderState().setRenderData(OVERLAY_AREAS, areasInThisLevel);
+        //#if FABRIC
+nfcompat.client.RenderStateData.set(event.getRenderState(), OVERLAY_AREAS, areasInThisLevel);
+//#else
+event.getRenderState().setRenderData(OVERLAY_AREAS, areasInThisLevel);
+//#endif
     }
 
     @SubscribeEvent
     public void submitCustomGeometry(SubmitCustomGeometryEvent event) {
         var levelRenderState = event.getLevelRenderState();
-        var visibleAreas = levelRenderState.getRenderDataOrDefault(OVERLAY_AREAS, List.of());
+        //#if FABRIC
+var visibleAreas = nfcompat.client.RenderStateData.getOrDefault(levelRenderState, OVERLAY_AREAS, List.of());
+//#else
+var visibleAreas = levelRenderState.getRenderDataOrDefault(OVERLAY_AREAS, List.of());
+//#endif
 
         if (visibleAreas.isEmpty()) {
             return;

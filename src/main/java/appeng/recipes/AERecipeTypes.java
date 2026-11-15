@@ -34,7 +34,11 @@ public final class AERecipeTypes {
             "storage_cell_disassembly");
 
     private static <T extends Recipe<?>> RecipeType<T> register(String id) {
+        //#if FABRIC
+        RecipeType<T> type = RecipeType.register(AppEng.makeId(id).toString());
+        //#else
         RecipeType<T> type = RecipeType.simple(AppEng.makeId(id));
+        //#endif
         DR.register(id, () -> type);
         return type;
     }

@@ -62,8 +62,13 @@ public class EnergyGeneratorBlockEntity extends AEBaseBlockEntity implements Ser
         final int energyToInsert = IntMath.pow(generationRate, tier);
 
         for (Direction facing : Direction.values()) {
+//#if FABRIC
+            var consumer = Capabilities.Energy.BLOCK.getCapability(getLevel(), getBlockPos().relative(facing), null,
+                    null, facing.getOpposite());
+            //#else
             var consumer = getLevel().getCapability(Capabilities.Energy.BLOCK, getBlockPos().relative(facing),
                     facing.getOpposite());
+            //#endif
             if (consumer != null) {
                 try (var tx = Transaction.open(null)) {
                     consumer.insert(energyToInsert, tx);

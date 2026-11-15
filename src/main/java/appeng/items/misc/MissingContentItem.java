@@ -30,7 +30,11 @@ public class MissingContentItem extends Item {
         var genericStackData = stack.get(AEComponents.MISSING_CONTENT_AEKEY_DATA);
 
         // "id" is just the most common ID field for key types
-        if (itemStackData != null && itemStackData.contains("id")) {
+        //#if FABRIC
+if (itemStackData != null && itemStackData.copyTag().contains("id")) {
+//#else
+if (itemStackData != null && itemStackData.contains("id")) {
+//#endif
             var brokenDataTag = itemStackData.copyTag();
             if (!brokenDataTag.contains("id")) {
                 return null; // Without any ID this info is worthless
@@ -45,7 +49,11 @@ public class MissingContentItem extends Item {
             }
 
             return new BrokenStackInfo(Component.literal(missingId), AEKeyType.items(), amount);
-        } else if (genericStackData != null && genericStackData.contains("id")) {
+        //#if FABRIC
+} else if (genericStackData != null && genericStackData.copyTag().contains("id")) {
+//#else
+} else if (genericStackData != null && genericStackData.contains("id")) {
+//#endif
             var brokenDataTag = genericStackData.copyTag();
             if (!brokenDataTag.contains("id")) {
                 return null; // Without any ID this info is worthless

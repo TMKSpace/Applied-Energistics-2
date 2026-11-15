@@ -76,7 +76,11 @@ public record FillCraftingGridFromRecipePacket(
             NonNullList<ItemStack> ingredientTemplates,
             boolean craftMissing) {
         this.recipeId = recipeId;
-        this.ingredientTemplates = NonNullList.copyOf(ingredientTemplates.stream().map(ItemStack::copy).toList());
+        //#if FABRIC
+this.ingredientTemplates = nfcompat.util.Lists.nonNullCopy(ingredientTemplates.stream().map(ItemStack::copy).toList());
+//#else
+this.ingredientTemplates = NonNullList.copyOf(ingredientTemplates.stream().map(ItemStack::copy).toList());
+//#endif
         this.craftMissing = craftMissing;
     }
 
@@ -331,8 +335,16 @@ public record FillCraftingGridFromRecipePacket(
      */
     private List<AEItemKey> findBestMatchingItemStack(Ingredient ingredient, IPartitionList filter,
             KeyCounter storage) {
+        //#if FABRIC
+        if (true) { // ванильный Ingredient не бывает "кастомным"
+        //#else
         if (!ingredient.isCustom()) {
+        //#endif
+            //#if FABRIC
+            return ingredient.items()
+            //#else
             return ingredient.getValues().stream()
+            //#endif
                     .map(Holder::value)
                     .map(AEItemKey::of)
                     .filter(r -> r != null && (filter == null || filter.isListed(r)))

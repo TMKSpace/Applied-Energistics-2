@@ -566,7 +566,11 @@ public abstract class AEBaseScreen<T extends AEBaseMenu> extends AbstractContain
         // Handler for Pick Block mouse click in Survival mode
         // (Key presses & Creative clicks all reach slotClicked handler as CLONE slot clicks)
         var pickBlockButton = InputConstants.Type.MOUSE.getOrCreate(event.button());
-        if (getMinecraft().options.keyPickItem.isActiveAndMatches(pickBlockButton)
+        //#if FABRIC
+if (getMinecraft().options.keyPickItem.matches(pickBlockButton)
+//#else
+if (getMinecraft().options.keyPickItem.isActiveAndMatches(pickBlockButton)
+//#endif
                 && handlePickBlock(this.getHoveredSlot(event.x(), event.y()))) {
             return true;
         }
@@ -820,6 +824,18 @@ public abstract class AEBaseScreen<T extends AEBaseMenu> extends AbstractContain
         return false;
     }
 
+//#if FABRIC
+    // в ванили `isHovering` есть только в 6-аргументной форме, поэтому это обычный
+    // вспомогательный метод, а не переопределение
+    private boolean ae2IsHovering(Slot slot, double x, double y) {
+        if (slot instanceof ResizableSlot resizableSlot) {
+            var width = resizableSlot.getWidth();
+            var height = resizableSlot.getHeight();
+            return this.isHovering(slot.x, slot.y, width, height, x, y);
+        }
+        return super.isHovering(slot.x, slot.y, 16, 16, x, y);
+    }
+//#else
     @Override
     protected boolean isHovering(Slot slot, double x, double y) {
         if (slot instanceof ResizableSlot resizableSlot) {
@@ -829,6 +845,7 @@ public abstract class AEBaseScreen<T extends AEBaseMenu> extends AbstractContain
         }
         return super.isHovering(slot, x, y);
     }
+//#endif
 
     public void drawBG(GuiGraphicsExtractor guiGraphics, int offsetX, int offsetY, int mouseX, int mouseY,
             float partialTicks) {

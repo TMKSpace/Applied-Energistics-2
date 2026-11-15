@@ -208,8 +208,32 @@ public final class TransformLogic {
                 if (!recipe.circumstance.isExplosion())
                     continue;
                 for (var ingredient : recipe.ingredients) {
-                    if (!ingredient.isCustom()) {
-                        holderSets.add(ingredient.getValues());
+                    //#if FABRIC
+                    if (true) { // ванильный Ingredient не бывает "кастомным"
+                    //#else
+                    //#if FABRIC
+if (true) { // ванильный Ingredient не бывает "кастомным"
+//#else
+//#if FABRIC
+if (true) { // ванильный Ingredient не бывает "кастомным"
+//#else
+if (!ingredient.isCustom()) {
+//#endif
+//#endif
+                    //#endif
+                        //#if FABRIC
+                        holderSets.add(net.minecraft.core.HolderSet.direct(ingredient.items().toList()));
+                        //#else
+                        //#if FABRIC
+holderSets.add(net.minecraft.core.HolderSet.direct(ingredient.items().toList()));
+//#else
+//#if FABRIC
+holderSets.add(net.minecraft.core.HolderSet.direct(ingredient.items().toList()));
+//#else
+holderSets.add(ingredient.getValues());
+//#endif
+//#endif
+                        //#endif
                     } else {
                         LOG.warn("Custom ingredient {} does not work in explosion transform recipe {}", ingredient,
                                 holder.id());
@@ -251,8 +275,16 @@ public final class TransformLogic {
     private static boolean collectFirstNonCustomIngredient(TransformRecipe recipe, List<HolderSet<Item>> holderSets) {
         boolean hadAnyWorkingIngredient = false;
         for (var ingredient : recipe.ingredients) {
+            //#if FABRIC
+            if (true) { // ванильный Ingredient не "кастомный"
+            //#else
             if (!ingredient.isCustom()) {
+            //#endif
+                //#if FABRIC
+                holderSets.add(net.minecraft.core.HolderSet.direct(ingredient.items().toList()));
+                //#else
                 holderSets.add(ingredient.getValues());
+                //#endif
                 hadAnyWorkingIngredient = true;
                 break; // only process first ingredient (they're all required anyway)
             }

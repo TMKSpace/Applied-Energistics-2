@@ -43,7 +43,11 @@ public final class FluidSoundHelper {
             return;
         }
 
+        //#if FABRIC
+        SoundEvent fillSound = null; // nfcompat: звуков жидкостей в шиме нет
+        //#else
         SoundEvent fillSound = fluid.getFluid().getFluidType().getSound(player, SoundActions.BUCKET_FILL);
+        //#endif
         if (fillSound == null) {
             return;
         }
@@ -56,7 +60,11 @@ public final class FluidSoundHelper {
             return;
         }
 
+        //#if FABRIC
+        SoundEvent fillSound = null; // nfcompat: звуков жидкостей в шиме нет
+        //#else
         SoundEvent fillSound = fluid.getFluid().getFluidType().getSound(player, SoundActions.BUCKET_EMPTY);
+        //#endif
         if (fillSound == null) {
             return;
         }

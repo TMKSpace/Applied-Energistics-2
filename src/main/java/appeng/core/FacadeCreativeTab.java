@@ -37,9 +37,17 @@ public final class FacadeCreativeTab {
     private static CreativeModeTab group;
 
     public static void init(Registry<CreativeModeTab> registry) {
+        //#if FABRIC
+        group = CreativeModeTab.builder(CreativeModeTab.Row.TOP, 0)
+        //#else
         group = CreativeModeTab.builder()
+        //#endif
                 .title(GuiText.CreativeTabFacades.text())
-                .withTabsBefore(AECreativeTabIds.MAIN)
+                //#if FABRIC
+// nfcompat: withTabsBefore — метод NeoForge
+//#else
+.withTabsBefore(AECreativeTabIds.MAIN)
+//#endif
                 .icon(() -> {
                     if (group == null) {
                         return ItemStack.EMPTY;

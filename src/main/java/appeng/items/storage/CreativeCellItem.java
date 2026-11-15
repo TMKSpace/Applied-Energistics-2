@@ -70,7 +70,11 @@ public class CreativeCellItem extends AEBaseItem implements ICellWorkbenchItem {
         if (inventory != null) {
             var cc = getConfigInventory(stack);
             if (!cc.isEmpty()) {
-                if (tooltipFlags.hasShiftDown()) {
+                //#if FABRIC
+if (tooltipFlags.isAdvanced()) {
+//#else
+if (tooltipFlags.hasShiftDown()) {
+//#endif
                     for (var key : cc.keySet()) {
                         lines.accept(Tooltips.of(key.getDisplayName()));
                     }

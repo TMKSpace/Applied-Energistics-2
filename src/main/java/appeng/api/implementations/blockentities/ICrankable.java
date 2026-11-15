@@ -54,6 +54,10 @@ public interface ICrankable {
 
     @Nullable
     static ICrankable get(Level level, BlockPos pos, Direction side) {
+//#if FABRIC
+        return AECapabilities.CRANKABLE.getCapability(level, pos, null, null, side);
+        //#else
         return level.getCapability(AECapabilities.CRANKABLE, pos, side);
+        //#endif
     }
 }
