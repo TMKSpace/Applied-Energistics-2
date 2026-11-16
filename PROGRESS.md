@@ -405,11 +405,11 @@ Forge Config API Port **не подошёл**: его `net.neoforged.fml.config`
 
 ## Next
 
-1. **Terminal Options**: обрезка переключателей/иконок должна уйти вместе с фиксом `Blitter`
-   (см. «Рантайм») — осталось подтвердить глазами.
-2. **JEI**: плагин теперь грузится (entrypoint `jei_mod_plugin`), жидкостной ингредиент переведён
-   на Fabric-API. Проверить в игре: в логе `Registering ... : ae2:core`, поиск жидкости, R/U по
-   жидкости в AE-терминалах, ghost-drag жидкости в фильтр.
+Полный список дыр шима (с тестами и статусами) — в **`TODO.md`**. Ниже только ближайшее.
+
+1. **JEI: P2P-attunement** — плагин теперь грузится, но падает на `Ingredient.of([])` в
+   `registerP2PAttunement` (пустые списки, потому что item-capabilities не смостены). Нужен
+   `//#if FABRIC`-гейт на пропуск пустых списков (и/или мост `Fluid.ITEM`/`Energy.ITEM`).
 3. **Гэп-список**: `Player#getDestroySpeed` (скайстоун ×50), `LivingEntity#onClimbable` (лазание
    по кабелю), `OnDatapackSyncEvent`, `FabricExternalStorageStrategy` (пустой файл — теперь можно
    и удалить, мост живёт в `FabricCapabilities`), `StandaloneModels` (null), чтение TOML в шиме,

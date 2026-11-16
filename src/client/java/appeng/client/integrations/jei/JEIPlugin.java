@@ -210,6 +210,24 @@ public class JEIPlugin implements IModPlugin {
 
         List<AttunementDisplay> attunementRecipes = new ArrayList<>();
         for (var entry : P2PTunnelAttunementInternal.getApiTunnels()) {
+            //#if FABRIC
+            // На Fabric item-capabilities (Energy.ITEM / Fluid.ITEM) пока не смостены, поэтому
+            // список подходящих предметов бывает пустым. Ванильный Ingredient.of([]) кидает
+            // UnsupportedOperationException и роняет регистрацию всего JEI-плагина, а
+            // removeIf ниже до этого места не доживает.
+            var apiItems = BuiltInRegistries.ITEM.stream()
+                    .filter(i -> entry.stackPredicate().test(i.getDefaultInstance()))
+                    .toArray(Item[]::new);
+            if (apiItems.length == 0) {
+                continue;
+            }
+            attunementRecipes.add(
+                    new AttunementDisplay(
+                            Ingredient.of(apiItems),
+                            entry.tunnelType(),
+                            ItemModText.P2P_API_ATTUNEMENT.text(),
+                            entry.description()));
+            //#else
             attunementRecipes.add(
                     new AttunementDisplay(
                             Ingredient.of(BuiltInRegistries.ITEM.stream()
@@ -218,6 +236,7 @@ public class JEIPlugin implements IModPlugin {
                             entry.tunnelType(),
                             ItemModText.P2P_API_ATTUNEMENT.text(),
                             entry.description()));
+            //#endif
         }
 
         for (var entry : P2PTunnelAttunementInternal.getTagTunnels().entrySet()) {
