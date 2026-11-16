@@ -4,13 +4,10 @@
 чтобы не искать по чатам. Статусы: `[ ]` не сделано, `[~]` в работе, `[x]` сделано и проверено.
 
 ## 1. Наружу из AE2 ничего не выставляется
-`[ ]` Мы научили шим брать чужие `ItemStorage`/`FluidStorage` (inbound), но обратной
-регистрации нет: в `compat/java` ни одного `*.SIDED.register*`.
-Ломается: воронка/труба другого мода не вставят в ME-сундук/интерфейс/ячейку; storage bus
-и интерфейс снаружи выглядят пустыми.
-Тест: воронка над ME-сундуком; труба в интерфейс.
-Где: по образцу энергетики — `BlockCapability.providerBlocks()` + `registerForBlocks`
-(см. `nfcompat/bridge/EnergyBridge.registerOutbound`).
+`[x]` Сделано: `nfcompat/bridge/StorageBridge` регистрирует `ItemStorage.SIDED`/`FluidStorage.SIDED`
+по `Capabilities.*.providerBlocks()` + `getCapabilityDirect`; адаптеры `ItemHandlerStorage`
+(SlottedStorage) и переписанный `FluidHandlerStorage` (через `HandlerTransactions` + `FluidUnits`).
+Сверено с 1.20.1 `InitApiLookup` — потерянных блоков нет.
 
 ## 2. Item-capabilities вообще не смостены
 `[ ]` `Capabilities.Fluid.ITEM` и `Capabilities.Energy.ITEM` не имеют Fabric-моста. Сейчас
@@ -27,15 +24,33 @@ ghost-drag жидкости из JEI.
 Тест: ведро → бак → ячейка → терминал, и обратно; сравнить объёмы в тултипах.
 
 ## 4. Spatial storage
-`[ ]` Своё измерение, spatial IO, portal, cross-dimension телепорт блоков. Часть инфраструктуры
-(тики, выгрузка чанков, ticket controllers) смостена в `LifecycleBridge`, но сам spatial —
-самый экзотический путь, в игре не проверялся.
-Тест: spatial IO port + storage cell + spatial pylon, сохранить/загрузить область.
+`[~]` Ядро цело: уровень создаётся миксином `spatial.MinecraftServerMixin` (в логе видно, что
+`ae2:spatial_storage` жил), `SavedData` плотов, обмен блоками/BlockEntity, телепорт через ванильный
+`TeleportTransition`, генератор чанков — всё на ванили.
+`[x]` Чанк-лоадер: владельцы тикетов в персистентном `TicketOwnershipData` (SavedData в overworld),
+форс снимается только последним владельцем, `validateTickets` на `ServerLevelEvents.LOAD`,
+`LevelEvent.Load`/`ChunkEvent.Load` теперь постятся.
+`[ ]` Скайбокс spatial-измерения: `RegisterCustomEnvironmentEffectRendererEvent` никто не постит,
+`neoforge:custom_skybox` вырезан из `InitBiomes` → в ячейке обычное небо. В 1.20.1 это закрывал
+`mixins/spatial/SkyRenderMixin` — можно повторить целиком в compat (client-миксин на рендер неба).
+`[ ]` `MatrixFrameBlock`: в FABRIC-ветке вырезаны `onBlockExploded`/`canEntityDestroy` → стенку
+плота можно пробить взрывом. Либо вернуть оверрайды в FABRIC-ветке, либо миксин на
+`Explosion#finalizeExplosion`.
+`[ ]` `ChunkLoadingService.isChunkForced()` читает `appeng.server.services.ChunkLoadState`, который
+в 26.3 никто не наполняет (класс package-private) → `appeng/mixins/chunkloading/ChunkMapMixin`
+(рандом-тики в форс-лоаднутых чанках) не работает. Нужен доступ к `src` либо перевод
+`isChunkForced` на наш `TicketOwnershipData`.
+Тест: spatial IO порт + пилоны + ячейка, редстоун → блоки уезжают в ячейку и возвращаются;
+`/ae2 spatial info|tp|tpback`; перезапуск сервера сохраняет плот и форс чанков.
 
 ## 5. Инструменты на неофорджевских патчах MC
-`[ ]` `Player#getDestroySpeed` — скайстоун копается ~×50 медленнее (известный гэп).
-`[ ]` `LivingEntity#onClimbable` — по кабелю нельзя лазать.
-Тест: кирка по скайстоуну (замер времени); зажать прыжок на кабеле.
+`[x]` `PlayerEvent.BreakSpeed` теперь постится: `EventHooks.getBreakSpeed` + `PlayerDestroySpeedMixin`
+(хвост `Player.getDestroySpeed`). Живой слушатель Ae2 `SkyStoneBreakSpeed` снова даёт ×10 для
+инструмента лучше железного (алмаз ~19 тиков вместо ~188; железо — без изменений).
+`[x]` Лазание по кабелю: `LivingEntityClimbableMixin` на HEAD `onClimbable` спрашивает
+`CableBusBlock.isLadder` для `getInBlockState()` (в 26.3 `getFeetBlockState` переименован);
+цепочка `CableBusContainer → IPart → CableAnchorPart` ожила. Без анкера не лезет.
+Тест: замер копания скайстоуна; кабель + `ae2:cable_anchor` на горизонтальную грань, зажать пробел.
 
 ## 6. Крафт-машины (molecular assembler, inscriber)
 `[~]` Идут через `AECapabilities.CRAFTING_MACHINE` (наш шим, не патч NeoForge) — должно жить,
