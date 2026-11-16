@@ -24,6 +24,10 @@ import net.minecraft.world.level.material.Fluid;
 import net.minecraft.world.level.material.Fluids;
 import net.neoforged.neoforge.fluids.FluidStack;
 
+//#if FABRIC
+import nfcompat.bridge.FluidTint;
+//#endif
+
 import appeng.api.stacks.AEFluidKey;
 
 /**
@@ -58,7 +62,10 @@ var tintSource = fluidModel.fluidTintSource();
 //#endif
         if (tintSource != null) {
             //#if FABRIC
-color = -1; // nfcompat: тинт жидкости по стеку недоступен (BlockTintSource работает с ItemStack)
+// nfcompat: берём настоящий ванильный тинт жидкости — BlockTintSource из её fluid-модели
+// (для воды это BiomeColors.getAverageWaterColor, для лавы тинта нет вовсе).
+// «Цвет текста» из Transfer API остался только фолбэком внутри FluidTint.
+color = FluidTint.colorOf(fluidModel, stack);
 //#else
 color = tintSource.colorAsStack(stack);
 //#endif

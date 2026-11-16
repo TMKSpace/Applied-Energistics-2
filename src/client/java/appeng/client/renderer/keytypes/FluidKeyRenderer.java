@@ -22,6 +22,10 @@ import appeng.client.api.AEKeyRenderer;
 import appeng.client.gui.style.FluidBlitter;
 import appeng.util.Platform;
 
+//#if FABRIC
+import nfcompat.bridge.FluidTint;
+//#endif
+
 public class FluidKeyRenderer implements AEKeyRenderer<AEFluidKey, FluidKeyRenderer.RenderState> {
     @Override
     public void drawInGui(Minecraft minecraft, GuiGraphicsExtractor guiGraphics, int x, int y, AEFluidKey what) {
@@ -52,7 +56,8 @@ var tintSource = fluidModel.fluidTintSource();
 //#endif
         if (tintSource != null) {
             //#if FABRIC
-state.color = -1; // nfcompat: тинт жидкости недоступен (BlockTintSource работает с ItemStack)
+// nfcompat: ванильный тинт жидкости (BlockTintSource её fluid-модели); -1 = без тинта.
+state.color = FluidTint.colorOf(fluidModel, fluidStack);
 //#else
 state.color = tintSource.colorAsStack(fluidStack);
 //#endif
