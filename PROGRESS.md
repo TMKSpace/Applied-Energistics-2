@@ -363,6 +363,19 @@ Forge Config API Port **не подошёл**: его `net.neoforged.fml.config`
   оборачивает их в `ResourceHandler` (`StorageItemHandler`, для жидкостей такой был).
 - **Печь и стороны** — не баг: ванильная печь принимает по сторонам только топливо, вход у неё
   сверху. Пуш руды провайдером сбоку не пройдёт ни на Fabric, ни на NeoForge.
+- **Кастомный GUI (`Blitter`)** — в FABRIC-ветке `Blitter.blit` звалась 11-аргументная перегрузка
+  `GuiGraphicsExtractor.blit`, а она подставляет размер источника = размеру назначения. Для текстур
+  256x256 при dest==src это случайно совпадает, поэтому «нормально» выглядели только табы и
+  тулбар-иконки. На 64x64 (чекбокс) и 128x128 (поле ввода) получался зум, а в спрайтах атласа
+  (ползунок, маркер pinned-строки автокрафта) в кроп попадали соседние спрайты. Перешли на
+  13-аргументную перегрузку с явными `srcRect` и `referenceWidth/referenceHeight` — чинит все
+  47 вызовов сразу.
+- **JEI** — плагин AE2 не загружался вообще: Fabric-JEI берёт плагины только из entrypoint
+  `jei_mod_plugin` в `fabric.mod.json` (никакого сканирования `@JeiPlugin` нет — проверено по
+  `mezz.jei.fabric.startup.FabricPluginFinder`). Добавили entrypoint. Плюс жидкостной ингредиент
+  переведён на `FabricTypes.FLUID_STACK` + `JeiFluidIngredient` с пересчётом миллибакетов через
+  `nfcompat.bridge.FluidUnits` (иначе JEI не знает наш тип и R/U по жидкости молчит), а рендер
+  жидкости в Transform-категории на Fabric отдан самому JEI (`setFluidRenderer`).
 
 ## Долг: `AEKeyTypes` запекался пустым (пустая сетка терминала)
 
@@ -385,11 +398,11 @@ Forge Config API Port **не подошёл**: его `net.neoforged.fml.config`
 
 ## Next
 
-1. **Terminal Options**: обрезанные переключатели/иконки — `Blitter` (extract + `peekScissorStack`)
-   и `WidgetContainer`/`AECheckbox` (не нулевая ли ширина).
-2. **JEI-интеграция AE2** не регистрируется: JEI грузится, но плагина `ae2` в списке нет —
-   смотреть `mezz.jei.api.neoforge` в `appeng/integration/modules/jei/**` (на Fabric такого пакета
-   нет, класс плагина, видимо, падает при инициализации; искать в `run/logs/debug.log`).
+1. **Terminal Options**: обрезка переключателей/иконок должна уйти вместе с фиксом `Blitter`
+   (см. «Рантайм») — осталось подтвердить глазами.
+2. **JEI**: плагин теперь грузится (entrypoint `jei_mod_plugin`), жидкостной ингредиент переведён
+   на Fabric-API. Проверить в игре: в логе `Registering ... : ae2:core`, поиск жидкости, R/U по
+   жидкости в AE-терминалах, ghost-drag жидкости в фильтр.
 3. **Гэп-список**: `Player#getDestroySpeed` (скайстоун ×50), `LivingEntity#onClimbable` (лазание
    по кабелю), `OnDatapackSyncEvent`, `FabricExternalStorageStrategy` (пустой файл — теперь можно
    и удалить, мост живёт в `FabricCapabilities`), `StandaloneModels` (null), чтение TOML в шиме,
@@ -425,7 +438,9 @@ Forge Config API Port **не подошёл**: его `net.neoforged.fml.config`
 - `ae2-detail.ps1` — детали по ошибкам AE2, с `-Match <регэксп>`;
 - `missing-symbols.ps1`, `compat-errors.ps1` — разборы;
 - `gen-aw.ps1`, `gen-events.ps1`, `gen-fml-shim.py`, `gen-config-shim.py` — генераторы;
-- `copy-events.py`, `patch-compat-*.py`, `move-logs.py`, `prune-compat.ps1` — разовые утилиты.
+- `copy-events.py`, `patch-compat-*.py`, `move-logs.py`, `prune-compat.ps1` — разовые утилиты;
+- `refresh-markers.py` — дописывает в `markers.tsv` новые маркеры `//#if FABRIC` (существующие
+  строки с заметками не трогает; пути в формате Windows, как в самом файле).
 
 Все скрипты сами ищут лог в `.opencode/`, затем в корне.
 
