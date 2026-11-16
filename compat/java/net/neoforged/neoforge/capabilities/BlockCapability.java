@@ -216,6 +216,17 @@ public final class BlockCapability<T, C extends @Nullable Object> extends BaseCa
             if (ret != null)
                 return ret;
         }
+
+        // Fabric: ванильные контейнеры и моды выставляют хранилища в Fabric Transfer API,
+        // а NeoForge-провайдеров у них нет. Спрашиваем мост — иначе импорт/экспорт-шины,
+        // Pattern Provider, интерфейс и P2P видят рядом пустоту.
+        var fromFabric = nfcompat.bridge.FabricCapabilities.lookup(this, level, pos, state, blockEntity, context);
+        if (fromFabric != null) {
+            @SuppressWarnings("unchecked")
+            T typed = (T) fromFabric;
+            return typed;
+        }
+
         return null;
     }
 }

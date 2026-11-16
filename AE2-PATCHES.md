@@ -96,20 +96,22 @@
 | пустая сетка ME-терминала: сеть живая, `ae2:me_inventory_update` доходит, `Repo` знает записи | `AEKeyTypesInternal.setRegistry()` вешает `BakeCallback`, который на NeoForge срабатывает **после всех регистраций**; наш `RegistryCallbacks` вызывал его немедленно — на `NewRegistryEvent`, когда `ae2:keytypes` ещё пуст (типы приходят позже, в `RegisterEvent(AEKeyType.REGISTRY_KEY)`). Пустой `AEKeyTypes.getAll()` → пустой `KeyTypeSelection` → `Repo.addEntriesToView` отсекает все записи по `typeFilter` | `RegistryCallbacks` копит колбэки, `NfCompat.runRegistrationPhases()` вызывает `bakeAll()` сразу после блока `RegisterEvent` |
 | блок-модели получали пустое model data при сборке меша чанка | `RenderChunkRegion.getBlockEntity()` в этом контексте всегда `null` | `nfcompat/model/client/ClientModelDataLookup` добирает block entity из клиентского мира по позиции |
 | `Platform.isClient()/isServer()` врали в одиночной игре | AE2 сравнивает `ThreadGroup`, а на Fabric группы клиента и встроенного сервера совпадают | `nfcompat.ServerThread` + маркеры в `appeng/util/Platform` |
+| все динамические блок-модели (кабель, привод, крафт-куб, пилон, кварц, краска, QNB) не рисовались | ванильный `BlockStateModel.collectParts(RandomSource, List)` не имеет ни мира, ни позиции, а наш дефолт подставлял `EMPTY`-мир, `BlockPos.ZERO` и воздух. Indigo из Fabric API зовёт именно его через `FabricBlockStateModel.emitQuads` | два редиректа: `ModelBlockRendererMixin` (в `tesselateBlock` контекст есть) и `FabricBlockStateModelMixin` (в `emitQuads` контекст есть) — оба отдают его позиционному `collectParts` |
+| `Missing registry: minecraft:recipe` в тике сервера (дропнутый предмет, апгрейд крафт-юнита) | `Registries.RECIPE` есть у датапаков, но не в `server.registryAccess()`; `RecipeMap.create(lookupOrThrow(...))` падал | карта берётся из `RecipeManager` через `@Accessor("recipes")` (`RecipeManagerAccessor`), `RecipeMaps.of(...)` |
+| на клиенте не работали подстановка результата, кодирование крафт-шаблонов и JEI-подстановка | ваниль 26.3 не отправляет клиенту рецепты (`ClientLevel.recipeAccess()` = `ClientRecipeContainer` без списка), а AE2 берёт их из `RecipesReceivedEvent` — событие никто не постил | пакет `nfcompat:recipes` (`RecipeSync`, порции по 100) при входе и после перезагрузки датапаков; клиент собирает `RecipeMap` и постит `RecipesReceivedEvent` |
+| шины, Pattern Provider, интерфейс и P2P «не видели» соседние сундуки/печи | `Capabilities.Item.BLOCK`/`Fluid.BLOCK` в шиме заканчивались на NeoForge-провайдерах, которых на Fabric нет; `FabricExternalStorageStrategy` был пустым файлом | `nfcompat/bridge/FabricCapabilities` мостит в `ItemStorage.SIDED`/`FluidStorage.SIDED` прямо из `BlockCapability.getCapability`; адаптер — `StorageItemHandler` (для жидкостей уже был) |
 
 ## Исключённые миксины AE2
-
 | миксин | почему |
 |---|---|
 | `AnvilMenuMixin` | целится в `createResultInternal`, которого в ванили нет — метод добавляет NeoForge. Mixin не может добавить public static член, значит intrinsic-чары наковальни остаются непокрытыми |
 
 ## Временная диагностика, спрятанная за `//#if FABRIC`
 
-В двух местах `src/` остались диагностические вызовы (`nfcompat.Diagnostics`) — там, где ответ
-нужен в рантайме, а не при компиляции: `CableBusModel.collectParts` (model data пришла пустой)
-и `CableBusRenderer.submit` (рендерер вызван без состояний частей). Оба обёрнуты в `//#if FABRIC`,
-поэтому для NeoForge-сборки файлы остаются нетронутыми. Удалять вместе с `nfcompat/Diagnostics`,
-когда кабель заработает.
+Раньше тут были строки в `CableBusModel`/`CableBusRenderer` — кабель уже рисуется, они удалены.
+Из диагностики остались только `nfcompat/Diagnostics` (model data при пустом block entity) и
+временная команда-проба `/nfcompat cap|parts|pp|provider` в `nfcompat/debug` — она полезна, когда
+надо за один прогон понять, видит ли AE2 соседний контейнер и куда именно провайдер целится.
 
 ## Мост точек входа
 

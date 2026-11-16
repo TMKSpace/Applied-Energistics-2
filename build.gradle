@@ -227,6 +227,11 @@ dependencies {
 	localRuntime "maven.modrinth:jade:71CTWqdE"                   // 26.3.5+fabric
 	localRuntime "maven.modrinth:modmenu:xckkBHD5"                // 21.0.1 fabric
 
+	// MCPFabric: встроенный в игру HTTP-мост (127.0.0.1:25599), через который агент
+	// сам ставит блоки, читает инвентарь, выполняет команды и делает скриншоты.
+	// Только для рантайма, в компиляции не нужен. Лежит в libs/ (см. .gitignore).
+	localRuntime files("libs/mcpfabric-0.10.0+26.3.jar")
+
 	// --- Сторонние API только для компиляции ---
 	// nightconfig: движок конфигов, на нём построен вендоренный ModConfigSpec.
 	implementation "com.electronwill.night-config:core:3.6.7"
