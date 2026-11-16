@@ -49,6 +49,15 @@ public final class LifecycleBridge {
         }
         installed = true;
 
+        // --- Синхронизация рецептов на клиент ---
+        // Ваниль 26.3 больше не отправляет клиенту рецепты, а AE2 на клиенте их ждёт
+        // (терминал кодирования, JEI-подстановка). NeoForge делает это патчем пакета.
+        nfcompat.network.RecipeSync.install();
+
+        // ВРЕМЕННО: команда-проба моста capability -> Fabric Transfer API.
+        // Удалить, когда шины/провайдер будут проверены в бою.
+        nfcompat.debug.CapabilityProbeCommand.register();
+
         // --- Тики сервера ---
         ServerTickEvents.START_SERVER_TICK.register(server -> {
             adoptServerThread();

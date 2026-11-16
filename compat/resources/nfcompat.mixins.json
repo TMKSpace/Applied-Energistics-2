@@ -4,7 +4,8 @@
   "package": "nfcompat.mixin",
   "compatibilityLevel": "JAVA_21",
   "mixins": [
-    "BlockEntityMixin"
+    "BlockEntityMixin",
+    "RecipeManagerAccessor"
   ],
   "client": [
     "ClientTooltipComponentMixin",
@@ -14,9 +15,11 @@
     "client.BlockColorsMixin",
     "client.BlockEntityRenderersMixin",
     "client.EntityRenderersMixin",
+    "client.FabricBlockStateModelMixin",
     "client.KeyboardHandlerMixin",
     "client.LayerDefinitionsMixin",
     "client.MouseHandlerMixin",
+    "client.ModelBlockRendererMixin",
     "client.OptionsMixin",
     "client.ParticleResourcesMixin"
   ],

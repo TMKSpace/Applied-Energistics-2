@@ -340,6 +340,29 @@ Forge Config API Port **не подошёл**: его `net.neoforged.fml.config`
   из клиентского мира по позиции.
 - **GuideME не поднимаем** — его статическая инициализация требует `ArgumentTypeInfos.registerByClass`
   (патч NeoForge), а Mixin не может добавить non-private static метод. Кнопка «?» погашена `GuidesCommonMixin`.
+- **Кабель и все динамические блок-модели** — рисуются. Причина, почему раньше не рисовались:
+  ванильный `BlockStateModel.collectParts(RandomSource, List)` не получает ни мира, ни позиции, а
+  Indigo (Fabric API) зовёт именно его через `FabricBlockStateModel.emitQuads`. Мир/позиция при этом
+  есть в кадре `ModelBlockRenderer.tesselateBlock` и в параметрах `emitQuads`, поэтому поставлены два
+  редиректа: `nfcompat.mixin.client.ModelBlockRendererMixin` и `FabricBlockStateModelMixin` — они
+  отдают контекст позиционному варианту. В логе это выглядело как вызовы `collectParts` для воздуха
+  в `BlockPos.ZERO`.
+- **Рецепты на сервере** — `nfcompat/recipes/RecipeMaps` берёт карту из `RecipeManager` через
+  `@Accessor("recipes")` (`nfcompat.mixin.RecipeManagerAccessor`). Через реестр нельзя: ключ
+  `minecraft:recipe` есть у датапаков, но не в `server.registryAccess()` — падало
+  `Missing registry: minecraft:recipe` в тике сервера.
+- **Рецепты на клиенте** — ваниль 26.3 не отправляет клиенту рецепты вообще
+  (`ClientLevel.recipeAccess()` = `ClientRecipeContainer` без списка). Сервер шлёт их пакетом
+  `nfcompat:recipes` (`nfcompat/network/RecipeSync`, порции по 100) при входе и после перезагрузки
+  датапаков; клиент собирает `RecipeMap` (`RecipeMaps.createFrom`, приватный конструктор через
+  рефлексию) и постит `RecipesReceivedEvent`. Без этого не работали подстановка результата,
+  кодирование крафт-шаблонов и JEI-подстановка.
+- **Внешние контейнеры (шины, Pattern Provider, интерфейс, P2P)** — `Capabilities.Item.BLOCK` /
+  `Fluid.BLOCK` в шиме больше не заканчиваются на NeoForge-провайдерах: после них
+  `nfcompat/bridge/FabricCapabilities` спрашивает `ItemStorage.SIDED` / `FluidStorage.SIDED` и
+  оборачивает их в `ResourceHandler` (`StorageItemHandler`, для жидкостей такой был).
+- **Печь и стороны** — не баг: ванильная печь принимает по сторонам только топливо, вход у неё
+  сверху. Пуш руды провайдером сбоку не пройдёт ни на Fabric, ни на NeoForge.
 
 ## Долг: `AEKeyTypes` запекался пустым (пустая сетка терминала)
 
@@ -362,18 +385,32 @@ Forge Config API Port **не подошёл**: его `net.neoforged.fml.config`
 
 ## Next
 
-1. **Кабель**: BER регистрируется (`cable_bus: true`), но геометрии нет — смотреть
-   `CableBusDynamicRenderState`, `PartModels` (`clientParts`), `CableBusModel.collectParts`
-   и quad-шим (`client/model/quad` — нормали не трансформируются).
-2. **Terminal Options**: обрезанные переключатели/иконки — `Blitter` (extract + `peekScissorStack`)
+1. **Terminal Options**: обрезанные переключатели/иконки — `Blitter` (extract + `peekScissorStack`)
    и `WidgetContainer`/`AECheckbox` (не нулевая ли ширина).
+2. **JEI-интеграция AE2** не регистрируется: JEI грузится, но плагина `ae2` в списке нет —
+   смотреть `mezz.jei.api.neoforge` в `appeng/integration/modules/jei/**` (на Fabric такого пакета
+   нет, класс плагина, видимо, падает при инициализации; искать в `run/logs/debug.log`).
 3. **Гэп-список**: `Player#getDestroySpeed` (скайстоун ×50), `LivingEntity#onClimbable` (лазание
-   по кабелю), `OnDatapackSyncEvent`/`RecipesReceivedEvent` (рецепты на клиенте), capability наружу
-   (`ItemStorage/FluidStorage/EnergyStorage.SIDED`), `FabricExternalStorageStrategy` (пустой файл),
-   `StandaloneModels` (null), чтение TOML в шиме, entrypoints JEI/REI/Jade.
+   по кабелю), `OnDatapackSyncEvent`, `FabricExternalStorageStrategy` (пустой файл — теперь можно
+   и удалить, мост живёт в `FabricCapabilities`), `StandaloneModels` (null), чтение TOML в шиме,
+   entrypoints REI/Jade.
 4. **Наковальня**: `AnvilMenuMixin` AE2 целится в `createResultInternal`, которого в ванили нет
    (метод добавляет NeoForge) — миксин исключён, intrinsic-чары наковальни остаются непокрытыми.
 5. **GuideME** — нужен патч джара на сборке (отложено).
+6. **Проба моста** — в шиме лежит временная команда `/nfcompat cap|parts|pp|provider`
+   (`nfcompat/debug/CapabilityProbeCommand`), полезная для разбора «шина не видит контейнер».
+   Удалить, когда надобность отпадёт.
+
+## Инструменты стенда
+
+Скрипты лежат в корне проекта, **логи прогонов — в `.opencode/`** (каталог в `.gitignore`).
+
+- **MCPFabric** — Fabric-мод, встраивающий HTTP-мост в игру (`127.0.0.1:25599`, токен в
+  `run/config/mcpfabric.config.json`). Позволяет агенту самому ставить блоки, читать инвентарь,
+  гонять команды и снимать скриншоты. Джарник лежит в `libs/` (в `.gitignore`) и подключён как
+  `localRuntime` в `build.gradle`; MCP-сервер собран в
+  `C:\Users\Kot\.config\opencode\tools\mcpfabric\mcp-server` и прописан в глобальном `opencode.jsonc`.
+  Через него же удобно ловить числа: `/nfcompat cap`, `/nfcompat provider`.
 
 ## Инструменты стенда
 

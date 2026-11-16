@@ -133,9 +133,6 @@ public class CableBusRenderer implements BlockEntityRenderer<CableBusBlockEntity
             CameraRenderState cameraRenderState) {
 
         if (state.sides == null) {
-            //#if FABRIC
-            nfcompat.Diagnostics.cableBusSubmitEmpty();
-            //#endif
             return;
         }
 
