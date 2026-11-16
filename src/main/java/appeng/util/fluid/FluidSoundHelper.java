@@ -27,6 +27,11 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.neoforged.neoforge.common.SoundActions;
 import net.neoforged.neoforge.transfer.fluid.FluidResource;
+//#if FABRIC
+import net.fabricmc.fabric.api.transfer.v1.fluid.FluidVariantAttributes;
+
+import nfcompat.bridge.FluidStacks;
+//#endif
 
 import appeng.api.stacks.AEFluidKey;
 
@@ -44,7 +49,10 @@ public final class FluidSoundHelper {
         }
 
         //#if FABRIC
-        SoundEvent fillSound = null; // nfcompat: звуков жидкостей в шиме нет
+        // Звук берём из Fabric Transfer API: у FluidVariant есть зарегистрированный атрибут-хендлер
+        // звука (вода/лава идут через ванильный Fluid#getBucketFillSound, моды могут регистрировать свой).
+        var variant = FluidStacks.toVariant(fluid.toResource());
+        SoundEvent fillSound = variant.isBlank() ? null : FluidVariantAttributes.getFillSound(variant);
         //#else
         SoundEvent fillSound = fluid.getFluid().getFluidType().getSound(player, SoundActions.BUCKET_FILL);
         //#endif
@@ -61,7 +69,8 @@ public final class FluidSoundHelper {
         }
 
         //#if FABRIC
-        SoundEvent fillSound = null; // nfcompat: звуков жидкостей в шиме нет
+        var variant = FluidStacks.toVariant(fluid.toResource());
+        SoundEvent fillSound = variant.isBlank() ? null : FluidVariantAttributes.getEmptySound(variant);
         //#else
         SoundEvent fillSound = fluid.getFluid().getFluidType().getSound(player, SoundActions.BUCKET_EMPTY);
         //#endif
