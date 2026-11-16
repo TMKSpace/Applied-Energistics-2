@@ -17,12 +17,15 @@ import org.jetbrains.annotations.Nullable;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.Container;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.ServerExplosion;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.BlockHitResult;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.common.util.BlockSnapshot;
 
@@ -65,5 +68,24 @@ public final class EventHooks {
     public static float getBreakSpeed(Player player, BlockState state, float original, @Nullable BlockPos pos) {
         var event = new net.neoforged.neoforge.event.entity.player.PlayerEvent.BreakSpeed(player, state, original, pos);
         return NeoForge.EVENT_BUS.post(event).isCanceled() ? 0f : event.getNewSpeed();
+    }
+
+    /**
+     * NeoForge зовёт это из патченных {@code ServerPlayerGameMode#useItemOn} (сервер) и
+     * {@code MultiPlayerGameMode#performUseItemOn} (клиент, внутри клиентского предсказания).
+     * У нас вместо патчей — миксины {@code ServerPlayerGameModeUseItemOnMixin} и
+     * {@code client.MultiPlayerGameModeUseItemOnMixin}.
+     * <p>
+     * Нужно AE2: {@code WrenchHook} ловит {@code RightClickBlock} и делает всю работу гаечного ключа
+     * (разбор с шифтом, поворот без шифта). Отмена события означает "ваниль не должна ничего делать
+     * с блоком/предметом" — возвращаем {@link InteractionResult} из {@code setCancellationResult},
+     * иначе {@link InteractionResult#PASS} (ваниль продолжает штатно).
+     */
+    public static InteractionResult onRightClickBlock(Player player, Level level, InteractionHand hand,
+            BlockHitResult hitResult) {
+        var event = new net.neoforged.neoforge.event.entity.player.PlayerInteractEvent.RightClickBlock(player, hand,
+                hitResult.getBlockPos(), hitResult);
+        NeoForge.EVENT_BUS.post(event);
+        return event.isCanceled() ? event.getCancellationResult() : InteractionResult.PASS;
     }
 }
