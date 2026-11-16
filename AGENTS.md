@@ -12,6 +12,9 @@
   клиент/сервер, и `Stop-Process` по `fabric.dli.config` роняет его. Проверьте, запущено ли
   что-то (`Get-CimInstance Win32_Process -Filter "Name like '%java%'" | Where-Object { $_.CommandLine -like '*fabric.dli.config*' }`),
   и если да — **не собирайте**, а отложите сборку и напишите об этом в отчёте.
+- **Сервер пользователя: `D:\Servers\Minecraft` — не ронять и не трогать.** Не убивать его
+  процессы, не писать в его каталог (логи, конфиги, миры, моды), не запускать `runServer`
+  на том же порту. Наш стенд — только `D:\Code\java\ae2-fabric-probe`.
 - Сборка: `powershell -NoProfile -ExecutionPolicy Bypass -File build.ps1 -Task classes -NoAnalyze`
   (в `.opencode/`, логи там же). Тесты шима: `-Task shimTest`.
 - Правки в `src/` — только блоками `//#if FABRIC` … `//#else` … `//#endif`, апстрим не переписывать.
