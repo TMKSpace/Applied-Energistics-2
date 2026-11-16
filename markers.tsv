@@ -215,3 +215,33 @@ src\client\java\appeng\datagen\providers\tags\ItemTagsProvider.java	56		return n
 src\client\java\appeng\datagen\providers\tags\ItemTagsProvider.java	183	equivalent.	.addOptionalTag(TagKey.create(Registries.ITEM, Identifier.parse("c:ingots/tin"))) .addOptionalTag(TagKey.create(Registries.ITEM, Identifier.parse("c:ingots/bras
 src\client\java\appeng\datagen\providers\tags\PoiTypeTagsProvider.java	15	Vanilla derives the pack directory from the tag namespace and has no mod-id parameter.	super(packOutput, registries);
 src\client\java\appeng\datagen\providers\tags\VillagerTradeTagsProvider.java	17	Vanilla derives the pack directory from the tag namespace and has no mod-id parameter.	super(output, Registries.VILLAGER_TRADE, lookupProvider);
+src\client\java\appeng\client\AEClientboundPacketHandler.java	145		
+src\client\java\appeng\client\integrations\jei\FluidIngredientConverter.java	7		
+src\client\java\appeng\client\integrations\jei\FluidIngredientConverter.java	27		
+src\client\java\appeng\client\integrations\jei\FluidIngredientConverter.java	33		
+src\client\java\appeng\client\integrations\jei\TransformCategory.java	140		
+src\client\java\appeng\client\model\PaintSplotchesModel.java	85		
+src\client\java\appeng\client\model\QnbFormedModel.java	116		
+src\client\java\appeng\client\model\SpatialPylonModel.java	80		
+src\client\java\appeng\client\render\cablebus\CableBusModel.java	110		
+src\client\java\appeng\client\render\cablebus\FacadeBuilder.java	325		
+src\client\java\appeng\client\render\crafting\CraftingCubeModel.java	80		
+src\client\java\appeng\client\render\model\DriveModel.java	117		
+src\client\java\appeng\datagen\providers\models\AE2ModelProvider.java	114		
+src\client\java\appeng\datagen\providers\models\ItemModelProvider.java	283		
+src\client\java\appeng\datagen\providers\models\ModelSubProvider.java	120		
+src\client\java\appeng\datagen\providers\models\ModelSubProvider.java	291		
+src\client\java\appeng\datagen\providers\tags\IntrinsicTagAppender.java	30		
+src\main\java\appeng\api\features\PlayerRegistryInternal.java	66		
+src\main\java\appeng\api\stacks\AEFluidKey.java	160		
+src\main\java\appeng\block\crafting\AbstractCraftingUnitBlock.java	85		
+src\main\java\appeng\block\networking\CableBusBlock.java	150		
+src\main\java\appeng\block\qnb\QuantumBaseBlock.java	110		
+src\main\java\appeng\blockentity\AEBaseBlockEntity.java	100		
+src\main\java\appeng\parts\automation\PlaneConnectionHelper.java	156		
+src\main\java\appeng\server\services\ChunkLoadState.java	45		
+src\main\java\appeng\server\services\ChunkLoadState.java	50		
+src\main\java\appeng\server\services\compass\CompassRegion.java	63		
+src\main\java\appeng\util\Platform.java	196		
+src\main\java\appeng\util\Platform.java	226		
+src\main\java\appeng\util\Platform.java	237		

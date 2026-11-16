@@ -13,7 +13,9 @@ import mezz.jei.api.gui.drawable.IDrawable;
 import mezz.jei.api.helpers.IGuiHelper;
 import mezz.jei.api.helpers.IJeiHelpers;
 import mezz.jei.api.helpers.IPlatformFluidHelper;
+//#if !FABRIC
 import mezz.jei.api.neoforge.NeoForgeTypes;
+//#endif
 import mezz.jei.api.recipe.RecipeIngredientRole;
 import mezz.jei.api.recipe.types.IRecipeType;
 
@@ -39,7 +41,9 @@ public class TransformCategory extends ViewBasedCategory<RecipeHolder<TransformR
 
     private final IPlatformFluidHelper<?> fluidHelper;
 
+//#if !FABRIC
     private final FluidBlockRenderer fluidRenderer;
+//#endif
 
     public TransformCategory(IJeiHelpers helpers) {
         super(helpers);
@@ -49,7 +53,9 @@ public class TransformCategory extends ViewBasedCategory<RecipeHolder<TransformR
                 AEItems.CERTUS_QUARTZ_CRYSTAL_CHARGED.stack());
         arrow = guiHelper.createDrawable(JEIPlugin.TEXTURE, 0, 17, 24, 17);
         fluidHelper = helpers.getPlatformFluidHelper();
+//#if !FABRIC
         fluidRenderer = new FluidBlockRenderer();
+//#endif
     }
 
     @Override
@@ -131,7 +137,13 @@ public class TransformCategory extends ViewBasedCategory<RecipeHolder<TransformR
                         slot.add(fluid, fluidHelper.bucketVolume());
                     }
 
+//#if FABRIC
+                    // JEI renders the platform fluid ingredient itself; bucketVolume() is
+                    // already in Fabric units (81000), same as the amount added above.
+                    slot.setFluidRenderer(fluidHelper.bucketVolume(), true, 16, 16);
+//#else
                     slot.setCustomRenderer(NeoForgeTypes.FLUID_STACK, fluidRenderer);
+//#endif
                 } else if (recipe.circumstance.isExplosion()) {
                     builder.addSlot(RecipeIngredientRole.CRAFTING_STATION, 55 + 1, yOffset + 1)
                             .setSlotName("explosion")

@@ -333,13 +333,22 @@ public final class Blitter {
         var texture = Minecraft.getInstance().getTextureManager().getTexture(this.texture);
 //#if FABRIC
         // nfcompat: вместо ручной сборки BlitRenderState (submitGuiElementRenderState —
-        // метод NeoForge) рисуем ванильным blit. UV у AE2 нормированные, поэтому
-        // переводим их в пиксели предполагаемого размера текстуры.
+        // метод NeoForge) рисуем ванильным blit.
+        //
+        // ВАЖНО: перегрузка с 11 аргументами (…, x, y, u, v, w, h, texW, texH, color)
+        // подставляет размер источника = (w, h), то есть кроп считается по размеру
+        // назначения, а не по srcRect. Для текстур 256x256 и dest==src это случайно
+        // совпадает, а на 64x64/128x128 и на атласах — нет: в чекбокс попадает зум,
+        // в ползунок и в маркер строки — куски соседних спрайтов атласа.
+        // Поэтому идём в 13-аргументную перегрузку и передаём размер источника и
+        // reference-размеры текстуры явно. Отражение (TextureTransform) при этом
+        // теряется — в AE2 оно нигде не используется.
         guiGraphics.blit(pipeline, this.texture,
                 (int) x1, (int) y1,
-                minU * DEFAULT_TEXTURE_WIDTH, minV * DEFAULT_TEXTURE_HEIGHT,
+                minU * referenceWidth, minV * referenceHeight,
                 (int) (x2 - x1), (int) (y2 - y1),
-                DEFAULT_TEXTURE_WIDTH, DEFAULT_TEXTURE_HEIGHT,
+                getSrcWidth(), getSrcHeight(),
+                referenceWidth, referenceHeight,
                 ARGB.color(a, r, g, b));
         //#else
         guiGraphics.submitGuiElementRenderState(new BlitRenderState(
