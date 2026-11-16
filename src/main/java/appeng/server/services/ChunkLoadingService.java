@@ -26,6 +26,9 @@ import net.neoforged.neoforge.common.world.chunk.LoadingValidationCallback;
 import net.neoforged.neoforge.common.world.chunk.RegisterTicketControllersEvent;
 import net.neoforged.neoforge.common.world.chunk.TicketController;
 import net.neoforged.neoforge.common.world.chunk.TicketHelper;
+//#if FABRIC
+import net.neoforged.neoforge.common.world.chunk.TicketOwnershipQueries;
+//#endif
 import net.neoforged.neoforge.event.server.ServerAboutToStartEvent;
 import net.neoforged.neoforge.event.server.ServerStoppingEvent;
 
@@ -95,7 +98,13 @@ public class ChunkLoadingService implements LoadingValidationCallback {
     }
 
     public boolean isChunkForced(ServerLevel level, int chunkX, int chunkZ) {
+        //#if FABRIC
+        // ChunkLoadState на Fabric никем не наполняется (форс идёт через TicketController), поэтому
+        // спрашиваем бухгалтерию тикетов шима: там лежат именно наши владельцы, чужие форсы не в счёт.
+        return TicketOwnershipQueries.isForcedByUs(level, chunkX, chunkZ);
+        //#else
         return ChunkLoadState.get(level).isForceLoaded(chunkX, chunkZ);
+        //#endif
     }
 
 }
