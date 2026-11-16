@@ -329,6 +329,27 @@ final class TicketOwnershipData extends SavedData {
     // Форс-лоад
     // ------------------------------------------------------------------
 
+    /**
+     * Держит ли этот чанк хотя бы один наш тикет (обычный или с натуральным спавном).
+     *
+     * <p>Спрашиваем именно нашу бухгалтерию, а не ванильный {@code ServerLevel#isPositionTicking}:
+     * чужой форс-лоад (например {@code /forceload}) в эти данные не попадает, поэтому чанк, который
+     * держит кто-то другой, мы своим не считаем.
+     */
+    boolean isForcedByUs(ServerLevel level, long chunk) {
+        var dimId = level.dimension().identifier();
+        var forced = forcedByUs.get(dimId);
+        if (forced != null && forced.contains(chunk)) {
+            return true;
+        }
+        var perChunk = tickets.get(dimId);
+        if (perChunk == null) {
+            return false;
+        }
+        var perOwner = perChunk.get(chunk);
+        return perOwner != null && !perOwner.isEmpty();
+    }
+
     boolean isForcedByController(ServerLevel level, long chunk) {
         var forced = forcedByUs.get(level.dimension().identifier());
         return forced != null && forced.contains(chunk);
