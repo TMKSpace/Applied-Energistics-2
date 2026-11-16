@@ -24,6 +24,8 @@ import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 
 import net.neoforged.fml.util.thread.SidedThreadGroups;
 import net.neoforged.neoforge.common.NeoForge;
+import net.neoforged.neoforge.common.world.chunk.RegisterTicketControllersEvent;
+import net.neoforged.neoforge.common.world.chunk.TicketController;
 import net.neoforged.neoforge.event.RegisterCommandsEvent;
 import net.neoforged.neoforge.event.level.ChunkEvent;
 import net.neoforged.neoforge.event.level.LevelEvent;
@@ -69,6 +71,10 @@ public final class LifecycleBridge {
         // --- Тики измерения: NeoForge рассылает их по одному Level ---
         ServerTickEvents.START_LEVEL_TICK.register(level -> {
             adoptServerThread();
+            // Отложенная валидация тикетов: на момент LOAD чанков ещё нет, блок-сущности
+            // якорей не создать, поэтому коллбэк (AE2 сверяет реальность якорей) крутим
+            // на первом тике, когда чанки уже подгружены.
+            TicketController.runDeferredValidation(level);
             NeoForge.EVENT_BUS.post(new LevelTickEvent.Pre(() -> true, level));
         });
         ServerTickEvents.END_LEVEL_TICK.register(level ->
@@ -90,9 +96,23 @@ public final class LifecycleBridge {
             ServerLifecycleHooks.setCurrentServer(null);
         });
 
-        // --- Выгрузка измерения и чанков (уборка очередей и grid-узлов) ---
-        ServerLevelEvents.UNLOAD.register((server, level) ->
-                NeoForge.EVENT_BUS.post(new LevelEvent.Unload(level)));
+        // --- Загрузка/выгрузка измерения и чанков ---
+        // LOAD: NeoForge постит LevelEvent.Load при создании уровня. Заодно восстанавливаем
+        // форс-лоады, сохранённые владельцами тикетов (spatial anchor), и планируем
+        // валидацию на первый тик измерения.
+        ServerLevelEvents.LOAD.register((server, level) -> {
+            NeoForge.EVENT_BUS.post(new LevelEvent.Load(level));
+            for (var controller : RegisterTicketControllersEvent.getRegisteredControllers()) {
+                controller.validateTickets(level);
+            }
+        });
+        // Выгрузка измерения и чанков (уборка очередей и grid-узлов).
+        ServerLevelEvents.UNLOAD.register((server, level) -> {
+            TicketController.clearDeferredValidation(level);
+            NeoForge.EVENT_BUS.post(new LevelEvent.Unload(level));
+        });
+        ServerChunkEvents.CHUNK_LOAD.register((level, chunk, newChunk) ->
+                NeoForge.EVENT_BUS.post(new ChunkEvent.Load(chunk, newChunk)));
         ServerChunkEvents.CHUNK_UNLOAD.register((level, chunk) ->
                 NeoForge.EVENT_BUS.post(new ChunkEvent.Unload(chunk)));
 

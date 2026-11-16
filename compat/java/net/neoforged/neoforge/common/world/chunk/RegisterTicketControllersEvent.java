@@ -2,9 +2,9 @@
  * Vendored from NeoForge (LGPL-2.1-only), adapted for the Fabric shim.
  * Upstream: net/neoforged/neoforge/common/world/chunk/RegisterTicketControllersEvent.java
  *
- * SHIM: this event is never posted by the Fabric shim. {@link #register(TicketController)} keeps the controller in
- * a static registry so code that queries it behaves sanely, and {@link #getRegisteredControllers()} gives a
- * potential host a way to drive ticket validation.
+ * SHIM: the event is posted by the shim during common setup (see nfcompat.NfCompat), exactly like NeoForge does.
+ * Controllers are kept in a static registry so the chunk loading bookkeeping can find them when a level loads,
+ * and {@link #getRegisteredControllers()} gives the host a way to drive ticket validation.
  */
 
 package net.neoforged.neoforge.common.world.chunk;

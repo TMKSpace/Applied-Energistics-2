@@ -2,9 +2,9 @@
  * Vendored from NeoForge (LGPL-2.1-only), adapted for the Fabric shim.
  * Upstream: net/neoforged/neoforge/common/world/chunk/TicketHelper.java
  *
- * SHIM: NeoForge stores per-owner block/entity ticket maps inside a patched TicketStorage. Vanilla MC 26.3
- * only has a flat set of forced chunks, so the shim's TicketController keeps the per-owner bookkeeping in
- * memory and this helper removes chunks through ServerLevel#setChunkForced.
+ * SHIM: NeoForge stores per-owner block/entity ticket maps inside a patched TicketStorage. The shim keeps that
+ * bookkeeping in TicketOwnershipData; removals go through the owning TicketController so the persisted owner
+ * counters stay in sync with what is actually force-loaded.
  */
 
 package net.neoforged.neoforge.common.world.chunk;
@@ -14,7 +14,6 @@ import java.util.Map;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.world.level.ChunkPos;
 
 /**
  * Class to help mods remove no longer valid tickets before they are activated on load.
@@ -23,11 +22,14 @@ public class TicketHelper {
     private final ServerLevel level;
     private final Identifier controllerId;
     private final Map<BlockPos, TicketSet> blockTickets;
+    private final TicketController controller;
 
-    TicketHelper(ServerLevel level, Identifier controllerId, Map<BlockPos, TicketSet> blockTickets) {
+    TicketHelper(ServerLevel level, Identifier controllerId, Map<BlockPos, TicketSet> blockTickets,
+            TicketController controller) {
         this.level = level;
         this.controllerId = controllerId;
         this.blockTickets = blockTickets;
+        this.controller = controller;
     }
 
     /**
@@ -58,10 +60,10 @@ public class TicketHelper {
             return;
         }
         for (long chunk : existingTickets.normal()) {
-            unforce(chunk);
+            unforce(owner, chunk);
         }
         for (long chunk : existingTickets.naturalSpawning()) {
-            unforce(chunk);
+            unforce(owner, chunk);
         }
     }
 
@@ -77,11 +79,10 @@ public class TicketHelper {
         if (existingTickets.isEmpty()) {
             blockTickets.remove(owner);
         }
-        unforce(chunk);
+        controller.dropTicket(level, owner, chunk, forceNaturalSpawning);
     }
 
-    private void unforce(long packedChunkPos) {
-        var chunkPos = ChunkPos.unpack(packedChunkPos);
-        level.setChunkForced(chunkPos.x(), chunkPos.z(), false);
+    private void unforce(BlockPos owner, long packedChunkPos) {
+        controller.dropAllTickets(level, owner, packedChunkPos);
     }
 }

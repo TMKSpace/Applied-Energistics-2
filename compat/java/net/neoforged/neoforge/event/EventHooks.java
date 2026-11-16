@@ -22,6 +22,7 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.ServerExplosion;
+import net.minecraft.world.level.block.state.BlockState;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.common.util.BlockSnapshot;
 
@@ -51,5 +52,18 @@ public final class EventHooks {
             List<BlockPos> blocks) {
         NeoForge.EVENT_BUS.post(new net.neoforged.neoforge.event.level.ExplosionEvent.Detonate(level, explosion, entities,
                 blocks));
+    }
+
+    /**
+     * NeoForge зовёт это из патченного {@code Player#getDestroySpeed(BlockState)} (у нас — миксин
+     * {@code nfcompat.mixin.PlayerDestroySpeedMixin}). Нужен AE2: {@code SkyStoneBreakSpeed} делит время
+     * копания скайстоуна на 10 для инструментов лучше железного.
+     * <p>
+     * Отменённое событие в NeoForge означает "блок не ломается вообще", поэтому отдаём 0 —
+     * прогресс разрушения не растёт.
+     */
+    public static float getBreakSpeed(Player player, BlockState state, float original, @Nullable BlockPos pos) {
+        var event = new net.neoforged.neoforge.event.entity.player.PlayerEvent.BreakSpeed(player, state, original, pos);
+        return NeoForge.EVENT_BUS.post(event).isCanceled() ? 0f : event.getNewSpeed();
     }
 }
