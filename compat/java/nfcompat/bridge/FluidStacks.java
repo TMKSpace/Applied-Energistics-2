@@ -30,6 +30,14 @@ public final class FluidStacks {
         return FluidVariant.of(resource.getFluid(), resource.getComponentsPatch());
     }
 
+    /** Обратно от {@link #toVariant(FluidResource)}: Fabric-ный вариант -> наш ресурс. */
+    public static FluidResource toResource(FluidVariant variant) {
+        if (variant == null || variant.isBlank()) {
+            return FluidResource.EMPTY;
+        }
+        return FluidResource.of(variant.getFluid(), variant.getComponentsPatch());
+    }
+
     /**
      * @param fabricAmount количество в единицах Fabric (81000 на ведро)
      */

@@ -88,6 +88,12 @@ public final class NfCompat {
         //     собранных провайдеров. Без мода team_reborn_energy — тихо ничего не делает.
         //     Обратное направление (Fabric -> AE2) живёт в FabricCapabilities.
         nfcompat.bridge.FabricEnergy.registerOutbound();
+
+        // 3b. То же для предметов и жидкостей: NeoForge-ные провайдеры AE2 отдаём в
+        //     Fabric-ные ItemStorage.SIDED / FluidStorage.SIDED. Тоже строго после
+        //     события (список блоков берётся из собранных провайдеров) и идемпотентно.
+        nfcompat.bridge.StorageBridge.registerOutbound();
+
         bus.post(new RegisterPayloadHandlersEvent());
         bus.post(new RegisterTicketControllersEvent());
 
