@@ -56,6 +56,12 @@ public final class LifecycleBridge {
         // (терминал кодирования, JEI-подстановка). NeoForge делает это патчем пакета.
         nfcompat.network.RecipeSync.install();
 
+        // --- Item#onItemUseFirst / doesSneakBypassUse ---
+        // Аналог неофорджевского вызова хука предмета из патченного useItemOn. Регистрируется
+        // ДО RightClickBlockBridge: Fabric перебирает хэндлеры UseBlockCallback в порядке
+        // регистрации, а NeoForge тоже сначала даёт шанс предмету, и только потом блоку.
+        nfcompat.bridge.ItemUseFirstBridge.install();
+
         // --- Правая кнопка по блоку ---
         // Аналог неофорджевского PlayerInteractEvent.RightClickBlock: UseBlockCallback из Fabric API
         // стреляет и на клиенте, и на сервере, и умеет отменять ванильную обработку. Нужен

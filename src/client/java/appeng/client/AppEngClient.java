@@ -666,6 +666,15 @@ if (event.getKey() == PART_PLACEMENT_OPPOSITE.getKey().getValue()) {
             spatialStorageSkyRenderer = new SpatialStorageSkyRenderer();
         }
 
+//#if FABRIC
+        // nfcompat: на NeoForge измерение привязано к рендереру атрибутами окружения биома
+        // (neoforge:custom_skybox/clouds/weather_effects), которых нет в ванильном реестре
+        // атрибутов (см. InitBiomes). Поэтому связываем измерение и id рендерера руками —
+        // иначе рендерер зарегистрирован, но его никто не спрашивает.
+        nfcompat.client.EnvironmentRenderers.bind(SpatialStorageDimensionIds.WORLD_ID,
+                SpatialStorageDimensionIds.CUSTOM_RENDERER_ID);
+//#endif
+
         event.registerCloudRenderer(SpatialStorageDimensionIds.CUSTOM_RENDERER_ID, new SpatialStorageCloudsRenderer());
         event.registerSkyboxRenderer(SpatialStorageDimensionIds.CUSTOM_RENDERER_ID, spatialStorageSkyRenderer);
         event.registerWeatherEffectRenderer(SpatialStorageDimensionIds.CUSTOM_RENDERER_ID,

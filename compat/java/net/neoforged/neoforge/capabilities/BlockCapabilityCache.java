@@ -9,19 +9,43 @@ import java.util.Objects;
 import java.util.function.BooleanSupplier;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.world.level.Level;
 import org.jspecify.annotations.Nullable;
 
 /**
- * A cache for block capabilities, to be used to track capabilities at a specific position, with a specific context.
+ * Хелпер для повторяющихся запросов block capability в фиксированной позиции с фиксированным
+ * контекстом.
  *
- * <p>The cache is invalidated when the level is notified of a change via {@link Level#invalidateCapabilities(BlockPos)}.
+ * <h3>nfcompat: этот класс намеренно НЕ кэширует</h3>
  *
- * <p>Instances are automatically cleared by the garbage collector when they are no longer in use.
+ * <p>В NeoForge он держит найденный объект и сбрасывает его по
+ * {@code Level#invalidateCapabilities(BlockPos)}. У нас такого хука нет (Level не патчится,
+ * а {@code nfcompat.capabilities.CapabilityInvalidation} — no-op), поэтому любой кэш здесь
+ * означал бы устаревшие хендлеры: соседний блок сменился или обновил состояние, а шина /
+ * провайдер шаблонов продолжает держать мёртвый {@code IItemHandler}/{@code MEStorage}.
+ * Для экспорт-шины это прямой путь к потере предметов.
+ *
+ * <p>Поэтому {@link #getCapability()} каждый раз идёт в
+ * {@code capability.getCapability(level, pos, null, null, context)} — ровно так же, как
+ * Fabric {@code BlockApiLookup}, у которого кэша нет вовсе.
+ *
+ * <p>Компромисс осознанный: чуть больше запросов на тик (одно обращение к провайдерам на
+ * каждый вызов вместо одного раза на смену блока), зато гарантированно нет устаревших
+ * хендлеров. Профилировки, которая показала бы, что это горячая точка, пока нет; если
+ * появится — вернёмся к кэшу, но уже с реальной инвалидацией (хук на смену блока /
+ * блок-сущности), а не с флагом «первый ответ валиден навсегда».
+ *
+ * <p>Публичный API сохранён как в NeoForge, чтобы код в {@code src/} компилировался без
+ * правок: {@link #create}, {@link #getCapability}, {@link #level()}, {@link #pos()},
+ * {@link #context()}. Перегрузка {@code create(..., isValid, invalidationListener)}
+ * принимает аргументы и игнорирует их: без кэша инвалидировать нечего, поэтому слушатель
+ * не вызывается никогда. (Он и раньше не вызывался: регистрации слушателей в Level у нас
+ * нет, поле слушателя просто лежало без дела.)
  */
 public final class BlockCapabilityCache<T, C extends @Nullable Object> {
     /**
-     * Creates a new cache instance and registers it to the level.
+     * Creates a new cache instance for the given position and context.
+     *
+     * <p>nfcompat: «cache» только по названию — объект не хранит найденную capability.
      *
      * @param capability the capability
      * @param level      the level
@@ -29,44 +53,32 @@ public final class BlockCapabilityCache<T, C extends @Nullable Object> {
      * @param context    extra context for the query
      */
     public static <T, C extends @Nullable Object> BlockCapabilityCache<T, C> create(BlockCapability<T, C> capability, ServerLevel level, BlockPos pos, C context) {
-        return create(capability, level, pos, context, () -> true, () -> {});
+        Objects.requireNonNull(capability);
+        Objects.requireNonNull(level);
+        Objects.requireNonNull(pos);
+
+        return new BlockCapabilityCache<>(capability, level, pos.immutable(), context);
     }
 
     /**
      * Creates a new cache instance with an invalidation listener, and registers it to the level.
      *
-     * <p>A few details regarding the system:
-     * <ul>
-     * <li>Calling {@link #getCapability()} from the invalidation listener is not supported,
-     * as the block being invalidated might not be ready to be queried again yet.
-     * If you receive an invalidation notification, you should wait for some time
-     * (e.g. until your own tick) before checking {@link #getCapability()} again.</li>
-     * <li>In general, do not perform any level access for the listener.
-     * The listener itself might be in a chunk that is being unloaded, for example.</li>
-     * <li>The listener does not receive notifications before {@link #getCapability()} is called.
-     * After each invalidation, {@link #getCapability()} must be called again to enable further notifications.</li>
-     * </ul>
+     * <p>nfcompat: {@code isValid} и {@code invalidationListener} принимаются только ради
+     * совместимости с NeoForge-ным API и не используются — кэша нет, инвалидация не нужна,
+     * уведомлять слушателя не о чем (см. javadoc класса).
      *
      * @param capability           the capability
      * @param level                the level
      * @param pos                  the position
      * @param context              extra context for the query
-     * @param isValid              a function to check if the listener still wants to receive notifications.
-     *                             A typical example would be {@code () -> !this.isRemoved()} for a block entity
-     *                             that should not receive invalidation notifications anymore once it is removed.
-     * @param invalidationListener the invalidation listener. Will be called whenever the capability of the cache might have changed.
+     * @param isValid              ignored: no cache, so no notifications to filter
+     * @param invalidationListener ignored: no cache, so nothing ever gets invalidated
      */
     public static <T, C extends @Nullable Object> BlockCapabilityCache<T, C> create(BlockCapability<T, C> capability, ServerLevel level, BlockPos pos, C context, BooleanSupplier isValid, Runnable invalidationListener) {
-        Objects.requireNonNull(capability);
         Objects.requireNonNull(isValid);
         Objects.requireNonNull(invalidationListener);
-        pos = pos.immutable();
 
-        var cache = new BlockCapabilityCache<>(capability, level, pos, context, isValid, invalidationListener);
-        // nfcompat: в NeoForge здесь level.registerCapabilityListener(pos, listener) — метод,
-        // которого в ванили нет. Пока кеш инвалидируется только по isValid(), слушатель
-        // подключается на этапе миксинов (см. план в PROGRESS.md).
-        return cache;
+        return create(capability, level, pos, context);
     }
 
     private final BlockCapability<T, C> capability;
@@ -74,48 +86,11 @@ public final class BlockCapabilityCache<T, C extends @Nullable Object> {
     private final BlockPos pos;
     private final C context;
 
-    /**
-     * {@code true} if notifications received by the cache will be forwarded to {@link #listener}.
-     * By default and after each invalidation, this is set to {@code false}.
-     * Calling {@link #getCapability()} sets it to {@code true}.
-     */
-    private boolean cacheValid = false;
-    @Nullable
-    private T cachedCap = null;
-
-    private boolean canQuery = true;
-    private final ICapabilityInvalidationListener listener;
-
-    private BlockCapabilityCache(BlockCapability<T, C> capability, ServerLevel level, BlockPos pos, C context, BooleanSupplier isValid, Runnable invalidationListener) {
+    private BlockCapabilityCache(BlockCapability<T, C> capability, ServerLevel level, BlockPos pos, C context) {
         this.capability = capability;
         this.level = level;
         this.pos = pos;
         this.context = context;
-
-        this.listener = () -> {
-            if (!cacheValid) {
-                // already invalidated, just check if the cache should be removed
-                return isValid.getAsBoolean();
-            }
-
-            // disable queries for now
-            canQuery = false;
-            // mark cached cap as invalid
-            cacheValid = false;
-            // clear cached cap
-            cachedCap = null;
-
-            if (isValid.getAsBoolean()) {
-                // notify
-                invalidationListener.run();
-                // re-enable queries
-                canQuery = true;
-                return true;
-            } else {
-                // not valid anymore: keep queries disabled and return false
-                return false;
-            }
-        };
     }
 
     public ServerLevel level() {
@@ -133,26 +108,20 @@ public final class BlockCapabilityCache<T, C extends @Nullable Object> {
     /**
      * Gets the capability instance, or {@code null} if the capability is not present.
      *
-     * <p>If {@linkplain #pos() the target position} is not loaded, this method will return {@code null}.
+     * <p>If {@linkplain #pos() the target position} is not loaded, this method will return
+     * {@code null} — как и в NeoForge, в выгруженный чанк не лезем.
+     *
+     * <p>Результат не запоминается: следующий вызов спросит провайдеров заново.
      */
     @Nullable
     public T getCapability() {
-        if (!canQuery)
-            throw new IllegalStateException("Do not call getCapability on an invalid cache or from the invalidation listener!");
-
-        if (!cacheValid) {
-            if (!level.isLoaded(pos)) {
-                // If the position is not loaded, return no capability for now.
-                // The cache will be invalidated when the chunk is loaded.
-                cachedCap = null;
-            } else {
-                // nfcompat: level.getCapability(...) — NeoForge-ный патч на Level, поэтому
-                // идём напрямую через capability.getCapability(...).
-                cachedCap = capability.getCapability(level, pos, null, null, context);
-            }
-            cacheValid = true;
+        if (!level.isLoaded(pos)) {
+            // If the position is not loaded, return no capability for now.
+            return null;
         }
 
-        return cachedCap;
+        // nfcompat: level.getCapability(...) — NeoForge-ный патч на Level, поэтому
+        // идём напрямую через capability.getCapability(...).
+        return capability.getCapability(level, pos, null, null, context);
     }
 }

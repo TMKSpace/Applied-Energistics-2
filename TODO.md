@@ -154,20 +154,19 @@ Reborn: AE2-источник сам наружу не толкает, работ
 Ниже только то, что влияет на игру; «осознанно пустое» не перечисляем.
 
 ### P0 — краш
-`[~]` **Standalone-модели.** `nfcompat/client/StandaloneModels.get()` всегда `null`, событие
-`ModelEvent.RegisterStandalone` никто не постит. `CrankRenderer:43` и `MEChestRenderer:106` —
-NPE (кривошип, ME-сундук с ячейкой). В работе (шим, `src` не трогаем).
+`[x]` **Standalone-модели** — закрыто. `StandaloneModels` держит карту из
+`ModelEvent.RegisterStandalone` и отдаёт её Fabric-плагину `ModelLoadingPlugin` (`ExtraModelKey`),
+`get(...)` читает запечённое из `ModelManager`. Кривошип и ME-сундук с ячейкой больше не падают.
 
 ### P1 — ключевая механика мертва
-`[~]` **`onItemUseFirst` не вызывается** (11 предметов): фасады не ставятся на кабель, карта
-улучшения не вставляется ПКМ, карта памяти не обходит GUI по шифту, спецповедение портативной
-ячейки/сетевого инструмента/шаблона/дебаг-карт. В работе (`UseBlockCallback` в шиме).
-`[ ]` **Инвалидация capability — не no-op, а баг.** `BlockCapabilityCache` кэширует навсегда:
-`cacheValid` после первого запроса не сбрасывается, слушатель не подключается
-(`CapabilityInvalidation` пуст). `PartAdjacentApi`, `PatternProviderTargetCache`,
-`StorageImportStrategy/ExportStrategy`, `ForgeExternalStorageStrategy` держат мёртвый хендлер
-после смены соседнего блока — вставка «в пустоту» = потеря предметов. Чинить в шиме
-(список кэшей по `(level,pos)` + вызов из `invalidate()`).
+`[x]` **`onItemUseFirst`** — закрыто без правок `src`: в шиме появился `IItemExtension` +
+миксин `@Mixin(Item.class) implements IItemExtension`, поэтому все 11 AE2-переопределений стали
+настоящими override; диспетчер — `ItemUseFirstBridge` на `UseBlockCallback` (регистрируется до
+`RightClickBlockBridge`). Включая `doesSneakBypassUse` для карты памяти.
+`[x]` **Инвалидация capability** — закрыто иначе: кэш в шиме убран целиком
+(`BlockCapabilityCache.getCapability()` всегда спрашивает провайдеры), поэтому устаревших
+хендлеров не бывает. Цена — лишние запросы на тик у шин/провайдеров; если профилировка покажет
+горячую точку, вернёмся к кэшу, но уже с настоящей инвалидацией по смене блока.
 `[ ]` **`AECapabilities` наружу не выставлены:** `ME_STORAGE`, `CRAFTING_MACHINE`,
 `GENERIC_INTERNAL_INV`, `IN_WORLD_GRID_NODE_HOST`, `CRANKABLE` видны только внутри шима.
 В 1.20.1 все были публичными Fabric-lookup (`MEStorage.SIDED`, `GenericInternalInventory.SIDED`,
@@ -180,12 +179,15 @@ NPE (кривошип, ME-сундук с ячейкой). В работе (ши
 потерять данные ноды. Портировать `DeferredBlockEntityUnloader` в шим.
 `[ ]` `ExtractBlockOutlineRenderStateEvent` не постится: нет превью установки деталей и
 per-part обводки (светится весь блок).
-`[ ]` `RegisterPictureInPictureRenderersEvent` не постится: 3D-иконки жидкости в списках
-JEI/REI не рисуются (`FluidBlockRendering` FABRIC-ветка пустая). В работе.
-`[ ]` `BuildCreativeModeTabContentsEvent` не постится: ~19 предметов не попадают в ванильные
-вкладки креатива. В работе.
-`[ ]` Model data без снапшота: `ClientModelDataLookup` читает `Minecraft.level` из потока
-сборки меша — гонка по чанк-мапам, а не «просто медленнее».
+`[~]` `RegisterPictureInPictureRenderersEvent` постится и рендерер регистрируется, но состояния
+никто не отправляет: `FluidBlockRendering` нужен доступ к `GuiGraphicsExtractor` (AW на
+`scissorStack`/`guiRenderState` либо интерфейс-миксин). Пока 3D-иконки жидкости в JEI/REI не рисуются.
+`[x]` `BuildCreativeModeTabContentsEvent` постится из миксина на `CreativeModeTab#buildContents` —
+~19 предметов вернулись в ванильные вкладки.
+`[x]` Model data: снапшотом служит сам `RenderSectionRegion` (у него рабочий `getBlockEntity`,
+проверено javap + логами), клиентский фолбэк `ClientModelDataLookup` удалён вместе с диагностикой.
+`[x]` Скайбокс spatial-измерения: событие постится, `EnvironmentRenderers` связывает измерение с
+id, `LevelRendererEnvironmentMixin` перехватывает небо/облака/погоду (в обычном мире — ваниль).
 `[ ]` `ExtractLevelRenderStateEvent` + `SubmitCustomGeometryEvent` не постятся — area overlay
 не рисуется вообще.
 `[ ]` Фасады без ambient occlusion (`FacadeBuilder` жёстко `false`) — выглядят плоскими;
