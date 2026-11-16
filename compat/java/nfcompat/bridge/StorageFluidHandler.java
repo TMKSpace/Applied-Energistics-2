@@ -2,11 +2,11 @@
  * Часть nfcompat: обратная сторона моста — предъявляем Fabric-ный Storage<FluidVariant>
  * (танк другого мода) как NeoForge-ный ResourceHandler<FluidResource>, которого ждёт AE2.
  *
- * Ограничение: у NeoForge-ной транзакции нет способа «прицепиться» к Fabric-ной,
- * поэтому в эту сторону операции фиксируются сразу (openOuter + commit). Для
- * чтения/записи по одной операции это эквивалентно, но атомарного отката
- * составной операции через границу пока нет. Помечено TODO: сделать при
- * необходимости через собственный журнал + отложенный коммит.
+ * Транзакции: NeoForge-ная транзакция (её держит AE2 и передаёт в insert/extract)
+ * привязывается к Fabric-ной через HandlerTransactions.runOntoFabric, поэтому
+ * `Actionable.SIMULATE` больше не «протекает»: без commit'а Fabric-ная сторона
+ * откатывается. Раньше здесь был openOuter + немедленный commit — то есть симуляция
+ * реально опустошала ведро/бак (SIMULATE-дыра).
  */
 package nfcompat.bridge;
 
@@ -17,7 +17,6 @@ import net.fabricmc.fabric.api.transfer.v1.storage.SlottedStorage;
 import net.fabricmc.fabric.api.transfer.v1.storage.Storage;
 import net.fabricmc.fabric.api.transfer.v1.storage.StorageView;
 import net.fabricmc.fabric.api.transfer.v1.storage.base.SingleSlotStorage;
-import net.fabricmc.fabric.api.transfer.v1.transaction.Transaction;
 import net.neoforged.neoforge.transfer.ResourceHandler;
 import net.neoforged.neoforge.transfer.fluid.FluidResource;
 import net.neoforged.neoforge.transfer.transaction.TransactionContext;
@@ -75,11 +74,8 @@ public final class StorageFluidHandler implements ResourceHandler<FluidResource>
         }
         FluidVariant variant = FluidStacks.toVariant(resource);
         long maxFabric = FluidUnits.toFabric(amount);
-        try (Transaction tx = Transaction.openOuter()) {
-            long inserted = storage.insert(variant, maxFabric, tx);
-            tx.commit();
-            return FluidUnits.toNf(inserted);
-        }
+        return HandlerTransactions.runOntoFabric(transaction, amount,
+                fabricTx -> FluidUnits.toNf(storage.insert(variant, maxFabric, fabricTx)));
     }
 
     @Override
@@ -89,15 +85,12 @@ public final class StorageFluidHandler implements ResourceHandler<FluidResource>
         }
         FluidVariant variant = FluidStacks.toVariant(resource);
         long maxFabric = FluidUnits.toFabric(amount);
-        try (Transaction tx = Transaction.openOuter()) {
-            long extracted = storage.extract(variant, maxFabric, tx);
-            tx.commit();
-            return FluidUnits.toNf(extracted);
-        }
+        int extracted = HandlerTransactions.runOntoFabric(transaction, amount,
+                fabricTx -> FluidUnits.toNf(storage.extract(variant, maxFabric, fabricTx)));
+        return extracted;
     }
 
-    private StorageView<FluidVariant> view(int index) {
-        if (storage instanceof SlottedStorage<?> slotted) {
+    private StorageView<FluidVariant> view(int index) {        if (storage instanceof SlottedStorage<?> slotted) {
             if (index < 0 || index >= slotted.getSlotCount()) {
                 return null;
             }

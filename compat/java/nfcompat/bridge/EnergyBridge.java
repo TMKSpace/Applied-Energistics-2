@@ -23,8 +23,11 @@
  */
 package nfcompat.bridge;
 
+import net.fabricmc.fabric.api.transfer.v1.context.ContainerItemContext;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
@@ -37,6 +40,7 @@ import team.reborn.energy.api.EnergyStorage;
 public final class EnergyBridge {
 
     private static boolean outboundRegistered;
+    private static boolean itemOutboundRegistered;
 
     private EnergyBridge() {
     }
@@ -47,6 +51,44 @@ public final class EnergyBridge {
             @Nullable BlockEntity blockEntity, @Nullable Direction side) {
         EnergyStorage storage = EnergyStorage.SIDED.find(level, pos, state, blockEntity, side);
         return storage == null ? null : new EnergyStorageHandler(storage);
+    }
+
+    /**
+     * Inbound для предметов: `EnergyStorage.ITEM.find` -> наш {@link EnergyHandler}.
+     * Хранилище предмета мутирует сам предмет через контекст, поэтому подмену
+     * (разряженная ячейка -> заряженная) делает {@link ItemAccessContainerContext}.
+     */
+    @Nullable
+    static Object lookupItem(ItemStack stack, ContainerItemContext context) {
+        EnergyStorage storage = EnergyStorage.ITEM.find(stack, context);
+        return storage == null ? null : new EnergyStorageHandler(storage);
+    }
+
+    /**
+     * Outbound для предметов: NeoForge-ные провайдеры `Capabilities.Energy.ITEM`
+     * (заряжаемые инструменты и портативные ячейки AE2) -> `EnergyStorage.ITEM`.
+     * Однократно.
+     */
+    static void registerItemOutbound() {
+        if (itemOutboundRegistered) {
+            return;
+        }
+        itemOutboundRegistered = true;
+
+        var items = Capabilities.Energy.ITEM.providerItems();
+        if (items.isEmpty()) {
+            return;
+        }
+
+        EnergyStorage.ITEM.registerForItems((stack, context) -> {
+            // Только NeoForge-ные провайдеры, без Fabric-fallback'а: см. шапку файла.
+            EnergyHandler handler = Capabilities.Energy.ITEM.getCapabilityDirect(stack,
+                    new ContainerContextItemAccess(context));
+            return handler == null ? null : new EnergyHandlerStorage(handler);
+        }, items.toArray(Item[]::new));
+
+        System.out.println("[nfcompat/energy] outbound: EnergyStorage.ITEM <- "
+                + items.size() + " предмет(ов) с NeoForge-провайдером энергии");
     }
 
     /** Outbound: NeoForge-ные провайдеры энергии -> `EnergyStorage.SIDED`. Однократно. */

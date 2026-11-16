@@ -7,17 +7,14 @@
  * Никакого коэффициента тут быть не должно: FE->AE (0.5) применяет апстрим
  * (`PowerUnit.FE` в `ForgeEnergyAdapter`).
  *
- * Транзакции: работаем с ХРАНИЛИЩЕМ Fabric-ным, поэтому и транзакция Fabric-ная
- * (`Transaction.openOuter`, см. StorageItemHandler). NeoForge-ная транзакция из
- * аргумента `insert`/`extract` тут не используется: прицепить её к Fabric-ной нельзя,
- * поэтому операция фиксируется сразу. Для одиночной вставки/извлечения это
- * эквивалентно, но составная операция через границу не откатится.
- * В обратную сторону (EnergyHandlerStorage) откат работает — там транзакция Fabric-ная
- * внешняя и шим-транзакцию можно привязать к её закрытию.
+ * Транзакции: работаем с ХРАНИЛИЩЕМ Fabric-ным, но транзакция снаружи NeoForge-ная
+ * (AE2 держит её и передаёт в insert/extract). Привязываем её к Fabric-ной через
+ * HandlerTransactions.runOntoFabric — иначе `Actionable.SIMULATE` реально менял бы
+ * заряд, а откат не доходил бы до хранилища. Обратное направление
+ * (EnergyHandlerStorage) делает то же зеркально.
  */
 package nfcompat.bridge;
 
-import net.fabricmc.fabric.api.transfer.v1.transaction.Transaction;
 import net.neoforged.neoforge.transfer.energy.EnergyHandler;
 import net.neoforged.neoforge.transfer.transaction.TransactionContext;
 import team.reborn.energy.api.EnergyStorage;
@@ -49,11 +46,8 @@ public final class EnergyStorageHandler implements EnergyHandler {
         if (amount <= 0 || !storage.supportsInsertion()) {
             return 0;
         }
-        try (Transaction tx = Transaction.openOuter()) {
-            long inserted = storage.insert(amount, tx);
-            tx.commit();
-            return (int) Math.clamp(inserted, 0, amount);
-        }
+        return HandlerTransactions.runOntoFabric(transaction, amount,
+                fabricTx -> (int) Math.clamp(storage.insert(amount, fabricTx), 0, amount));
     }
 
     @Override
@@ -61,10 +55,7 @@ public final class EnergyStorageHandler implements EnergyHandler {
         if (amount <= 0 || !storage.supportsExtraction()) {
             return 0;
         }
-        try (Transaction tx = Transaction.openOuter()) {
-            long extracted = storage.extract(amount, tx);
-            tx.commit();
-            return (int) Math.clamp(extracted, 0, amount);
-        }
+        return HandlerTransactions.runOntoFabric(transaction, amount,
+                fabricTx -> (int) Math.clamp(storage.extract(amount, fabricTx), 0, amount));
     }
 }

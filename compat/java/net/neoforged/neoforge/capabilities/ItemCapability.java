@@ -8,6 +8,7 @@ package net.neoforged.neoforge.capabilities;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -96,6 +97,55 @@ public final class ItemCapability<T, C extends @Nullable Object> extends BaseCap
             return null;
         }
 
+        var fromProviders = fromProviders(stack, context);
+        if (fromProviders != null) {
+            return fromProviders;
+        }
+
+        // Fabric: вёдра, энергоячейки и прочие «предметы с содержимым» выставляют свои
+        // хранилища в Fabric Transfer API (`FluidStorage.ITEM` / `EnergyStorage.ITEM`),
+        // а NeoForge-ных провайдеров у них нет. Спрашиваем мост — иначе жидкостной
+        // терминал/интерфейс и P2P-аттюнмент видят пустоту (см. FabricItemCapabilities).
+        var fromFabric = nfcompat.bridge.FabricItemCapabilities.lookup(this, stack, context);
+        if (fromFabric != null) {
+            @SuppressWarnings("unchecked")
+            T typed = (T) fromFabric;
+            return typed;
+        }
+
+        return null;
+    }
+
+    /**
+     * То же, что {@link #getCapability}, но <b>только NeoForge-ные провайдеры</b>, без
+     * Fabric-fallback'а.
+     *
+     * <p>Нужен мосту в обратную сторону: его провайдер, зарегистрированный в Fabric-ном
+     * lookup, обязан спрашивать эту версию. Иначе получился бы цикл
+     * {@code FabricLookup.find -> наш провайдер -> getCapability -> FabricLookup.find}.
+     */
+    @ApiStatus.Internal
+    @Nullable
+    public T getCapabilityDirect(ItemStack stack, C context) {
+        if (stack.isEmpty()) {
+            return null;
+        }
+        return fromProviders(stack, context);
+    }
+
+    /**
+     * {@return предметы, для которых зарегистрирован хотя бы один провайдер}
+     *
+     * <p>Fabric-ная сторона (мост nfcompat) регистрирует свои lookup'ы не на все
+     * предметы в игре, а ровно на эти. Снимок неизменяемый, порядок не задаётся.
+     */
+    public Set<Item> providerItems() {
+        return Set.copyOf(providers.keySet());
+    }
+
+    /** Общий обход NeoForge-ных провайдеров. */
+    @Nullable
+    private T fromProviders(ItemStack stack, C context) {
         for (var provider : providers.getOrDefault(stack.getItem(), List.of())) {
             var ret = provider.getCapability(stack, context);
             if (ret != null)

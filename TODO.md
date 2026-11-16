@@ -10,13 +10,16 @@
 Сверено с 1.20.1 `InitApiLookup` — потерянных блоков нет.
 
 ## 2. Item-capabilities вообще не смостены
-`[ ]` `Capabilities.Fluid.ITEM` и `Capabilities.Energy.ITEM` не имеют Fabric-моста. Сейчас
-это уже стреляет: JEI-плагин падает на `registerP2PAttunement` (`Ingredient.of([])` —
-`UnsupportedOperationException: Ingredients can't be empty`), потому что оба attunement-списка
-(энергия и жидкости) пустые.
-Ломается: вёдра/контейнеры в жидкостном терминале и интерфейсе, P2P-аттюнмент по предмету,
-ghost-drag жидкости из JEI.
-Тест: ведро воды в слот жидкостного терминала; R/U по жидкости; P2P-категории в JEI.
+`[~]` Сделано в коде: `FabricItemCapabilities` (inbound: `ItemStorage.ITEM`/`FluidStorage.ITEM`/
+`EnergyStorage.ITEM` → наши хендлеры, контекст через `ItemAccessContainerContext`) и
+`ItemCapabilityBridge` (outbound по `ItemCapability.providerItems()` + `getCapabilityDirect`).
+Главное попутное: `HandlerTransactions.runOntoFabric` — Fabric-ная транзакция привязывается к
+NeoForge-ному root, из-за чего симуляция больше не опустошает вёдра (`StorageFluidHandler`,
+`StorageItemHandler`, `EnergyStorageHandler` переведены на него).
+Проверять в игре: ведро воды в жидкостном терминале (`/nfcompat cap held`), пустое ведро через
+`EmptyBucketStorage`, R/U по жидкости, P2P-аттюнмент ведром/энергоячейкой.
+Outbound: 16 энерго-предметов AE2; fluid/item-в-предмете наружу пока 0 (AE2 таких провайдеров
+не регистрирует), inbound работает через Fabric-провайдеры ванили.
 
 ## 3. Масштаб жидкостей ×81
 `[ ]` Граница NeoForge 1000/ведро ↔ Fabric 81000 (`nfcompat.bridge.FluidUnits`). Уже дважды
