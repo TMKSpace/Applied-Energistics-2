@@ -1,4 +1,4 @@
-param(
+﻿param(
     [string]$UpstreamUrl = 'https://github.com/AppliedEnergistics/Applied-Energistics-2.git',
     [string]$UpstreamBranch = 'main',
     [string]$OurBranch = 'fabric-26.3',
@@ -34,13 +34,20 @@ try {
     }
 
     "== тянем апстрим =="
-    git fetch --depth=1 upstream $UpstreamBranch
+    # Глубина 1 ломает поиск общего предка: shallow-коммит выглядит корнем, и git
+    # переигрывает ВСЮ нашу историю (отсюда конфликты add/add на файлах, которые
+    # апстрим на самом деле не менял). Поэтому тянем с запасом.
+    git fetch --depth=200 upstream $UpstreamBranch
     if ($LASTEXITCODE -ne 0) { throw "fetch не прошёл" }
     $upstreamTip = (git rev-parse FETCH_HEAD).Trim()
     "  апстрим: $upstreamTip"
 
-    "== rebase наших маркеров поверх апстрима =="
-    git rebase FETCH_HEAD
+    "== rebase наших коммитов поверх апстрима =="
+    # Переигрываем только своё: всё, что после общего предка.
+    $base = (git merge-base HEAD FETCH_HEAD).Trim()
+    if (-not $base) { throw "общий предок не найден — нужна история глубже: git fetch --unshallow upstream" }
+    "  общий предок: $base"
+    git rebase --onto FETCH_HEAD $base
     if ($LASTEXITCODE -ne 0) {
         "конфликты:"
         git diff --name-only --diff-filter=U | ForEach-Object { "  $_" }
