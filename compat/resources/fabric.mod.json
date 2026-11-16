@@ -3,6 +3,7 @@
   "id": "ae2",
   "version": "26.3-nfcompat",
   "name": "Applied Energistics 2 (nfcompat probe)",
+  "description": "Fabric port of Applied Energistics 2. A Minecraft mod about Matter, Energy and using them to conquer the world...",
   "environment": "*",
   "mixins": [
     "nfcompat.mixins.json",
@@ -24,5 +25,8 @@
     "fabricloader": ">=0.20.1",
     "fabric-api": "*",
     "minecraft": ">=26.3"
+  },
+  "recommends": {
+    "team_reborn_energy": ">=5.0.0"
   }
 }

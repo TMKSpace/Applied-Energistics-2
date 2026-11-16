@@ -173,3 +173,35 @@ Thanks to everyone helping out to improve localization of AE2.
 ## Credits
 
 Thanks to all of our [contributors](https://github.com/AppliedEnergistics/Applied-Energistics-2/graphs/contributors)!
+
+## Fabric port (nfcompat branch)
+
+This branch ports Applied Energistics 2 to Fabric. The NeoForge API layer lives in
+`compat/java` as an extractable shim; AE2 sources stay upstream-compatible, with
+Fabric-only code inside `//#if FABRIC` blocks.
+
+### Energy interop is optional and not shipped
+
+AE2 does not produce power (the charger crank is not a generator), and this port does
+not bundle [Team Reborn Energy](https://github.com/TechReborn/Energy) either: no
+`include` (jar-in-jar), no `implementation`. The metadata only carries
+`recommends: { team_reborn_energy: ">=5.0.0" }`.
+
+- if some other mod brings that library (TechReborn, RebornCore, any generator mod),
+  AE2's bridge turns on and networks can be powered from outside;
+- if nobody brings it, the bridge stays disabled (`isModLoaded` guard) and AE2 works
+  exactly as before — just without external energy. That is a deliberate choice:
+  the mod that supplies energy is the one that should ship the API.
+
+Units are 1 E == 1 FE with no conversion inside the bridge; the FE to AE ratio
+(2 FE = 1 AE) stays in upstream code (`ForgeEnergyAdapter` / `PowerUnit.FE` /
+`powerRatios.forgeEnergy`).
+
+### Other port notes
+
+- Cables and other dynamic block models render through positional `collectParts`
+  hooks (`ModelBlockRendererMixin`, `FabricBlockStateModelMixin`).
+- Recipes are synced to the client by `nfcompat:recipes` (vanilla 26.3 no longer does).
+- `Capabilities.Item/Fluid.BLOCK` fall back to Fabric `ItemStorage`/`FluidStorage`.
+- JEI integration is registered through the `jei_mod_plugin` entrypoint and uses
+  Fabric fluid ingredients.

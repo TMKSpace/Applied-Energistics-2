@@ -103,6 +103,7 @@
 | кастомный GUI: зум в чекбоксах/полях, куски атласа в ползунках и в маркере pinned-строки | в FABRIC-ветке `Blitter.blit` звалась 11-аргументная `GuiGraphicsExtractor.blit`, которая подставляет размер источника = размеру назначения (для 256x256 при dest==src совпадает случайно) | 13-аргументная перегрузка с явными `srcRect` и `referenceWidth/referenceHeight`; отражение (`TextureTransform`) не используется в AE2 и в Fabric-ветке не поддержано |
 | JEI: плагин AE2 отсутствовал в списке JEI без единой ошибки | Fabric-JEI берёт плагины только из entrypoint `jei_mod_plugin` в `fabric.mod.json`, сканирования `@JeiPlugin` нет | entrypoint `appeng.client.integrations.jei.JEIPlugin` в `compat/resources/fabric.mod.json` |
 | JEI: жидкости не находились, R/U по ним молчал | AP2 полагалась на `mezz.jei.api.neoforge.NeoForgeTypes`, которого в Fabric-JEI нет; была своя заглушка, но JEI её тип не знает | FABRIC-ветка: `FabricTypes.FLUID_STACK` + `JeiFluidIngredient`, пересчёт через `nfcompat.bridge.FluidUnits` (1000↔81000), рендер — `setFluidRenderer`; заглушка `NeoForgeTypes` удалена |
+| энергия наружу/извне не ходила | `Capabilities.Energy.BLOCK` в шиме никуда не мостился: чужие генераторы AE2 не видели, AE2 не отдавала энергию (FE-P2P мёртв) | `nfcompat.bridge.FabricEnergy` → `EnergyBridge` (Team Reborn `EnergyStorage.SIDED` ↔ наш `EnergyHandler`, 1 E ≡ 1 FE). Библиотеку **не поставляем** (`compileOnly` + `localRuntime`, `recommends`), без неё мост выключен по `isModLoaded` |
 
 ## Исключённые миксины AE2
 | миксин | почему |

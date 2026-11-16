@@ -8,6 +8,7 @@ package net.neoforged.neoforge.capabilities;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.resources.Identifier;
@@ -211,10 +212,9 @@ public final class BlockCapability<T, C extends @Nullable Object> extends BaseCa
                 state = blockEntity.getBlockState();
         }
 
-        for (var provider : providers.getOrDefault(state.getBlock(), List.of())) {
-            var ret = provider.getCapability(level, pos, state, blockEntity, context);
-            if (ret != null)
-                return ret;
+        var fromProviders = fromProviders(level, pos, state, blockEntity, context);
+        if (fromProviders != null) {
+            return fromProviders;
         }
 
         // Fabric: ванильные контейнеры и моды выставляют хранилища в Fabric Transfer API,
@@ -225,6 +225,58 @@ public final class BlockCapability<T, C extends @Nullable Object> extends BaseCa
             @SuppressWarnings("unchecked")
             T typed = (T) fromFabric;
             return typed;
+        }
+
+        return null;
+    }
+
+    /**
+     * {@return блоки, для которых зарегистрирован хотя бы один провайдер}
+     *
+     * <p>Fabric-ная сторона (мост nfcompat) регистрирует свои lookup'ы не на все блоки
+     * мира, а ровно на эти: тогда чужие машины видят только то, что мы действительно
+     * умеем отдавать. Снимок неизменяемый, порядок не задаётся.
+     */
+    public Set<Block> providerBlocks() {
+        return Set.copyOf(providers.keySet());
+    }
+
+    /**
+     * То же, что {@link #getCapability}, но <b>только NeoForge-ные провайдеры</b>, без
+     * Fabric-fallback'а.
+     *
+     * <p>Нужен мосту в обратную сторону: его провайдер, зарегистрированный в Fabric-ном
+     * lookup, обязан спрашивать эту версию. Иначе получился бы цикл
+     * {@code FabricLookup.find -> наш провайдер -> getCapability -> FabricLookup.find}.
+     */
+    @ApiStatus.Internal
+    @Nullable
+    public T getCapabilityDirect(Level level, BlockPos pos, @Nullable BlockState state, @Nullable BlockEntity blockEntity, C context) {
+        // Convert pos to immutable, it's easy to forget otherwise
+        pos = pos.immutable();
+
+        // Get block state and block entity if they were not provided
+        if (blockEntity == null) {
+            if (state == null)
+                state = level.getBlockState(pos);
+
+            if (state.hasBlockEntity())
+                blockEntity = level.getBlockEntity(pos);
+        } else {
+            if (state == null)
+                state = blockEntity.getBlockState();
+        }
+
+        return fromProviders(level, pos, state, blockEntity, context);
+    }
+
+    /** Общий обход NeoForge-ных провайдеров; state/blockEntity уже разрешены. */
+    @Nullable
+    private T fromProviders(Level level, BlockPos pos, BlockState state, @Nullable BlockEntity blockEntity, C context) {
+        for (var provider : providers.getOrDefault(state.getBlock(), List.of())) {
+            var ret = provider.getCapability(level, pos, state, blockEntity, context);
+            if (ret != null)
+                return ret;
         }
 
         return null;
