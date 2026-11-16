@@ -370,12 +370,19 @@ Forge Config API Port **не подошёл**: его `net.neoforged.fml.config`
   (ползунок, маркер pinned-строки автокрафта) в кроп попадали соседние спрайты. Перешли на
   13-аргументную перегрузку с явными `srcRect` и `referenceWidth/referenceHeight` — чинит все
   47 вызовов сразу.
-- **JEI** — плагин AE2 не загружался вообще: Fabric-JEI берёт плагины только из entrypoint
-  `jei_mod_plugin` в `fabric.mod.json` (никакого сканирования `@JeiPlugin` нет — проверено по
+- **JEI** — плагин AE2 не загружался вообще: Fabric-JEI берёт плагины только из entrypoint  `jei_mod_plugin` в `fabric.mod.json` (никакого сканирования `@JeiPlugin` нет — проверено по
   `mezz.jei.fabric.startup.FabricPluginFinder`). Добавили entrypoint. Плюс жидкостной ингредиент
   переведён на `FabricTypes.FLUID_STACK` + `JeiFluidIngredient` с пересчётом миллибакетов через
   `nfcompat.bridge.FluidUnits` (иначе JEI не знает наш тип и R/U по жидкости молчит), а рендер
   жидкости в Transform-категории на Fabric отдан самому JEI (`setFluidRenderer`).
+- **Мост энергии (опциональный, энергию не поставляем)** — `nfcompat.bridge.FabricEnergy` +
+  `EnergyBridge` + `EnergyStorageHandler`/`EnergyHandlerStorage`. Единицы 1 E ≡ 1 FE, пересчёта нет:
+  коэффициент FE→AE (0.5, т.е. 2 FE = 1 AE) остаётся в апстримном `ForgeEnergyAdapter`/`PowerUnit.FE`.
+  AE2 сама энергию не производит (рукоятка зарядника — не генератор), поэтому библиотеку
+  `Team Reborn Energy` **не вкладываем**: ни `include`, ни `implementation` — только `compileOnly`
+  + `localRuntime` для dev и `recommends` (`>=5.0.0`) в метаданных. Нет библиотеки — мост целиком
+  выключается по `isModLoaded`, AE2 работает как обычно, внешней энергии нет. Это осознанное решение,
+  а не недоделка: API должен приносить тот, кто эту энергию выдаёт.
 
 ## Долг: `AEKeyTypes` запекался пустым (пустая сетка терминала)
 

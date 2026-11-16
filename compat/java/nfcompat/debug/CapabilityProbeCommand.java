@@ -10,6 +10,9 @@
  * Печатает класс и размер хранилища на каждом слое и пробует вставку одного камня
  * (вставка НЕ откатывается — тестировать на мусорном сундуке).
  *
+ * Энерго-секция (класс, amount/capacity, supports*, insert/extract по 1000 FE) живёт
+ * в EnergyProbe и включается только при наличии мода team_reborn_energy.
+ *
  * Удалить вместе с записью в LifecycleBridge, когда мост будет проверен в бою.
  */
 package nfcompat.debug;
@@ -264,6 +267,15 @@ public final class CapabilityProbeCommand {
             }
         }
 
+        // 4. Энергия. Секция целиком под guard'ом: без мода team_reborn_energy команда
+        //    работает как раньше, а классы Team Reborn не грузятся вообще.
+        if (nfcompat.bridge.FabricEnergy.isAvailable()) {
+            EnergyProbe.probe(source, level, pos, state, be);
+        } else {
+            say(source, ChatFormatting.DARK_GRAY,
+                    "энергия: мода team_reborn_energy нет — секция пропущена");
+        }
+
         return 1;
     }
 
@@ -285,7 +297,8 @@ public final class CapabilityProbeCommand {
         return name;
     }
 
-    private static void say(CommandSourceStack source, ChatFormatting color, String text) {
+    /** package-private: энерго-секция живёт в EnergyProbe, печатать должна одинаково. */
+    static void say(CommandSourceStack source, ChatFormatting color, String text) {
         source.sendSuccess(() -> Component.literal("[nfcompat] " + text).withStyle(color), false);
         System.out.println("[nfcompat/cap] " + text);
     }

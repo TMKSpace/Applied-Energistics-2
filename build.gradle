@@ -23,6 +23,15 @@ repositories {
 			includeGroup('maven.modrinth')
 		}
 	}
+	// Team Reborn Energy (MIT): API Fabric-энергии, на нём стоит TechReborn.
+	// Нужен для моста в обе стороны, см. nfcompat.bridge.FabricEnergy*.
+	maven {
+		name = 'Fabric'
+		url = 'https://maven.fabricmc.net/'
+		content {
+			includeGroup('teamreborn')
+		}
+	}
 }
 
 // ВАЖНО: splitEnvironmentSourceSets НЕ включаем.
@@ -247,6 +256,19 @@ dependencies {
 	// REI 26.3.824+fabric
 	compileOnly "maven.modrinth:rei:rKsAE6bX"
 	compileOnly "maven.modrinth:modmenu:xckkBHD5"
+
+	// Team Reborn Energy 5.0.0: API Fabric-энергии (1 E == 1 FE, пересчёта нет).
+	//
+	// ЭНЕРГИЮ НЕ ПОСТАВЛЯЕМ. Ни include (JiJ), ни implementation: библиотека чужая,
+	// её должен притащить тот, кто эту энергию производит (TechReborn/RebornCore и пр.).
+	// Иначе в паке окажется лишний экземпляр мода с id team_reborn_energy.
+	// Нет библиотеки — мост энергии выключается целиком (nfcompat.bridge.FabricEnergy,
+	// проверка isModLoaded), и AE2 живёт без энергии извне. Так и задумано.
+	//
+	// compileOnly — только для компиляции моста; localRuntime — чтобы API был в dev-мире
+	// и /nfcompat cap мог его опросить.
+	compileOnly "teamreborn:energy:5.0.0"
+	localRuntime "teamreborn:energy:5.0.0"
 
 	// --- тесты ---
 	// JUnit 5 + AssertJ: тесты шима и core-механик не требуют запуска игры

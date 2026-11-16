@@ -81,6 +81,13 @@ public final class NfCompat {
 
         // 3. Провайдеры capability и сетевые каналы.
         bus.post(new RegisterCapabilitiesEvent());
+
+        // 3a. Мост энергии в обратную сторону: NeoForge-ные провайдеры энергии (приёмники
+        //     AE2, FE P2P-туннели) отдаём в Fabric-ный EnergyStorage.SIDED, чтобы кабели
+        //     Team Reborn видели AE2. Строго после события: список блоков берётся из уже
+        //     собранных провайдеров. Без мода team_reborn_energy — тихо ничего не делает.
+        //     Обратное направление (Fabric -> AE2) живёт в FabricCapabilities.
+        nfcompat.bridge.FabricEnergy.registerOutbound();
         bus.post(new RegisterPayloadHandlersEvent());
         bus.post(new RegisterTicketControllersEvent());
 

@@ -57,6 +57,12 @@ public final class FabricCapabilities {
             return storage == null ? null : new StorageFluidHandler(storage);
         }
 
+        if (capability == Capabilities.Energy.BLOCK) {
+            // Энергия — мягкая зависимость: без мода team_reborn_energy вернётся null,
+            // а сам класс EnergyStorage даже не загрузится (см. FabricEnergy).
+            return FabricEnergy.lookup(level, pos, state, blockEntity, side);
+        }
+
         return null;
     }
 }
