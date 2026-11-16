@@ -94,6 +94,12 @@ public final class NfCompat {
         //     события (список блоков берётся из собранных провайдеров) и идемпотентно.
         nfcompat.bridge.StorageBridge.registerOutbound();
 
+        // 3c. Item-capability: предметы с содержимым (заряжаемые ячейки и инструменты,
+        //     а также всё, что в будущем зарегистрирует Fluid/Item.ITEM) — в
+        //     Fabric-ные ItemStorage.ITEM / FluidStorage.ITEM / EnergyStorage.ITEM.
+        //     Обратное направление живёт в ItemCapability/FabricItemCapabilities.
+        nfcompat.bridge.ItemCapabilityBridge.registerOutbound();
+
         bus.post(new RegisterPayloadHandlersEvent());
         bus.post(new RegisterTicketControllersEvent());
 

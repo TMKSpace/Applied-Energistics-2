@@ -6,6 +6,7 @@
  *
  *   /nfcompat cap            — по блоку, на который смотрит игрок (до 6 блоков)
  *   /nfcompat cap <x> <y> <z> — по указанной позиции
+ *   /nfcompat cap held       — item-capability предмета в главной руке (см. ItemCapabilityProbe)
  *
  * Печатает класс и размер хранилища на каждом слое и пробует вставку одного камня
  * (вставка НЕ откатывается — тестировать на мусорном сундуке).
@@ -53,6 +54,8 @@ public final class CapabilityProbeCommand {
         dispatcher.register(Commands.literal("nfcompat")
                 .then(Commands.literal("cap")
                         .executes(ctx -> probeLookedAt(ctx.getSource()))
+                        .then(Commands.literal("held")
+                                .executes(ctx -> ItemCapabilityProbe.probeHeld(ctx.getSource())))
                         .then(Commands.argument("x", IntegerArgumentType.integer())
                                 .then(Commands.argument("y", IntegerArgumentType.integer())
                                         .then(Commands.argument("z", IntegerArgumentType.integer())

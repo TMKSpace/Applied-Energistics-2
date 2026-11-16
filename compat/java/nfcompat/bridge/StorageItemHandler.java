@@ -6,9 +6,8 @@
  * нет пересчёта единиц (1 предмет = 1 штука и там, и там), а жидкости расходятся
  * в 81 раз (ведро 1000 у NeoForge против 81000 у Fabric) — см. FluidUnits.
  *
- * Ограничение то же: у NeoForge-ной транзакции нет способа прицепиться к Fabric-ной,
- * поэтому операции фиксируются сразу (openOuter + commit). Для одиночной вставки или
- * извлечения это эквивалентно; составная операция через границу не откатится.
+ * Транзакции — через HandlerTransactions.runOntoFabric: SIMULATE больше не «протекает»
+ * (раньше здесь был openOuter + немедленный commit).
  */
 package nfcompat.bridge;
 
@@ -20,9 +19,7 @@ import net.fabricmc.fabric.api.transfer.v1.storage.SlottedStorage;
 import net.fabricmc.fabric.api.transfer.v1.storage.Storage;
 import net.fabricmc.fabric.api.transfer.v1.storage.StorageView;
 import net.fabricmc.fabric.api.transfer.v1.storage.base.SingleSlotStorage;
-import net.fabricmc.fabric.api.transfer.v1.transaction.Transaction;
-import net.neoforged.neoforge.transfer.ResourceHandler;
-import net.neoforged.neoforge.transfer.item.ItemResource;
+import net.neoforged.neoforge.transfer.ResourceHandler;import net.neoforged.neoforge.transfer.item.ItemResource;
 import net.neoforged.neoforge.transfer.transaction.TransactionContext;
 
 public final class StorageItemHandler implements ResourceHandler<ItemResource> {
@@ -78,11 +75,8 @@ public final class StorageItemHandler implements ResourceHandler<ItemResource> {
             return 0;
         }
         ItemVariant variant = ItemVariant.of(resource.getItem(), resource.getComponentsPatch());
-        try (Transaction tx = Transaction.openOuter()) {
-            long inserted = storage.insert(variant, amount, tx);
-            tx.commit();
-            return (int) Math.min(inserted, amount);
-        }
+        return HandlerTransactions.runOntoFabric(transaction, amount,
+                fabricTx -> (int) Math.min(storage.insert(variant, amount, fabricTx), amount));
     }
 
     @Override
@@ -91,11 +85,8 @@ public final class StorageItemHandler implements ResourceHandler<ItemResource> {
             return 0;
         }
         ItemVariant variant = ItemVariant.of(resource.getItem(), resource.getComponentsPatch());
-        try (Transaction tx = Transaction.openOuter()) {
-            long extracted = storage.extract(variant, amount, tx);
-            tx.commit();
-            return (int) Math.min(extracted, amount);
-        }
+        return HandlerTransactions.runOntoFabric(transaction, amount,
+                fabricTx -> (int) Math.min(storage.extract(variant, amount, fabricTx), amount));
     }
 
     private StorageView<ItemVariant> view(int index) {

@@ -1,6 +1,7 @@
 /*
  * Часть nfcompat. МОСТ ЭНЕРГИИ: NeoForge-ный `EnergyHandler` <-> Fabric-ный
  * `team.reborn.energy.api.EnergyStorage` (Team Reborn Energy, 1 E == 1 FE).
+ * Работает и для блоков (`EnergyStorage.SIDED`), и для предметов (`EnergyStorage.ITEM`).
  *
  * Единицы НЕ пересчитываются: 1 E (Team Reborn) и 1 FE — одно и то же.
  * Коэффициент FE->AE (0.5) живёт в апстриме: `PowerUnit.FE.conversionRatio`
@@ -16,9 +17,11 @@
  */
 package nfcompat.bridge;
 
+import net.fabricmc.fabric.api.transfer.v1.context.ContainerItemContext;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
@@ -55,6 +58,28 @@ public final class FabricEnergy {
     public static Object lookup(Level level, BlockPos pos, @Nullable BlockState state,
             @Nullable BlockEntity blockEntity, @Nullable Direction side) {
         return isAvailable() ? EnergyBridge.lookup(level, pos, state, blockEntity, side) : null;
+    }
+
+    /**
+     * Inbound-направление для предметов: Fabric-ное хранилище энергии ПРЕДМЕТА ->
+     * наш `EnergyHandler` (см. EnergyStorageHandler).
+     *
+     * @return обёртка или {@code null}, если мода нет либо у предмета энергии нет
+     */
+    @Nullable
+    public static Object lookupItem(ItemStack stack, ContainerItemContext context) {
+        return isAvailable() ? EnergyBridge.lookupItem(stack, context) : null;
+    }
+
+    /**
+     * Outbound-направление: отдаём NeoForge-ные провайдеры энергии ПРЕДМЕТОВ
+     * (заряжаемые инструменты и портативные ячейки AE2) в `EnergyStorage.ITEM`.
+     */
+    public static void registerItemOutbound() {
+        if (!isAvailable()) {
+            return;
+        }
+        EnergyBridge.registerItemOutbound();
     }
 
     /**
