@@ -45,8 +45,7 @@ public final class ModelDataHooks {
 
         // Рендер-регион чанка BlockGetter'ом отдаёт null: block entity лежит за его
         // пределами. Берём его из клиентского мира по той же позиции.
-        if (net.fabricmc.loader.api.FabricLoader.getInstance()
-                .getEnvironmentType() == net.fabricmc.api.EnvType.CLIENT) {
+        if (isClientEnvironment()) {
             var fromClient = nfcompat.model.client.ClientModelDataLookup.lookup(pos);
             if (fromClient == ModelData.EMPTY) {
                 nfcompat.Diagnostics.modelDataMissing(pos);
@@ -54,6 +53,20 @@ public final class ModelDataHooks {
             return fromClient;
         }
         return ModelData.EMPTY;
+    }
+
+    /**
+     * Безопасная проверка стороны: в юнит-тестах (shimTest) Fabric-загрузчика нет,
+     * и {@code FabricLoader.getInstance().getEnvironmentType()} кидает NPE.
+     */
+    private static boolean isClientEnvironment() {
+        try {
+            return net.fabricmc.loader.api.FabricLoader.getInstance()
+                    .getEnvironmentType() == net.fabricmc.api.EnvType.CLIENT;
+        } catch (RuntimeException e) {
+            // Нет лаунчера — значит и клиента нет.
+            return false;
+        }
     }
 
     /**

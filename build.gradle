@@ -81,22 +81,20 @@ sourceSets {
 }
 
 // ---------------------------------------------------------------------------
-// Сорсет shimTest: тесты шима и core-механик, которые запускаются СЕЙЧАС.
+// Сорсет shimTest: тесты шима и core-механик.
 //
-// Зачем отдельный сорсет: main красный (сотни ошибок в ещё не отрефакторенных
-// исходниках AE2), а стандартный src/test/java зависит от main.output через
-// testCompileClasspath -> compileJava. То есть обычные тесты не стартуют вообще.
-// shimTest компилирует ТОЛЬКО шим (compat/java) и свои тесты: compileClasspath
-// взят у main (MC 26.3, fabric-loader, fabric-api, nightconfig, jspecify,
-// jetbrains-annotations; mixin приезжает транзитивно с loader'ом), но main.output
-// в него сознательно не входит. Задача shimTest от compileJava не зависит.
+// Исторически main был красным (сотни ошибок в неотрефакторенных исходниках AE2), поэтому
+// shimTest компилировал сам `compat/java` и не зависел от main.output. Сейчас main зелёный,
+// а шим вырос: часть классов `nfcompat/**` ссылается на AE2 (`appeng.*`), и без main.output
+// такой сорсет просто не собирается. Поэтому тесты берут шим из main как обычный
+// потребитель: свой srcDir — только `src/shimTest/java`.
 // ---------------------------------------------------------------------------
 sourceSets {
 	shimTest {
-		java.srcDirs = ['compat/java', 'src/shimTest/java']
+		java.srcDirs = ['src/shimTest/java']
 		// Ресурсы шима для тестов не нужны (fabric.mod.json, mixins.json и т.п.)
 		resources.srcDirs = []
-		compileClasspath = sourceSets.main.compileClasspath + configurations.shimTestCompileClasspath
+		compileClasspath = sourceSets.main.output + sourceSets.main.compileClasspath + configurations.shimTestCompileClasspath
 		runtimeClasspath = output + compileClasspath + configurations.shimTestRuntimeClasspath
 	}
 }
