@@ -9,8 +9,7 @@
     "MatrixFrameExplosionMixin",
     "PickItemFromBlockMixin",
     "PlayerDestroySpeedMixin",
-    "RecipeManagerAccessor",
-    "ServerPlayerGameModeUseItemOnMixin"
+    "RecipeManagerAccessor"
   ],
   "client": [
     "ClientTooltipComponentMixin",
@@ -25,7 +24,6 @@
     "client.LayerDefinitionsMixin",
     "client.MouseHandlerMixin",
     "client.ModelBlockRendererMixin",
-    "client.MultiPlayerGameModeUseItemOnMixin",
     "client.OptionsMixin",
     "client.ParticleResourcesMixin"
   ],

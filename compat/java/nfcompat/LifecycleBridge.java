@@ -56,6 +56,12 @@ public final class LifecycleBridge {
         // (терминал кодирования, JEI-подстановка). NeoForge делает это патчем пакета.
         nfcompat.network.RecipeSync.install();
 
+        // --- Правая кнопка по блоку ---
+        // Аналог неофорджевского PlayerInteractEvent.RightClickBlock: UseBlockCallback из Fabric API
+        // стреляет и на клиенте, и на сервере, и умеет отменять ванильную обработку. Нужен
+        // appeng.hooks.WrenchHook (поворот/разбор гаечным ключом).
+        nfcompat.bridge.RightClickBlockBridge.install();
+
         // ВРЕМЕННО: команда-проба моста capability -> Fabric Transfer API.
         // Удалить, когда шины/провайдер будут проверены в бою.
         nfcompat.debug.CapabilityProbeCommand.register();

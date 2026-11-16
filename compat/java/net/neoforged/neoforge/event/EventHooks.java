@@ -72,9 +72,9 @@ public final class EventHooks {
 
     /**
      * NeoForge зовёт это из патченных {@code ServerPlayerGameMode#useItemOn} (сервер) и
-     * {@code MultiPlayerGameMode#performUseItemOn} (клиент, внутри клиентского предсказания).
-     * У нас вместо патчей — миксины {@code ServerPlayerGameModeUseItemOnMixin} и
-     * {@code client.MultiPlayerGameModeUseItemOnMixin}.
+     * {@code MultiPlayerGameMode#useItemOn} (клиент, до клиентского предсказания). У нас вместо патчей —
+     * {@code UseBlockCallback} из Fabric API, зарегистрированный в
+     * {@code nfcompat.bridge.RightClickBlockBridge} (инжекты Fabric API стоят в тех же местах).
      * <p>
      * Нужно AE2: {@code WrenchHook} ловит {@code RightClickBlock} и делает всю работу гаечного ключа
      * (разбор с шифтом, поворот без шифта). Отмена события означает "ваниль не должна ничего делать
