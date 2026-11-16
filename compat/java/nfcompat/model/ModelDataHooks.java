@@ -2,16 +2,26 @@
  * Часть nfcompat. Статические хелперы вместо неофорджевских патчей BlockGetter/BlockEntity.
  *
  * ПОЧЕМУ ТАК, А НЕ КАК В NEOFORGE:
- * В NeoForge уровень отвечает на getModelData(pos) через ModelDataManager — он держит
- * кэш «позиция -> данные модели», наполняет его при загрузке чанка/блок-сущности и
- * сбрасывает по requestModelDataUpdate(). Кэш нужен, потому что рендер может читать
- * данные модели чаще, чем они меняются.
+ * В NeoForge уровень отвечает на getModelData(pos) через ModelDataManager — кэш
+ * «позиция -> данные модели» с хуками на загрузку/выгрузку блок-сущностей и сбросом
+ * по requestModelDataUpdate(). У нас ни хуков, ни кэша нет — и кэш тут не нужен.
  *
- * У нас такого кэша нет и завести его неоткуда: нет хуков на загрузку/выгрузку
- * блок-сущностей, которыми ModelDataManager набивает свои карты. Поэтому путь
- * простой и честный: каждый вызов достаёт блок-сущность по позиции и спрашивает
- * её напрямую. Дороже, чем кэш (лишний getBlockEntity на каждый запрос), но
- * результат тот же самый — ModelData.EMPTY, если данных нет.
+ * КЭШ НЕ НУЖЕН, ПОТОМУ ЧТО РЕНДЕР-РЕГИОН — УЖЕ СНАПШОТ СЕКЦИИ.
+ * При сборке меша чанка Indigo передаёт в emitQuads не живой Level, а
+ * net.minecraft.client.renderer.chunk.RenderSectionRegion: неизменяемый снимок секции
+ * 16x16x16 вместе с её блок-сущностями. Он implements BlockAndTintGetter и его
+ * getBlockEntity(BlockPos) отдаёт настоящую блок-сущность из снапшота (проверено javap).
+ * То есть чтение идёт из потока сборки меша по этому снимку и никогда не обращается к
+ * живому Minecraft.level. Внутри одного прохода рендера снапшоту устареть не с чего,
+ * а следующий проход получит свой, свежий.
+ *
+ * Отдельного клиентского фолбэка («найти блок-сущность в Minecraft.level по позиции»)
+ * поэтому нет: он бы читал живой мир из фонового потока — ровно то, чего вся эта схема
+ * избегает. До удаления фолбэка он был проверен на живых прогонах: диагностика
+ * «ModelData: пусто» не сработала ни разу, то есть первый путь покрывал все вызовы.
+ *
+ * Итог: путь простой и честный — спросить BlockGetter.getBlockEntity(pos), взять данные
+ * у неё напрямую; ModelData.EMPTY, если блок-сущности нет или она не ModelDataProvider.
  */
 package nfcompat.model;
 
@@ -34,39 +44,15 @@ public final class ModelDataHooks {
      * Все они — наследники {@link BlockGetter} (проверено по minecraft-merged.jar 26.3),
      * так что instanceof срабатывает всегда; проверка оставлена только чтобы не ловить
      * ClassCastException, если кто-то подсунет что-то совсем постороннее.
+     * <p>
+     * В рендере сюда приходит {@code RenderSectionRegion} — снапшот секции, и его
+     * {@code getBlockEntity} отвечает настоящими данными (см. шапку файла).
      */
     public static ModelData get(Object getter, BlockPos pos) {
         if (getter instanceof BlockGetter blockGetter) {
-            var data = get(blockGetter.getBlockEntity(pos));
-            if (data != ModelData.EMPTY) {
-                return data;
-            }
-        }
-
-        // Рендер-регион чанка BlockGetter'ом отдаёт null: block entity лежит за его
-        // пределами. Берём его из клиентского мира по той же позиции.
-        if (isClientEnvironment()) {
-            var fromClient = nfcompat.model.client.ClientModelDataLookup.lookup(pos);
-            if (fromClient == ModelData.EMPTY) {
-                nfcompat.Diagnostics.modelDataMissing(pos);
-            }
-            return fromClient;
+            return get(blockGetter.getBlockEntity(pos));
         }
         return ModelData.EMPTY;
-    }
-
-    /**
-     * Безопасная проверка стороны: в юнит-тестах (shimTest) Fabric-загрузчика нет,
-     * и {@code FabricLoader.getInstance().getEnvironmentType()} кидает NPE.
-     */
-    private static boolean isClientEnvironment() {
-        try {
-            return net.fabricmc.loader.api.FabricLoader.getInstance()
-                    .getEnvironmentType() == net.fabricmc.api.EnvType.CLIENT;
-        } catch (RuntimeException e) {
-            // Нет лаунчера — значит и клиента нет.
-            return false;
-        }
     }
 
     /**

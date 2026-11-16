@@ -100,6 +100,23 @@ public final class NfCompatClient implements ClientModInitializer {
                 BlockStateModelHooks.BLOCK_STATE_MODEL_IDS,
                 BlockStateModelHooks.BLOCK_MODEL_DEFINITION_IDS));
 
+        // 2e3. Кастомные рендереры окружения (небо/облака/погода измерения). На NeoForge
+        //      событие постит сам загрузчик; рендереры складываются в карты, а связь
+        //      "измерение -> id рендерера" мод делает сам (EnvironmentRenderers.bind),
+        //      потому что атрибутов neoforge:custom_* в ванильном реестре нет.
+        NeoForge.EVENT_BUS.post(new net.neoforged.neoforge.client.event.RegisterCustomEnvironmentEffectRendererEvent(
+                nfcompat.client.EnvironmentRenderers.cloudRenderers(),
+                nfcompat.client.EnvironmentRenderers.skyboxRenderers(),
+                nfcompat.client.EnvironmentRenderers.weatherRenderers()));
+
+        // 2f. Группы частиц (`RegisterParticleGroupsEvent`) и picture-in-picture
+        //     рендереры (`RegisterPictureInPictureRenderersEvent`). На NeoForge их
+        //     рассылает патч `ParticleEngine`/`GameRenderer`; у нас карты копятся здесь,
+        //     а применяются в nfcompat.mixin.client.ParticleEngineMixin / GameRendererMixin.
+        //     Строго до создания `ParticleEngine` и `GameRenderer` (оба — на вход в мир/старт).
+        nfcompat.client.ParticleGroups.install();
+        nfcompat.client.PictureInPicture.install();
+
         // 3. Клиентская инициализация.
         var queue = new DeferredWorkQueue();
         NeoForge.EVENT_BUS.post(new FMLClientSetupEvent(NfCompat.container(), queue));
@@ -112,6 +129,21 @@ public final class NfCompatClient implements ClientModInitializer {
         //    AppEngClient.partModels остаётся null, и разрешение модели cable_bus падает
         //    с "Client registries have not been initialized yet" — падает весь reload.
         NeoForge.EVENT_BUS.post(new InitializeClientRegistriesEvent());
+
+        // 5. Standalone-модели (`ModelEvent.RegisterStandalone`): модель ручки кривошипа и
+        //    модели ячеек хранения для ME-сундука. Строго после шага 4: обработчик AE2
+        //    обходит `StorageCellModels`, который наполняется как раз в
+        //    `InitializeClientRegistriesEvent` — иначе в карте окажется только дефолтная
+        //    модель ячейки. И до первого reload'а ресурсов (клиентская инициализация
+        //    загрузчика случается раньше), иначе Fabric-плагин их не увидит.
+        //    Запекание делает сам Fabric: `ModelLoadingPlugin.Context#addModel` кладёт
+        //    их в `ModelDiscovery` и общий `ModelBakery`, а `StandaloneModels.get(...)`
+        //    читает готовое из `ModelManager` (карта пересобирается на каждом reload'е).
+        nfcompat.client.StandaloneModels.install();
+        NeoForge.EVENT_BUS.post(new net.neoforged.neoforge.client.event.ModelEvent.RegisterStandalone(
+                nfcompat.client.StandaloneModels.models()));
+        System.out.println("[nfcompat] standalone-моделей AE2: "
+                + nfcompat.client.StandaloneModels.models().size());
     }
 
     @SuppressWarnings({ "unchecked", "rawtypes" })

@@ -19,6 +19,9 @@
     ],
     "jei_mod_plugin": [
       "appeng.client.integrations.jei.JEIPlugin"
+    ],
+    "fabric-datagen": [
+      "appeng.datagen.AE2DataGenerators"
     ]
   },
   "depends": {

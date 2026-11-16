@@ -5,6 +5,8 @@
   "compatibilityLevel": "JAVA_21",
   "mixins": [
     "BlockEntityMixin",
+    "CreativeModeTabMixin",
+    "ItemExtensionMixin",
     "LivingEntityClimbableMixin",
     "MatrixFrameExplosionMixin",
     "PickItemFromBlockMixin",
@@ -20,11 +22,14 @@
     "client.BlockEntityRenderersMixin",
     "client.EntityRenderersMixin",
     "client.FabricBlockStateModelMixin",
+    "client.GameRendererMixin",
     "client.KeyboardHandlerMixin",
     "client.LayerDefinitionsMixin",
+    "client.LevelRendererEnvironmentMixin",
     "client.MouseHandlerMixin",
     "client.ModelBlockRendererMixin",
     "client.OptionsMixin",
+    "client.ParticleEngineMixin",
     "client.ParticleResourcesMixin"
   ],
   "injectors": {

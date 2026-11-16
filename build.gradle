@@ -211,6 +211,30 @@ tasks.named('compileJava') {
 	dependsOn 'preprocessSources'
 }
 
+// ---------------------------------------------------------------------------
+// Fabric-датаген (fabric-data-generation-api-v1).
+//
+// Вход — appeng.datagen.AE2DataGenerators (src/client/java/appeng/datagen/), он же
+// зарегистрирован как entrypoint "fabric-datagen" в compat/resources/fabric.mod.json.
+// Задача runDatagen создаётся самим Loom'ом (createRunConfiguration).
+//
+// ВАЖНО про вывод: дефолт Loom — src/main/generated, а в репо уже лежат апстримные
+// JSON'ы в src/generated/resources (они подключены как ресурсы main). Прогон туда
+// затирать нельзя, поэтому пишем в build/datagen-out, а addToResources выключаем —
+// сгенерированное не должно утекать ни в main resources, ни в jar.
+// createSourceSet=false: отдельный `datagen` сорсет не нужен, вход уже в main.
+// client=true: модели, локализация и партиклы генерятся только в клиентском режиме.
+// ---------------------------------------------------------------------------
+fabricApi {
+	configureDataGeneration {
+		client = true
+		modId = 'ae2'
+		outputDirectory = file('build/datagen-out')
+		addToResources = false
+		createSourceSet = false
+	}
+}
+
 dependencies {
 	minecraft "com.mojang:minecraft:${project.minecraft_version}"
 	// MC 26.x поставляется необфусцированным — mappings не задаются вообще
