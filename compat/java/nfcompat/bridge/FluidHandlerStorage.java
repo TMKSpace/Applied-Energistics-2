@@ -1,13 +1,15 @@
 /*
- * Часть nfcompat: показываем AE2-шный ResourceHandler<FluidResource> как Fabric-ный
- * Storage<FluidVariant>, чтобы другие Fabric-моды (трубы, танки) могли качать
+ * Часть nfcompat. OUTBOUND: NeoForge-ный `ResourceHandler<FluidResource>` (ME-сундук,
+ * конденсатор, sky stone tank, fluid-P2P-туннель) предъявляется как Fabric-ный
+ * `SlottedStorage<FluidVariant>`, чтобы трубы и танки Fabric-модов могли качать
  * жидкость в AE2 и из AE2.
  *
- * Транзакции: Fabric-транзакция открыта снаружи, поэтому NeoForge-ную мы открываем
- * внутри и привязываем к её закрытию — коммитнулась Fabric-ная, коммитится и наша;
- * иначе просто закрываем без коммита (откат).
+ * Единицы: NeoForge 1000/ведро, Fabric 81000/ведро — пересчёт только через
+ * nfcompat.bridge.FluidUnits (никакой своей арифметики: деление всегда вниз, иначе
+ * можно «создать» жидкость из ничего).
  *
- * Единицы: NeoForge 1000/ведро, Fabric 81000/ведро — пересчёт в nfcompat.bridge.FluidUnits.
+ * Транзакции — см. HandlerTransactions: NeoForge-ная root-транзакция открывается внутри
+ * и привязывается к Fabric-ной, чтобы симуляция/откат и commit работали в обе стороны.
  */
 package nfcompat.bridge;
 
@@ -22,7 +24,6 @@ import net.fabricmc.fabric.api.transfer.v1.storage.base.SingleSlotStorage;
 import net.fabricmc.fabric.api.transfer.v1.transaction.TransactionContext;
 import net.neoforged.neoforge.transfer.ResourceHandler;
 import net.neoforged.neoforge.transfer.fluid.FluidResource;
-import net.neoforged.neoforge.transfer.transaction.Transaction;
 
 public final class FluidHandlerStorage implements SlottedStorage<FluidVariant> {
 
@@ -52,15 +53,19 @@ public final class FluidHandlerStorage implements SlottedStorage<FluidVariant> {
         if (resource == null || resource.isBlank() || maxAmount <= 0) {
             return 0;
         }
-        FluidResource nfResource = FluidResource.of(resource.getObject(), resource.getComponentsPatch());
+        FluidResource nfResource = FluidStacks.toResource(resource);
+        if (nfResource.isEmpty()) {
+            return 0;
+        }
         int maxNf = FluidUnits.toNf(maxAmount);
         if (maxNf <= 0) {
             return 0;
         }
-        Transaction nfTx = Transaction.openRoot();
-        bindRollback(nfTx, transaction);
-        int inserted = handler.insert(nfResource, maxNf, nfTx);
-        version.incrementAndGet();
+        int inserted = HandlerTransactions.run(transaction, maxNf,
+                nfTx -> handler.insert(nfResource, maxNf, nfTx));
+        if (inserted != 0) {
+            version.incrementAndGet();
+        }
         return FluidUnits.toFabric(inserted);
     }
 
@@ -69,15 +74,19 @@ public final class FluidHandlerStorage implements SlottedStorage<FluidVariant> {
         if (resource == null || resource.isBlank() || maxAmount <= 0) {
             return 0;
         }
-        FluidResource nfResource = FluidResource.of(resource.getObject(), resource.getComponentsPatch());
+        FluidResource nfResource = FluidStacks.toResource(resource);
+        if (nfResource.isEmpty()) {
+            return 0;
+        }
         int maxNf = FluidUnits.toNf(maxAmount);
         if (maxNf <= 0) {
             return 0;
         }
-        Transaction nfTx = Transaction.openRoot();
-        bindRollback(nfTx, transaction);
-        int extracted = handler.extract(nfResource, maxNf, nfTx);
-        version.incrementAndGet();
+        int extracted = HandlerTransactions.run(transaction, maxNf,
+                nfTx -> handler.extract(nfResource, maxNf, nfTx));
+        if (extracted != 0) {
+            version.incrementAndGet();
+        }
         return FluidUnits.toFabric(extracted);
     }
 
@@ -95,20 +104,6 @@ public final class FluidHandlerStorage implements SlottedStorage<FluidVariant> {
         return version.get();
     }
 
-    /**
-     * Привязка NeoForge-ной транзакции к внешней Fabric-ной:
-     * закрылась Fabric-ная — коммитим только если она закоммичена,
-     * иначе закрываем NF-ную без коммита (это и есть откат).
-     */
-    private static void bindRollback(Transaction nfTx, TransactionContext fabricTx) {
-        fabricTx.addCloseCallback((ctx, result) -> {
-            if (result.wasCommitted()) {
-                nfTx.commit();
-            }
-            nfTx.close();
-        });
-    }
-
     private final class Slot implements SingleSlotStorage<FluidVariant> {
         private final int index;
 
@@ -121,15 +116,19 @@ public final class FluidHandlerStorage implements SlottedStorage<FluidVariant> {
             if (resource == null || resource.isBlank() || maxAmount <= 0) {
                 return 0;
             }
-            FluidResource nfResource = FluidResource.of(resource.getObject(), resource.getComponentsPatch());
+            FluidResource nfResource = FluidStacks.toResource(resource);
+            if (nfResource.isEmpty()) {
+                return 0;
+            }
             int maxNf = FluidUnits.toNf(maxAmount);
             if (maxNf <= 0) {
                 return 0;
             }
-            Transaction nfTx = Transaction.openRoot();
-            bindRollback(nfTx, transaction);
-            int inserted = handler.insert(index, nfResource, maxNf, nfTx);
-            version.incrementAndGet();
+            int inserted = HandlerTransactions.run(transaction, maxNf,
+                    nfTx -> handler.insert(index, nfResource, maxNf, nfTx));
+            if (inserted != 0) {
+                version.incrementAndGet();
+            }
             return FluidUnits.toFabric(inserted);
         }
 
@@ -138,15 +137,19 @@ public final class FluidHandlerStorage implements SlottedStorage<FluidVariant> {
             if (resource == null || resource.isBlank() || maxAmount <= 0) {
                 return 0;
             }
-            FluidResource nfResource = FluidResource.of(resource.getObject(), resource.getComponentsPatch());
+            FluidResource nfResource = FluidStacks.toResource(resource);
+            if (nfResource.isEmpty()) {
+                return 0;
+            }
             int maxNf = FluidUnits.toNf(maxAmount);
             if (maxNf <= 0) {
                 return 0;
             }
-            Transaction nfTx = Transaction.openRoot();
-            bindRollback(nfTx, transaction);
-            int extracted = handler.extract(index, nfResource, maxNf, nfTx);
-            version.incrementAndGet();
+            int extracted = HandlerTransactions.run(transaction, maxNf,
+                    nfTx -> handler.extract(index, nfResource, maxNf, nfTx));
+            if (extracted != 0) {
+                version.incrementAndGet();
+            }
             return FluidUnits.toFabric(extracted);
         }
 
