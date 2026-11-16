@@ -36,6 +36,10 @@ import net.minecraft.world.phys.Vec3;
 import appeng.blockentity.storage.SkyStoneTankBlockEntity;
 import appeng.client.render.CubeBuilder;
 
+//#if FABRIC
+import nfcompat.bridge.FluidTint;
+//#endif
+
 public final class SkyStoneTankRenderer
         implements BlockEntityRenderer<SkyStoneTankBlockEntity, SkyStoneTankRenderState> {
 
@@ -75,7 +79,8 @@ var tintSource = fluidModel.fluidTintSource();
 //#endif
         if (tintSource != null) {
             //#if FABRIC
-state.color = -1; // nfcompat: тинт жидкости недоступен (BlockTintSource работает с ItemStack)
+// nfcompat: ванильный тинт жидкости (BlockTintSource её fluid-модели); -1 = без тинта.
+state.color = FluidTint.colorOf(fluidModel, fluidStack);
 //#else
 state.color = tintSource.colorAsStack(fluidStack);
 //#endif
