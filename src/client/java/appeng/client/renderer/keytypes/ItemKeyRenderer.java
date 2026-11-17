@@ -56,6 +56,15 @@ public class ItemKeyRenderer implements AEKeyRenderer<AEItemKey, ItemStackRender
 
     @Override
     public void extract(ItemStackRenderState state, AEItemKey what, @Nullable Level level, int seed) {
+        //#if FABRIC
+        // На Fabric точка входа клиента (nfcompat.NfCompatClient) выполняется ВНУТРИ конструктора
+        // Minecraft - до того, как ваниль заполнит поле itemModelResolver (это происходит позже,
+        // при создании ModelManager). NeoForge стартует моды после этого, поэтому там захват
+        // резолвера в конструкторе безопасен. Берём актуальный резолвер, если захваченный null.
+        var itemModelResolver = this.itemModelResolver != null
+                ? this.itemModelResolver
+                : Minecraft.getInstance().getItemModelResolver();
+        //#endif
         itemModelResolver.updateForTopItem(
                 state,
                 what.getReadOnlyStack(),
