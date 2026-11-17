@@ -28,7 +28,10 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Redirect;
 
+import net.minecraft.client.KeyMapping;
+
 import nfcompat.compat.guideme.GuideMEBootstrap;
+import nfcompat.compat.guideme.GuideMEHotkeyCompat;
 
 @Mixin(targets = "guideme.internal.GuideMEClient")
 public class GuideMEClientMixin {
@@ -37,5 +40,19 @@ public class GuideMEClientMixin {
             at = @At(value = "INVOKE", target = "Lguideme/internal/hotkey/OpenGuideHotkey;init()V"))
     private static void nfcompat$initHotkey() {
         GuideMEBootstrap.initHotkey();
+    }
+
+    /**
+     * `registerHotkeys` зовёт `OpenGuideHotkey.getHotkey()` — то есть грузит класс, который
+     * на NeoForge инициализируется 5-аргументным `KeyMapping`. Если `<clinit>` всё же упал
+     * (например, GuideME сменит конструктор), это давало `NoClassDefFoundError` уже на
+     * инициализации `Options` и роняло клиент. Отдаём клавишу из своего холдера: она либо та,
+     * что создал `GuideMEHotkeyMixin`, либо наша ванильная замена.
+     */
+    @Redirect(method = "registerHotkeys", require = 0,
+            at = @At(value = "INVOKE",
+                    target = "Lguideme/internal/hotkey/OpenGuideHotkey;getHotkey()Lnet/minecraft/client/KeyMapping;"))
+    private static KeyMapping nfcompat$hotkey() {
+        return GuideMEHotkeyCompat.mapping();
     }
 }

@@ -32,6 +32,7 @@
     "client.ParticleResourcesMixin",
     "guideme.ArgumentTypeInfosAccessor",
     "guideme.GuideMEClientMixin",
+    "guideme.GuideMEHotkeyMixin",
     "guideme.GuideMERegisterByClassMixin",
     "guideme.RenderPipelineBuilderInvoker",
     "guideme.RenderPipelineToBuilderMixin"
