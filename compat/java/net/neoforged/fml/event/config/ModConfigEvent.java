@@ -34,11 +34,4 @@ public abstract class ModConfigEvent extends Event implements IModBusEvent {
             super(config);
         }
     }
-
-    /** Конфиг выгружен. */
-    public static class Unloading extends ModConfigEvent {
-        public Unloading(ModConfig config) {
-            super(config);
-        }
-    }
 }

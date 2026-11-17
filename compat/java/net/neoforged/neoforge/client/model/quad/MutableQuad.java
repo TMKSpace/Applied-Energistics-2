@@ -769,14 +769,6 @@ public class MutableQuad {
     /**
      * Sets the color of all vertices to a packed ARGB color.
      */
-    public MutableQuad setColor(BakedColors bakedColors) {
-        colors[0] = bakedColors.color(0);
-        colors[1] = bakedColors.color(1);
-        colors[2] = bakedColors.color(2);
-        colors[3] = bakedColors.color(3);
-        return this;
-    }
-
     @Contract(pure = true)
     public boolean hasAmbientOcclusion() {
         return ambientOcclusion;

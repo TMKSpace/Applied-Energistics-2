@@ -60,7 +60,7 @@ public final class ModList {
      * `ClassGraph`/индекс Fabric, либо явным списком.
      */
     public List<net.neoforged.neoforgespi.language.ModFileScanData> getAllScanData() {
-        return List.of();
+        return nfcompat.gametest.ModAnnotationScanner.scanAll();
     }
 
     public List<ModContainer> getMods() {

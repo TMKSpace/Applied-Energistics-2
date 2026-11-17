@@ -17,7 +17,6 @@ import net.minecraft.world.level.storage.ValueOutput;
 import net.neoforged.neoforge.common.util.ValueIOSerializable;
 import net.neoforged.neoforge.transfer.fluid.FluidStacksResourceHandler;
 import net.neoforged.neoforge.transfer.item.ItemResource;
-import net.neoforged.neoforge.transfer.item.ItemStacksResourceHandler;
 import net.neoforged.neoforge.transfer.resource.Resource;
 import net.neoforged.neoforge.transfer.resource.ResourceStack;
 import net.neoforged.neoforge.transfer.transaction.SnapshotJournal;
@@ -40,7 +39,6 @@ import net.neoforged.neoforge.transfer.transaction.TransactionContext;
  *
  * @param <S> The type of stack used to store the contents of this handler.
  * @param <T> The type of resource this handler manages.
- * @see ItemStacksResourceHandler the ItemStack-based subclass
  * @see FluidStacksResourceHandler the FluidStack-based subclass
  * @see ResourceStacksResourceHandler the ResourceStack-based subclass
  */

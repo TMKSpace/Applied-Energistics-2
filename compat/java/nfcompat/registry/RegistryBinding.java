@@ -42,11 +42,30 @@ public final class RegistryBinding {
                 bind(mapped);
             }
         }
-        // Реестры, созданные самим шимом (NewRegistryEvent), в BuiltInRegistries.REGISTRY не лежат.
+        // Реестры, созданные самим шимом (NewRegistryEvent). После ModRegistries#expose они
+        // тоже лежат в BuiltInRegistries.REGISTRY, но список CREATED остаётся каноническим:
+        // там реестр есть даже если разморозить реестр реестров не удалось.
         for (var registry : net.neoforged.neoforge.registries.NewRegistryEvent.getCreatedRegistries()) {
             if (registry instanceof MappedRegistry<?> mapped) {
                 bind(mapped);
             }
+        }
+    }
+
+    /**
+     * Привязывает один holder к значению. Нужно сразу после {@code register}, когда реестр
+     * ещё не заморожен: {@code MappedRegistry#register} создаёт holder через
+     * {@code Reference.createStandAlone}, и без привязки любое чтение значения
+     * ({@code Holder#value}) падает с "Trying to access unbound value".
+     */
+    public static void bindValue(Holder.Reference<?> holder, Object value) {
+        if (BIND_VALUE == null || holder.isBound()) {
+            return;
+        }
+        try {
+            BIND_VALUE.invoke(holder, value);
+        } catch (ReflectiveOperationException | RuntimeException ignored) {
+            // Не смогли - привяжет финальный freeze().
         }
     }
 

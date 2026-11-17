@@ -33,7 +33,6 @@ import net.neoforged.neoforge.transfer.transaction.TransactionContext;
  * If the container does not own its slots, for example because it delegates to another container, this wrapper should not be used!
  *
  * @see PlayerInventoryWrapper
- * @see WorldlyContainerWrapper
  */
 public class VanillaContainerWrapper implements ResourceHandler<ItemResource> {
     /**
@@ -55,8 +54,6 @@ public class VanillaContainerWrapper implements ResourceHandler<ItemResource> {
      * Wraps a vanilla container into a {@link ResourceHandler} of {@link ItemResource}s.
      *
      * <p>If the container is a player {@link Inventory}, use {@link PlayerInventoryWrapper} instead which adds convenience methods for players.
-     *
-     * <p>If the container is a {@link WorldlyContainer}, use {@link WorldlyContainerWrapper} instead which checks the extra methods of worldy containers.
      */
     public static ResourceHandler<ItemResource> of(Container container) {
         // Only expose a ResourceHandler in this method.

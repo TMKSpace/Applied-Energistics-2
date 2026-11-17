@@ -32,12 +32,4 @@ public final class RegistryBuilder<T> {
     public ResourceKey<? extends Registry<T>> key() {
         return key;
     }
-
-    public boolean isSynced() {
-        return sync;
-    }
-
-    public int maxId() {
-        return maxId;
-    }
 }

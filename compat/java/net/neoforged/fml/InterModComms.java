@@ -23,8 +23,4 @@ public final class InterModComms {
         SENT.add(new Message("appliedenergistics2", modId, key, value));
         return true;
     }
-
-    public static List<Message> getSentMessages() {
-        return List.copyOf(SENT);
-    }
 }

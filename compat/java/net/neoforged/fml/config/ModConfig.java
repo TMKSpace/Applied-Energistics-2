@@ -39,10 +39,6 @@ public final class ModConfig {
         public String getSerializedName() {
             return serializedName;
         }
-
-        public String extension() {
-            return serializedName + ".toml";
-        }
     }
 
     private final Type type;
@@ -76,11 +72,6 @@ public final class ModConfig {
 
     public String getFileName() {
         return fileName;
-    }
-
-    @Nullable
-    public Path getFullPath() {
-        return path;
     }
 
     @Nullable

@@ -176,9 +176,6 @@ public final class BlockCapability<T, C extends @Nullable Object> extends BaseCa
     private TriState proxyable = TriState.DEFAULT; // default is false
 
     void setProxyable(boolean proxyable) {
-        if (CapabilityHooks.initFinished) {
-            throw new IllegalStateException("Cannot call setProxyable after the RegisterCapabilitiesEvent has been fired.");
-        }
         switch (this.proxyable) {
             case DEFAULT -> this.proxyable = proxyable ? TriState.TRUE : TriState.FALSE;
             case TRUE -> {

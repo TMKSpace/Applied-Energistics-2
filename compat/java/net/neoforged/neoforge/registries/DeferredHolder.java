@@ -50,10 +50,6 @@ public class DeferredHolder<R, T extends R> extends Holder.Reference<R> implemen
         return create(ResourceKey.create(registryKey, valueName));
     }
 
-    public static <R, T extends R> DeferredHolder<R, T> create(Identifier registryName, Identifier valueName) {
-        return create(ResourceKey.createRegistryKey(registryName), valueName);
-    }
-
     public static <R, T extends R> DeferredHolder<R, T> create(ResourceKey<R> key) {
         return new DeferredHolder<>(key);
     }
@@ -92,10 +88,6 @@ public class DeferredHolder<R, T extends R> extends Holder.Reference<R> implemen
     @Override
     public T get() {
         return value();
-    }
-
-    public Optional<T> asOptional() {
-        return isBound() ? Optional.of(value()) : Optional.empty();
     }
 
     @Override
