@@ -12,7 +12,7 @@
  * лямбда переименуется, миксин упадёт на старте (required=true, defaultRequire=1) -
  * это лучше, чем молча нерабочие модели.
  */
-package nfcompat.mixin;
+package nfcompat.mixin.client;
 
 import com.mojang.serialization.Codec;
 import net.minecraft.client.renderer.block.dispatch.BlockStateModel;

@@ -15,9 +15,9 @@
     "common.RecipeManagerAccessor"
   ],
   "client": [
-    "ClientTooltipComponentMixin",
-    "MultipartSelectorMixin",
-    "SimpleModelSelectorsMixin",
+    "client.ClientTooltipComponentMixin",
+    "client.MultipartSelectorMixin",
+    "client.SimpleModelSelectorsMixin",
     "client.BlockColorsMixin",
     "client.GuiGraphicsExtractorMixin",
     "client.KeyMappingMixin",
