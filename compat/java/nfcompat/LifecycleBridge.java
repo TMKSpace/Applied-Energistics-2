@@ -72,6 +72,11 @@ public final class LifecycleBridge {
         // Удалить, когда шины/провайдер будут проверены в бою.
         nfcompat.debug.CapabilityProbeCommand.register();
 
+        // --- Перезагрузка конфигов (/ae2config reload) ---
+        // Аналог неофорджевского файлового вотчера: у нас перечитывание явное,
+        // иначе правки в config/*.toml подхватывались бы только с перезапуском.
+        nfcompat.config.ConfigReloadCommand.register();
+
         // --- Тики сервера ---
         ServerTickEvents.START_SERVER_TICK.register(server -> {
             adoptServerThread();
