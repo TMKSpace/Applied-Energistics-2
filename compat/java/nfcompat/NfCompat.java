@@ -57,6 +57,15 @@ public final class NfCompat {
     public static void runRegistrationPhases() {
         var bus = NeoForge.EVENT_BUS;
 
+        // 0. Конфиги. На NeoForge загрузчик грузит их после того, как все моды
+        //    построены: AE2 вешает слушателя Loading в конструкторе уже ПОСЛЕ
+        //    registerConfig, поэтому событие нельзя постить в момент регистрации.
+        //    Значения при этом прочитаны раньше (ModConfig#load), так что get() работает.
+        int loadedConfigs = ModContainer.postAllPendingConfigLoads();
+        if (loadedConfigs > 0) {
+            System.out.println("[nfcompat] конфигов загружено: " + loadedConfigs);
+        }
+
         // 1. Собственные реестры мода. Раньше всех: AEKeyType создаётся здесь,
         //    и без него следующий шаг для этого ключа ничего не сделает.
         bus.post(new NewRegistryEvent());
