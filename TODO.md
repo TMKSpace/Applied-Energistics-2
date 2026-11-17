@@ -88,8 +88,9 @@ submitGuiElementRenderState,submitPictureInPictureRenderState}`, `KeyMapping.get
 `CommonListenerCookie` 15-арг, `Entity.onAddedToLevel`, `LevelAccessor.*`, `Lazy` (класс!),
 `NeoForgeClientConfig` (с загрузкой конфига), `ModelDataManager`, `RenderPhaseKeys`/`submitSpecial`,
 `RegisterFeatureRenderersEvent`, `TextureAtlasStitchedEvent`, `ScreenEvent`-стаб, `ItemTooltipEvent`.
-Известные ограничения: `/guideme export` (site-export) мёртв, «показывать гайд при входе» —
-событие `ScreenEvent.Opening` только стаб, датаген GuideME не подключён.
+Известные ограничения: `/guideme export` (site-export) мёртв, датаген GuideME не подключён.
+`ScreenEvent.Opening` теперь **постится** (`client.MinecraftScreenOpeningMixin` → `@ModifyVariable`
+в `Minecraft#setScreen`), так что фича «показать гайд при входе» живая.
 Открыто: dev-страховка рендера страницы (`-Dnfcompat.guide.debugCatch`) — перед релизом
 проверить, что она выключена.
 
@@ -241,10 +242,10 @@ submitGuiElementRenderState,submitPictureInPictureRenderState}`, `KeyMapping.get
 блокер**, делать только если появится аддон; пометить как «осознанно внутри».
 
 ### P2 — заметно, но не ломает
-`[ ]` `onNeighborChange` кабеля мёртв (нет `INeighborChangeSensitive` + миксина на
-`Level#updateNeighbourForOutputSignal`). Частично закрыто: сам сигнал инвалидации теперь
-доставляется (`CapabilityInvalidation`), этого хватило для `ae2:subnet`. Остаётся пинг при
-изменении соседнего блока без участия AE2 (поставили сундук рядом) — нужен миксин, `src` не трогаем.
+`[x]` `onNeighborChange` кабеля — **закрыто**: `IBlockExtension.onNeighborChange` в шиме,
+`Block implements IBlockExtension` и вызов из `Level#updateNeighbourForOutputSignal` по шести
+направлениям (как в NeoForge); `CableBusBlock` в FABRIC-ветке снова компилирует этот метод,
+так что части получают смену соседа (в т.ч. когда рядом поставили/убрали чужой контейнер).
 `[ ]` `onChunkUnloaded` не вызывается, `setRemoved` срабатывает до сохранения чанка — риск
 потерять данные ноды. Портировать `DeferredBlockEntityUnloader` в шим.
 `[ ]` `ExtractBlockOutlineRenderStateEvent` не постится: нет превью установки деталей и
@@ -285,9 +286,8 @@ id, `LevelRendererEnvironmentMixin` перехватывает небо/обла
 открыт AW). `recomputeNormals()` после него не нужен: метод только циклически сдвигает вершины
 вместе с UV. В `src` по-прежнему не зовётся — это гигиена API. Комментарий в шиме исправлен
 (раньше утверждал, что метода в ванили нет).
-`[ ]` Новая находка рядом: `MutableQuad.itemGlintRenderType()` возвращает поле `itemRenderType`
-вместо `itemGlintRenderType` (copy-paste, ~строка 484). Никем не зовётся, но при первом вызове
-даст неверный пайплайн.
+`[x]` `MutableQuad.itemGlintRenderType()` — **закрыто**: возвращал `itemRenderType` вместо
+`itemGlintRenderType` (copy-paste). Сейчас никем не зовётся, но геттер больше не врёт.
 `[ ]` Тинт `MutableQuad` → `BakedQuad` — **принято как граница шима** (категория C): ванильный
 `BakedQuad` в 26.3 — record без цветов и нормалей, шим честно их дропает. Теряются: `QuadTinter`
 (фасады тинтованных блоков, `FacadeBuilder:248`) и точечные `setColorRGB` (канальные точки
