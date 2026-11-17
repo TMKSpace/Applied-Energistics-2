@@ -35,6 +35,7 @@
     "client.LevelRendererEnvironmentMixin",
     "client.LevelRendererSubmitGeometryMixin",
     "client.MouseHandlerMixin",
+    "client.MinecraftScreenOpeningMixin",
     "client.ModelBlockRendererMixin",
     "client.OptionsMixin",
     "client.ParticleEngineMixin",
