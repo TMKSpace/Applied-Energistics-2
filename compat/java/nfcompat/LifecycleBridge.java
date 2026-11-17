@@ -111,6 +111,10 @@ public final class LifecycleBridge {
         ServerLifecycleEvents.SERVER_STOPPED.register(server -> {
             NeoForge.EVENT_BUS.post(new ServerStoppedEvent(server));
             ServerLifecycleHooks.setCurrentServer(null);
+            // Мир закончился: серверный поток будет другим, а фейкплееры держат
+            // ссылки на уровни этого мира.
+            nfcompat.ServerThread.reset();
+            net.neoforged.neoforge.common.util.FakePlayerFactory.clear();
         });
 
         // --- Загрузка/выгрузка измерения и чанков ---
@@ -127,6 +131,8 @@ public final class LifecycleBridge {
         ServerLevelEvents.UNLOAD.register((server, level) -> {
             TicketController.clearDeferredValidation(level);
             NeoForge.EVENT_BUS.post(new LevelEvent.Unload(level));
+            // Уровень умер — после события фейкплееры этого уровня уже не нужны.
+            net.neoforged.neoforge.common.util.FakePlayerFactory.invalidate(level);
         });
         ServerChunkEvents.CHUNK_LOAD.register((level, chunk, newChunk) ->
                 NeoForge.EVENT_BUS.post(new ChunkEvent.Load(chunk, newChunk)));

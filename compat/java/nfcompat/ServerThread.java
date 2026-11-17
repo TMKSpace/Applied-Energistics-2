@@ -44,6 +44,18 @@ public final class ServerThread {
         thread = Thread.currentThread();
     }
 
+    /**
+     * Забывает серверный поток.
+     *
+     * Интегрированный сервер умирает вместе с миром, а при повторном входе создаётся
+     * новый объект и новый поток — старый держать нельзя, иначе {@link #isServer()}
+     * отвечает про поток прошлого мира. Зовётся на SERVER_STOPPED, после рассылки
+     * события (обработчики AE2 ещё вправе считать себя на серверном потоке).
+     */
+    public static void reset() {
+        thread = null;
+    }
+
     /** {@return true, если код исполняется на серверной стороне} */
     public static boolean isServer() {
         if (DEDICATED) {
