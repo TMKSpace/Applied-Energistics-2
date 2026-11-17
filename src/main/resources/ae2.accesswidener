@@ -81,3 +81,8 @@ accessible class net/minecraft/client/gui/GuiGraphicsExtractor$ScissorStack
 accessible method net/minecraft/client/gui/GuiGraphicsExtractor$ScissorStack peek ()Lnet/minecraft/client/gui/navigation/ScreenRectangle;
 # nfcompat: GuideME строит ScaledGuiGraphics через приватный конструктор экстрактора
 accessible method net/minecraft/client/gui/GuiGraphicsExtractor <init> (Lnet/minecraft/client/Minecraft;Lorg/joml/Matrix3x2fStack;Lnet/minecraft/client/renderer/state/gui/GuiRenderState;II)V
+# nfcompat: GuideME (ScenePictureInPictureRenderer) читает приватные текстуры PIP-рендерера
+accessible field net/minecraft/client/gui/render/pip/PictureInPictureRenderer texture Lcom/mojang/renderpearl/api/textures/GpuTexture;
+accessible field net/minecraft/client/gui/render/pip/PictureInPictureRenderer textureView Lcom/mojang/renderpearl/api/textures/GpuTextureView;
+accessible field net/minecraft/client/gui/render/pip/PictureInPictureRenderer depthTexture Lcom/mojang/renderpearl/api/textures/GpuTexture;
+accessible field net/minecraft/client/gui/render/pip/PictureInPictureRenderer depthTextureView Lcom/mojang/renderpearl/api/textures/GpuTextureView;
