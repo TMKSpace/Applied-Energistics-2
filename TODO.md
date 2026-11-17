@@ -238,7 +238,26 @@ per-part обводки (светится весь блок).
 `[x]` Скайбокс spatial-измерения: событие постится, `EnvironmentRenderers` связывает измерение с
 id, `LevelRendererEnvironmentMixin` перехватывает небо/облака/погоду (в обычном мире — ваниль).
 `[ ]` `ExtractLevelRenderStateEvent` + `SubmitCustomGeometryEvent` не постятся — area overlay
-не рисуется вообще.
+не рисуется вообще. **Разбор (oracle): свой рендер-пас не нужен**, ваниль 26.3 уже умеет
+`OrderedSubmitNodeCollector.submitCustomGeometry(...)`, и `AreaOverlayRenderer` его зовёт.
+Нужны два тонких миксина: `@Inject(TAIL)` в `LevelExtractor#extract(DeltaTracker, Camera, float)`
+для extract-события и `@Inject(AFTER)` на `ParticlesRenderState.submit(...)` внутри
+`LevelRenderer#submitFeatures` для submit-события (свежая `PoseStack` + пустой список секций —
+AE2 сам транслирует на камеру, `getRenderableSections()` никто не читает). Слушатель уже
+зарегистрирован (`AppEngClient:309`), `//#if FABRIC`-гейты в `AreaOverlayRenderer` уже есть,
+`src` трогать не придётся. Хрупкое место — имена `submitFeatures`/`ParticlesRenderState.submit`.
+`[ ]` `MutableQuad.recalculateWinding()` — no-op, и комментарий в `MutableQuad.java:948` врёт:
+`FaceBakery#recalculateWinding(Vector3fc[], long[], Direction)` **есть в ванили 26.3** (private
+static), AW `ae2.accesswidener:78` уже открывает ровно её. Фикс на 10 строк: делегировать
+и затем `recomputeNormals`. В `src` метод сейчас не зовётся (только тест `CubeBuilderTest`,
+и он ходит в `FaceBakery` напрямую) — то есть это гигиена API, а не фича.
+`[ ]` Тинт `MutableQuad` → `BakedQuad` — **принято как граница шима** (категория C): ванильный
+`BakedQuad` в 26.3 — record без цветов и нормалей, шим честно их дропает. Теряются: `QuadTinter`
+(фасады тинтованных блоков, `FacadeBuilder:248`) и точечные `setColorRGB` (канальные точки
+смарт-кабелей `CableBuilder:314-337`, крафт-монитор, карта памяти); сами текстуры кабеля цветные,
+поэтому белеют не кабели, а индикаторы. Повторять NF-путь = интерфейс-миксин на ванильный record
+плюс патч паковщика вершин — дорого и хрупко. Опционально потом: точечный `tintIndex`-вариант
+для канальных точек через ванильный `BlockTintSource`, если в игре будет выглядеть сломанно.
 `[ ]` Фасады без ambient occlusion (`FacadeBuilder` жёстко `false`) — выглядят плоскими;
 в 26.3 поля в `BlockStateModelPart` нет, значит нужен свой флаг в шиме либо принять.
 
