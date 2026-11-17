@@ -76,15 +76,22 @@ Reborn: AE2-источник сам наружу не толкает, работ
 в игре не смотрели.
 `[ ]` REI — не проверялся вовсе.
 `[ ]` Jade — плагин грузится, реальный вывод не смотрели.
-`[x]` GuideME — работает. Всё GuideME-специфичное изолировано в `nfcompat/compat/guideme`
-и `nfcompat/mixin/guideme` (7 файлов, каталог удаляется целиком, без него шим живёт).
-Закрыты три неофорджевские сигнатуры: `ArgumentTypeInfos.registerByClass` (`@Accessor`
-к `BY_CLASS` + `@Redirect` двух лямбд), `ModContainer.registerExtensionPoint` (возврат
-`void`), `RenderPipeline.toBuilder()` (`@Unique`-метод, копирующий состояние в `Builder`).
-Миксины GuideME — в секции `"client"`: их таргеты (`guideme.internal.*`,
-`com.mojang.renderpearl.*`) на сервере отсутствуют и роняли запуск в PREPARE.
-Открыто: хоткей GuideME отключён (5-арг `KeyMapping` с `IKeyConflictContext` не шимим,
-в логе "хоткей GuideME пропущен").
+`[x]` GuideME — **работает, проверено в игре**: страницы (текст, спрайты, ссылки), 3D-сцены,
+хоткей «зажми G у предмета» (через постинг `ItemTooltipEvent`), иконки жидкостей, поиск/навигация.
+Всё GuideME-специфичное изолировано в `nfcompat/compat/guideme` и `nfcompat/mixin/guideme`
+(каталоги удаляются целиком, без них шим живёт).
+Закрытые неофорджевские точки: `ArgumentTypeInfos.registerByClass`, `ModContainer.registerExtensionPoint`
+(void), `RenderPipeline.toBuilder()` (+ перенос shader defines), `KeyMapping` 5-арг конструктор,
+`SimpleJsonResourceReloadListener.scanDirectory`, `GuiGraphicsExtractor.{peekScissorStack,
+submitGuiElementRenderState,submitPictureInPictureRenderState}`, `KeyMapping.getKey`,
+`ItemStackTemplate` ctor'ы, `FluidModel.{customRenderer,fluidTintSource}`, `hasMaterialFlag(4)`,
+`CommonListenerCookie` 15-арг, `Entity.onAddedToLevel`, `LevelAccessor.*`, `Lazy` (класс!),
+`NeoForgeClientConfig` (с загрузкой конфига), `ModelDataManager`, `RenderPhaseKeys`/`submitSpecial`,
+`RegisterFeatureRenderersEvent`, `TextureAtlasStitchedEvent`, `ScreenEvent`-стаб, `ItemTooltipEvent`.
+Известные ограничения: `/guideme export` (site-export) мёртв, «показывать гайд при входе» —
+событие `ScreenEvent.Opening` только стаб, датаген GuideME не подключён.
+Открыто: dev-страховка рендера страницы (`-Dnfcompat.guide.debugCatch`) — перед релизом
+проверить, что она выключена.
 
 ## 9. Мелочи, замеченные по пути
 `[x]` `FluidBlitter`: тинт жидкости закрыт. `FluidTint` берёт цвет из
