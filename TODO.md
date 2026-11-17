@@ -97,6 +97,9 @@ submitGuiElementRenderState,submitPictureInPictureRenderState}`, `KeyMapping.get
 `[x]` `FluidBlitter`: тинт жидкости закрыт. `FluidTint` берёт цвет из
 `FluidVariantAttributes.getAssociatedColor` (плюс `FluidModelData`), цвет доезжает до
 `FluidBlitter`/`FluidKeyRenderer`/`SkyStoneTankRenderer`; `-1` остался только фолбэком.
+Проверено в гайде: иконка воды рисуется текстурой `water_still` с тинтом (видна светлая
+кромка сверху — UV верные). Другой жидкости в рецептах гайда нет, так что кросс-проверки не
+будет: «ровный синий» — это сама текстура воды (16×16, почти однородная).
 `[ ]` `Blitter.copy()` не копирует `blending`/`transform` (сейчас нигде не стреляет — все
 использования задают флаги после `copy()`).
 `[ ]` `Blitter.GUI_TEXTURED_OPAQUE` на Fabric = обычный `GUI_TEXTURED` (блендинг включён).
