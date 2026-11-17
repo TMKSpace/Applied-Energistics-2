@@ -271,13 +271,18 @@ static), AW `ae2.accesswidener:78` уже открывает ровно её. Ф
 `[x]` `RegisterGameTestsEvent` + `RegisterEvent.register(...)` для `TEST_INSTANCE_TYPE` — ожили:
 `runGameTest` находит 81 тест, `ae2:tiny_tnt*` проходит 3/3. `ModFileScanData` больше не заглушка
 (`nfcompat.gametest.ModAnnotationScanner` сканирует `appeng/**` через ASM).
-`[ ]` Открытый остаток по геймтестам: 81 тест доезжает до конца, 1 провал —
-`ae2:memcard_pattern_provider` (NPE: `serverPlayer.connection` null у фейкплеера при отправке
-пакета). `ae2:subnet` починен: причина была в мёртвом сигнале инвалидации capability
-(см. P1), а не в subnet-логике.
+`[x]` Геймтесты: **81/81 passed** (`runGameTest -PgtFilter=*:*`, ~3.7 с). По дороге закрыто:
+`InscriberTestPlots` (null-шаблоны), `ae2:subnet` (мёртвый сигнал инвалидации capability),
+`ae2:memcard_pattern_provider` (у фейкплеера не было соединения).
 `[ ]` Устаревший комментарий: `attachment/AttachmentType.java:8` утверждает, что attachment-API
 у Fabric нет — на самом деле есть `fabric-data-attachment-api-v1` (`AttachmentRegistry`,
 `AttachmentType`, `AttachmentTarget`, `AttachmentSyncPredicate`). Ключ реестра сейчас важнее API.
+`[ ]` В `debug.log` при старте мелькает
+`Class version 69 required is higher than the class version supported by the current version of Mixin`
+для `PickItemFromBlockMixin` и `gametest/RegistryDataLoaderMixin`. Оба при этом применяются
+(геймтесты регистрируются, pick-block проверен в игре), то есть это предупреждение на этапе
+pre-apply, а не отказ. Держать в голове при обновлении Mixin/ASM: если начнут молча не
+применяться, симптом — «мод грузится, но фича мертва без единой ошибки».
 `[ ]` Мелочи: `TinyTNTBlock.onCaughtFire` (огонь не поджигает мини-ТНТ),
 `SkyStoneChestRenderer.getRenderBoundingBox` (сундук моргает на краю фрустума), пайплайны
 `LINES_BEHIND_BLOCK`/`STORAGE_CELL_LEDS` без depth-state, `ModConfigEvent.Reloading` не постится,
