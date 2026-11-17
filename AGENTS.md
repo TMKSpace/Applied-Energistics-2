@@ -18,6 +18,12 @@
   на том же порту. Наш стенд — только `D:\Code\java\ae2-fabric-probe`.
 - Сборка: `powershell -NoProfile -ExecutionPolicy Bypass -File build.ps1 -Task classes -NoAnalyze`
   (в `.opencode/`, логи там же). Тесты шима: `-Task shimTest`.
+- **Один писатель в дереве.** Параллельно можно запускать только read-only агентов (аудиты,
+  разведка). Два пишущих лейна в одном рабочем дереве ломают друг другу `build/` и дают ложные
+  падения/ложные «зелёные» прогоны. Если нужно два писателя — git worktree на каждого
+  (`.slim/worktrees/<slug>`, отдельный `build/`), слияние через orchestrator.
+- **Инкрементальный `compileJava` не замечает удаления файлов** в `compat/`: после `git rm`
+  он может сказать `UP-TO-DATE`. Удаления проверять `-Task clean` → `-Task classes`.
 - Правки в `src/` — только блоками `//#if FABRIC` … `//#else` … `//#endif`, апстрим не переписывать.
   Всё, что можно, живёт в `compat/java`.
 
