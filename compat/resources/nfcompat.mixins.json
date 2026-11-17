@@ -45,6 +45,7 @@
     "guideme.NavigationUtilMixin",
     "guideme.FakeRenderEnvironmentMixin",
     "guideme.GuidebookLevelRendererMixin",
+    "guideme.FluidBlitterMixin",
     "guideme.GuidebookLevelMixin",
     "guideme.GuideMERegisterByClassMixin",
     "guideme.RenderPipelineBuilderInvoker",
