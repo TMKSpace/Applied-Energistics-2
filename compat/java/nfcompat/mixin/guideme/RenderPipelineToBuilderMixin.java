@@ -10,8 +10,9 @@
  * (ShaderDefines: у Builder'а нет API для произвольных defines), то теряется; для
  * пайплайнов GuideME defines пустые, на практике это не влияет.
  *
- * Метод объявлен с @Unique: Mixin разрешает добавлять таким образом instance-методы
- * любой видимости (в отличие от non-private static, который запрещён).
+ * Метод добавлен как обычный instance-метод: Mixin такое разрешает (в отличие от
+ * non-private static, который в чужой класс добавить нельзя). @Unique тут не годится:
+ * он переименовывает член, а GuideME зовёт `toBuilder()` по имени.
  */
 package nfcompat.mixin.guideme;
 
@@ -31,7 +32,6 @@ import net.minecraft.resources.Identifier;
 
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
-import org.spongepowered.asm.mixin.Unique;
 
 @Mixin(RenderPipeline.class)
 public abstract class RenderPipelineToBuilderMixin {
@@ -66,7 +66,6 @@ public abstract class RenderPipelineToBuilderMixin {
     @Shadow
     public abstract int pushConstantSize();
 
-    @Unique
     public RenderPipeline.Builder toBuilder() {
         var builder = RenderPipelineBuilderInvoker.nfcompat$newBuilder();
         builder.withLocation(getLocation());
