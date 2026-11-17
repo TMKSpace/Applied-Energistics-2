@@ -20,6 +20,7 @@
     "client.BlockColorsMixin",
     "client.GuiGraphicsExtractorMixin",
     "client.KeyMappingMixin",
+    "client.SubmitNodeCollectorMixin",
     "client.BlockEntityRenderersMixin",
     "client.EntityRenderersMixin",
     "client.FabricBlockStateModelMixin",
