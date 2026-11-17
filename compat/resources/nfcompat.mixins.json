@@ -21,6 +21,7 @@
     "client.BlockColorsMixin",
     "client.FeatureRenderDispatcherMixin",
     "client.GuiGraphicsExtractorMixin",
+    "client.ItemStackTooltipMixin",
     "client.KeyMappingMixin",
     "client.SubmitNodeCollectorMixin",
     "client.TextureAtlasMixin",
