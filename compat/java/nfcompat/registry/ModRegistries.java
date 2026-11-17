@@ -108,6 +108,11 @@ public final class ModRegistries {
         return ((Registry) BuiltInRegistries.REGISTRY).containsKey((ResourceKey) key);
     }
 
+    /** {@return true, если реестр реестров уже заморожен, то есть ванильный bootstrap прошёл} */
+    public static boolean isRootFrozen() {
+        return Boolean.TRUE.equals(isFrozen(BuiltInRegistries.REGISTRY));
+    }
+
     private static Boolean isFrozen(Object registry) {
         if (FROZEN == null || !(registry instanceof MappedRegistry<?>)) {
             return null;
