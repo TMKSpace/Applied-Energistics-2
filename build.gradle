@@ -439,8 +439,28 @@ java {
 // а GuideME читает их из ресурсов по пути assets/ae2/ae2guide. Апстрим делает этот перенос в
 // своём processResources, в Fabric-сборке его не было - отсюда "Page not found" на любой
 // странице гайда и "Data driven guides: []" в логе.
+// GuideME — не Fabric-мод: в её джарнике только `neoforge.mods.toml`, `fabric.mod.json` нет,
+// поэтому FabricLoader не считает её модом и её `assets/` не попадают в ресурспак. Из-за этого
+// спрайты гайда (`assets/guideme/textures/gui/sprites/*`) оказывались missing, а рендер панелей
+// падал на "Expected sprite guideme:window to be a nine-slice sprite!".
+// Достаём их из джарника на сборке — так они едут в нашем ресурспаке.
+configurations {
+	guidemeAssets {
+		transitive = false
+		canBeConsumed = false
+		canBeResolved = true
+	}
+}
+
+dependencies {
+	guidemeAssets("org.appliedenergistics:guideme:${project.guideme_version}")
+}
+
 processResources {
 	from('guidebook') {
 		into 'assets/ae2/ae2guide'
+	}
+	from({ configurations.guidemeAssets.collect { zipTree(it) } }) {
+		include 'assets/guideme/**'
 	}
 }
