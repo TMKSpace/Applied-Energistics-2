@@ -4,10 +4,6 @@
   "package": "nfcompat.mixin",
   "compatibilityLevel": "JAVA_21",
   "mixins": [
-    "RenderPipelineBuilderInvoker",
-    "RenderPipelineToBuilderMixin",
-    "ArgumentTypeInfosAccessor",
-    "GuideMERegisterByClassMixin",
     "BlockEntityMixin",
     "CreativeModeTabMixin",
     "ItemExtensionMixin",
@@ -19,7 +15,6 @@
   ],
   "client": [
     "ClientTooltipComponentMixin",
-    "GuideMEClientMixin",
     "MultipartSelectorMixin",
     "SimpleModelSelectorsMixin",
     "client.BlockColorsMixin",
@@ -34,7 +29,12 @@
     "client.ModelBlockRendererMixin",
     "client.OptionsMixin",
     "client.ParticleEngineMixin",
-    "client.ParticleResourcesMixin"
+    "client.ParticleResourcesMixin",
+    "guideme.ArgumentTypeInfosAccessor",
+    "guideme.GuideMEClientMixin",
+    "guideme.GuideMERegisterByClassMixin",
+    "guideme.RenderPipelineBuilderInvoker",
+    "guideme.RenderPipelineToBuilderMixin"
   ],
   "injectors": {
     "defaultRequire": 1

@@ -13,7 +13,7 @@
  * Метод объявлен с @Unique: Mixin разрешает добавлять таким образом instance-методы
  * любой видимости (в отличие от non-private static, который запрещён).
  */
-package nfcompat.mixin;
+package nfcompat.mixin.guideme;
 
 import java.util.Map;
 import java.util.List;
