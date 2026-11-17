@@ -4,7 +4,7 @@
  * В NeoForge `IItemExtension` вплетается прямо в `net.minecraft.world.item.Item` (патч ядра),
  * поэтому любой предмет неявно получает дефолтные реализации, а AE2 просто переопределяет
  * нужные методы (`FacadeItem`, `UpgradeCardItem`, `MemoryCardItem`, ...). На Fabric ядро не
- * патчено, поэтому интерфейс добавляем через `nfcompat.mixin.ItemExtensionMixin`.
+ * патчено, поэтому интерфейс добавляем через `nfcompat.mixin.common.ItemExtensionMixin`.
  *
  * Здесь только те два метода, которые реально нужны AE2. Полный интерфейс NeoForge огромен
  * и целиком нам не нужен: добавляй по мере надобности, а не "на всякий случай".

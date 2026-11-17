@@ -59,7 +59,7 @@ public final class EventHooks {
 
     /**
      * NeoForge зовёт это из патченного {@code Player#getDestroySpeed(BlockState)} (у нас — миксин
-     * {@code nfcompat.mixin.PlayerDestroySpeedMixin}). Нужен AE2: {@code SkyStoneBreakSpeed} делит время
+     * {@code nfcompat.mixin.common.PlayerDestroySpeedMixin}). Нужен AE2: {@code SkyStoneBreakSpeed} делит время
      * копания скайстоуна на 10 для инструментов лучше железного.
      * <p>
      * Отменённое событие в NeoForge означает "блок не ломается вообще", поэтому отдаём 0 —

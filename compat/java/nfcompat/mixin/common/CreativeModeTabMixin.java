@@ -10,7 +10,7 @@
  * Побочный эффект: событие летит и на сервере (там креативные вкладки собираются при
  * входе игрока) — как и на NeoForge, где патч стоит в общем коде.
  */
-package nfcompat.mixin;
+package nfcompat.mixin.common;
 
 import java.util.Collection;
 import java.util.Set;

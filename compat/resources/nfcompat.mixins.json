@@ -4,14 +4,15 @@
   "package": "nfcompat.mixin",
   "compatibilityLevel": "JAVA_21",
   "mixins": [
-    "BlockEntityMixin",
-    "CreativeModeTabMixin",
-    "ItemExtensionMixin",
-    "LivingEntityClimbableMixin",
-    "MatrixFrameExplosionMixin",
-    "PickItemFromBlockMixin",
-    "PlayerDestroySpeedMixin",
-    "RecipeManagerAccessor"
+    "common.BlockEntityMixin",
+    "common.LevelAccessorMixin",
+    "common.CreativeModeTabMixin",
+    "common.ItemExtensionMixin",
+    "common.LivingEntityClimbableMixin",
+    "common.MatrixFrameExplosionMixin",
+    "common.PickItemFromBlockMixin",
+    "common.PlayerDestroySpeedMixin",
+    "common.RecipeManagerAccessor"
   ],
   "client": [
     "ClientTooltipComponentMixin",

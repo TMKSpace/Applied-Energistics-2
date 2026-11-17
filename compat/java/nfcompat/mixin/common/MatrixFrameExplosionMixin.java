@@ -18,7 +18,7 @@
  * блоки, урон сущностям, дроп и resistance не затрагиваются — для всего, что не
  * матричная рамка, метод работает как раньше.
  */
-package nfcompat.mixin;
+package nfcompat.mixin.common;
 
 import java.util.function.BiConsumer;
 

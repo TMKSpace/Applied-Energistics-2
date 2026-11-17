@@ -9,7 +9,7 @@
  * `displayItems`/`displayItemsSearchTab`.
  *
  * У ванили такого хука нет, поэтому событие постит миксин
- * `nfcompat.mixin.CreativeModeTabMixin` в конце `buildContents`, а здесь — сборка
+ * `nfcompat.mixin.common.CreativeModeTabMixin` в конце `buildContents`, а здесь — сборка
  * "правильных" коллекций (InsertableLinkedOpenCustomHashSet: AE2 вставляет предметы
  * через `accept`, а событию нужен именно этот тип) и запись их обратно.
  *

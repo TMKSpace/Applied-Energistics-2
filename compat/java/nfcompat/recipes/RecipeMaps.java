@@ -34,7 +34,7 @@ import net.minecraft.world.item.crafting.RecipeMap;
 import net.minecraft.world.item.crafting.RecipeType;
 import net.minecraft.world.level.Level;
 
-import nfcompat.mixin.RecipeManagerAccessor;
+import nfcompat.mixin.common.RecipeManagerAccessor;
 
 public final class RecipeMaps {
     private static final Constructor<RecipeMap> CONSTRUCTOR = resolveConstructor();

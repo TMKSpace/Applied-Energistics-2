@@ -10,7 +10,7 @@
  * (как камень для железной кирки), и событие умножает скорость на 10 для инструментов
  * лучше железного. Позиция блока не передаётся (как и в NeoForge, когда она неизвестна).
  */
-package nfcompat.mixin;
+package nfcompat.mixin.common;
 
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;

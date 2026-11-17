@@ -11,7 +11,7 @@
  * берём поле аксессором: `RecipeManager` — единственный держатель полной карты,
  * и он же пересоздаётся при перезагрузке датапаков, так что читать его безопасно.
  */
-package nfcompat.mixin;
+package nfcompat.mixin.common;
 
 import net.minecraft.world.item.crafting.RecipeManager;
 import net.minecraft.world.item.crafting.RecipeMap;
