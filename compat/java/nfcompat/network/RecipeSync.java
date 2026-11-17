@@ -90,6 +90,17 @@ public final class RecipeSync {
         }
     }
 
+    /**
+     * Сброс недособранного клиентского буфера.
+     *
+     * Мир покинули или переключились на другой сервер — недоехавшие пакеты первого
+     * сервера не должны склеиться с картой второго. Вызывается из клиентского
+     * приёмника на Fabric-евенте disconnect (см. {@link RecipeSyncClient}).
+     */
+    static void clearClientBuffer() {
+        CLIENT_BUFFER.clear();
+    }
+
     /** Клиентская сторона: накопить пакеты и собрать карту. */
     static void receive(RecipesSyncPayload payload) {
         CLIENT_BUFFER.addAll(payload.recipes());
