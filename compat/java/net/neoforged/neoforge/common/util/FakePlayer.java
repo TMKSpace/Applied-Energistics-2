@@ -10,16 +10,18 @@ package net.neoforged.neoforge.common.util;
 
 import com.mojang.authlib.GameProfile;
 
+import net.minecraft.server.level.ClientInformation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
 
 public class FakePlayer extends ServerPlayer {
     public FakePlayer(ServerLevel level, GameProfile profile) {
-        super(level.getServer(), level, profile,
-                level.getServer().getPlayerList().getPlayers().isEmpty()
-                        ? null
-                        : level.getServer().getPlayerList().getPlayers().get(0).clientInformation());
+        // ClientInformation обязателен: ServerPlayer#updateOptions в 26.3 дёргает
+        // information.language(). NeoForge тоже передаёт createDefault(), а не null.
+        // Раньше здесь брали clientInformation() первого игрока в списке, но на
+        // выделенном сервере (и в геймтестах) список пуст -> NPE ещё в конструкторе.
+        super(level.getServer(), level, profile, ClientInformation.createDefault());
     }
 
     /** Ничего не отправляем на клиент: такого игрока там нет. */
@@ -31,6 +33,16 @@ public class FakePlayer extends ServerPlayer {
     @Override
     public boolean isCreative() {
         return false;
+    }
+
+    /**
+     * У фиктивного игрока нет сетевого соединения, а ванильный
+     * {@code ServerPlayer#closeContainer} шлёт клиенту пакет через {@code connection}.
+     * В геймтестах AE2 этот метод зовётся напрямую (CraftingTerminalTestPlots),
+     * и без заглушки сервер падал с NPE.
+     */
+    @Override
+    public void closeContainer() {
     }
 
     @Override

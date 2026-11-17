@@ -50,7 +50,7 @@ public final class GameTestRegistration {
      */
     public static void registerIfEnabled(List<RegistryLoadTask<?>> loadTasks) {
         if (!GameTestHooks.isGametestEnabled()) {
-            LOGGER.info("[gametest] registry path hook reached, but disabled "
+            LOGGER.debug("[gametest] registry path hook reached, but disabled "
                     + "(neoforge.gametest.enabled={})",
                     System.getProperty("neoforge.gametest.enabled"));
             return;
@@ -69,9 +69,9 @@ public final class GameTestRegistration {
         }
 
         if (environments == null || tests == null) {
-            // Один из реестров в этом прогоне не грузился (например, клиентский
-            // network-путь) — постить нечего и незачем.
-            LOGGER.info("[gametest] TEST_* registries missing in this load: environment={}, tests={}",
+            // Один из реестров в этом прогоне не грузился (например, network-путь
+            // синхронизации с сервера) — постить нечего и незачем.
+            LOGGER.debug("[gametest] TEST_* registries missing in this load: environment={}, tests={}",
                     environments != null, tests != null);
             return;
         }
@@ -83,8 +83,8 @@ public final class GameTestRegistration {
 
         // Мод-шина шима — та же, на которую AppEngBase вешает addListener(this::registerTests).
         NeoForge.EVENT_BUS.post(new RegisterGameTestsEvent(envRegistry, testRegistry));
-        LOGGER.info("[gametest] RegisterGameTestsEvent posted, appeng.tests={}, tests in registry now: {}",
+        LOGGER.info("[gametest] RegisterGameTestsEvent posted (appeng.tests={}), tests in registry: {}",
                 System.getProperty("appeng.tests"), testRegistry.size());
-        LOGGER.info("[gametest] TEST_INSTANCE ids: {}", testRegistry.keySet());
+        LOGGER.debug("[gametest] TEST_INSTANCE ids: {}", testRegistry.keySet());
     }
 }

@@ -284,7 +284,9 @@ fabricApi {
 // так что конфликта с чужим сервером нет даже при дефолтном server-port.
 //
 // -Dappeng.tests=true включает регистрацию тестплотов AE2 (AppEngBase#registerTests).
-// -Dfabric-api.gametest.filter ограничивает прогон: в фильтр передаётся regex по id теста.
+// -Dfabric-api.gametest.filter — НЕ regex, а ванильный resource selector
+// (ResourceSelectorArgument): `*` = только namespace minecraft, `*:*` = все,
+// `ae2:tiny_tnt*` = группа плотов. id теста = id плота.
 // ---------------------------------------------------------------------------
 fabricApi {
 	configureTests {
@@ -301,9 +303,8 @@ loom {
 			// Включает реестровый путь: GameTestHooks.isGametestEnabled() ->
 			// пост RegisterGameTestsEvent до заморозки TEST_INSTANCE.
 			vmArg '-Dneoforge.gametest.enabled=true'
-			// По умолчанию гоняем один короткий плот (см. AE2-PATCHES.md, если нужен весь набор:
-			// убрать фильтр или задать свой через -PgtFilter=...).
-			vmArg "-Dfabric-api.gametest.filter=${project.findProperty('gtFilter') ?: '*'}"
+			// По умолчанию гоняем весь набор. Один плот: -PgtFilter=ae2:tiny_tnt*
+			vmArg "-Dfabric-api.gametest.filter=${project.findProperty('gtFilter') ?: '*:*'}"
 		}
 	}
 }
