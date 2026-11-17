@@ -233,6 +233,27 @@ id, `LevelRendererEnvironmentMixin` перехватывает небо/обла
 правки механические, но их надо делать одним заходом, когда все лейны молчат.
 Пока не начинаем: сначала добить функционал, потом рефакторинг.
 
+## Правило: сначала искать существующее, шим = адаптер
+
+Урок (дорого выученный на gametest): прежде чем писать реализацию NeoForge-API, надо проверить,
+нет ли уже готового **в ванили** или в Fabric API. Пример: в 26.3 геймтесты — это ванильные
+реестры `TEST_ENVIRONMENT`/`TEST_INSTANCE`/`TEST_FUNCTION`, а AE2 уже пишет под них
+(`GameTestPlotAdapter extends GameTestInstance`). NeoForge добавляет от себя только пост
+`RegisterGameTestsEvent` из `RegistryDataLoader.load(...)`. Мы же чуть не начали писать
+свой тестовый харнесс и портировать FML.
+
+Порядок действий для любого NeoForge-API:
+1. `javap` по ванильному jar — может, класс/реестр/хук уже есть;
+2. Fabric API — может, есть готовый колбэк/лукап;
+3. если есть — шим = **тонкий адаптер** (как `LifecycleBridge`, `ClientEventBridge`,
+   `UseBlockCallback`-диспетчеры, `FabricCapabilities`);
+4. только если аналога нет — писать реализацию (как `ModelData`, `QuadCollection`-мосты, `EventBus`).
+
+`[ ]` Отдельная задача: пройтись по `compat/java/net/neoforged/**` и найти классы, которые
+дублируют то, что уже есть в ванили/Fabric API (кандидаты: `DeferredRegister`, `SavedData`-подобное,
+`GameTestHooks`, `ModelData`, `TagKey`-хелперы, `StructureTemplate`-обёртки). Для каждого —
+вердикт «адаптер / реализация / не нужно вовсе».
+
 ## Уже закрыто (чтобы не искали заново)
 
 `[x]` Кабель и все динамические блок-модели — позиционный `collectParts` через
