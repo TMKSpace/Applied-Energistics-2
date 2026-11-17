@@ -3,8 +3,12 @@
  *
  * В NeoForge реестр создаётся до заморозки `BuiltInRegistries` и вставляется туда, поэтому
  * его ключ потом работает при сериализации. На Fabric такой точки нет: `BuiltInRegistries`
- * уже заморожен. Возвращаем настоящий `MappedRegistry`, но живёт он только в руках AE2 —
- * для её собственного использования этого достаточно, для сериализации по ключу — нет.
+ * уже заморожен. Возвращаем настоящий `MappedRegistry` и руками кладём его в реестр реестров
+ * (`nfcompat.registry.ModRegistries`), иначе код, который резолвит реестр через
+ * `RegistryAccess` (`ByteBufCodecs.registry` -> `lookupOrThrow`), падает с
+ * "Missing registry: ResourceKey[minecraft:root / ae2:keytypes]".
+ *
+ * Заморозка самих реестров мода — в `RegistryCallbacks#bakeAll`, после всех регистраций.
  */
 package net.neoforged.neoforge.registries;
 
@@ -16,6 +20,8 @@ import net.minecraft.resources.ResourceKey;
 import net.neoforged.bus.api.Event;
 import net.neoforged.fml.event.IModBusEvent;
 
+import nfcompat.registry.ModRegistries;
+
 public class NewRegistryEvent extends Event implements IModBusEvent {
     /** Созданные модом реестры: нужны, чтобы `RegisterEvent` мог их найти. */
     private static final java.util.Map<ResourceKey<? extends Registry<?>>, Registry<?>> CREATED = new java.util.concurrent.ConcurrentHashMap<>();
@@ -26,6 +32,8 @@ public class NewRegistryEvent extends Event implements IModBusEvent {
     public <T> Registry<T> create(RegistryBuilder<T> builder) {
         Registry<T> registry = new MappedRegistry<>(builder.key(), Lifecycle.stable());
         CREATED.put(builder.key(), registry);
+        // NeoForge: реестр мода живёт в реестре реестров, поэтому его видно через RegistryAccess.
+        ModRegistries.expose(builder.key(), registry);
         return registry;
     }
 

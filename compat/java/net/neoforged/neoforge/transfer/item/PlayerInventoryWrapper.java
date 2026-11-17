@@ -26,7 +26,6 @@ import net.neoforged.neoforge.transfer.transaction.TransactionContext;
  * An implementation of {@code ResourceHandler<ItemResource>} for the {@link Inventory} of a {@link Player}.
  *
  * @see VanillaContainerWrapper
- * @see WorldlyContainerWrapper
  */
 // TODO: do we want to "animate" client-side inserted items with setPopTime(POP_TIME_DURATION)?
 public final class PlayerInventoryWrapper extends VanillaContainerWrapper {

@@ -14,11 +14,6 @@ import net.minecraft.world.level.ItemLike;
 
 public class DeferredItem<T extends Item> extends DeferredHolder<Item, T> implements ItemLike {
 
-    /** Стек из одного предмета. */
-    public ItemStack toStack() {
-        return toStack(1);
-    }
-
     /** Стек заданного размера. */
     public ItemStack toStack(int count) {
         ItemStack stack = asItem().getDefaultInstance();

@@ -12,7 +12,15 @@ import java.util.Collection;
 import java.util.List;
 
 public final class ModFileScanData {
-    private final List<AnnotationData> annotations = List.of();
+    private final List<AnnotationData> annotations;
+
+    public ModFileScanData() {
+        this(List.of());
+    }
+
+    public ModFileScanData(Collection<AnnotationData> annotations) {
+        this.annotations = List.copyOf(annotations);
+    }
 
     public Collection<AnnotationData> getAnnotations() {
         return annotations;

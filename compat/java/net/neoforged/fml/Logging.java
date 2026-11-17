@@ -11,7 +11,6 @@ import org.apache.logging.log4j.MarkerManager;
 
 public final class Logging {
     public static final Marker CORE = MarkerManager.getMarker("CORE");
-    public static final Marker LOADING = MarkerManager.getMarker("LOADING");
 
     private Logging() {
     }

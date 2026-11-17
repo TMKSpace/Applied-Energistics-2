@@ -39,6 +39,21 @@ public final class RegistryCallbacks {
         // holder'ам - а AEKeyTypesInternal читает реестр через holder. См. RegistryBinding.
         RegistryBinding.bindAllValues();
 
+        // В NeoForge реестры мода замораживаются сразу после всех регистраций. Теперь наш
+        // реестр лежит в реестре реестров (см. ModRegistries), то есть попадает в RegistryAccess,
+        // а ваниль считает такие реестры "загруженными": TagNetworkSerialization зовёт
+        // getTags() (у незамороженного - "Tags not bound"), TagLoader - prepareTagReload
+        // ("Invalid method used for tag loading"). Поэтому морозим здесь, когда регистрация
+        // уже закончена, но сервер ещё не стартовал.
+        for (var registry : net.neoforged.neoforge.registries.NewRegistryEvent.getCreatedRegistries()) {
+            try {
+                registry.freeze();
+            } catch (RuntimeException e) {
+                com.mojang.logging.LogUtils.getLogger()
+                        .warn("Could not freeze modded registry {}", registry.key().identifier(), e);
+            }
+        }
+
         var pending = new ArrayList<>(PENDING);
         PENDING.clear();
         for (var runnable : pending) {
