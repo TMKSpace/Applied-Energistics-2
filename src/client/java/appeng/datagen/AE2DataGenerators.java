@@ -69,22 +69,26 @@ public final class AE2DataGenerators implements DataGeneratorEntrypoint {
 
     @Override
     public void buildRegistry(RegistrySetBuilder builder) {
-        // Worldgen et al
+        // Worldgen et al.
+        // In 26.3 damage types, villager trades and trade sets live in vanilla's world registry builder
+        // (VanillaRegistries.WORLD_BUILDER), so they must be added here, where stubs for an already present
+        // registry are merged. Adding them to the reloadable builder instead collides with the world lookup that
+        // Fabric passes as that build's context and dies with "Multiple entries with same key".
         builder.add(Registries.DIMENSION_TYPE, InitDimensionTypes::init)
                 .add(Registries.STRUCTURE, InitStructures::initDatagenStructures)
                 .add(Registries.STRUCTURE_SET, InitStructures::initDatagenStructureSets)
-                .add(Registries.BIOME, InitBiomes::init);
+                .add(Registries.BIOME, InitBiomes::init)
+                .add(Registries.DAMAGE_TYPE, AEDamageTypes::init)
+                // The villager bootstraps return the holder they registered, so they are wrapped instead of used as a
+                // SingleRegistryBootstrap method reference.
+                .add(Registries.TRADE_SET, context -> InitVillager.bootstrapTradeSets(context))
+                .add(Registries.VILLAGER_TRADE, context -> InitVillager.bootstrapTrades(context));
     }
 
     @Override
     public void buildReloadableRegistry(RegistrySetBuilder builder) {
-        // The villager bootstraps return the holder they registered, so they are wrapped instead of used as a
-        // SingleRegistryBootstrap method reference.
-        builder.add(Registries.DAMAGE_TYPE, AEDamageTypes::init)
-                .add(Registries.TRADE_SET, context -> InitVillager.bootstrapTradeSets(context))
-                .add(Registries.VILLAGER_TRADE, context -> InitVillager.bootstrapTrades(context))
-                // Loot, advancements and recipes
-                .add(Registries.LOOT_TABLE, AE2LootTableProvider.create())
+        // Loot, advancements and recipes
+        builder.add(Registries.LOOT_TABLE, AE2LootTableProvider.create())
                 .add(Registries.ADVANCEMENT, new AdvancementProvider(List.of(
                         context -> new AdvancementGenerator(context, LOCALIZATION))))
                 .add(AE2RecipeProvider.create());
