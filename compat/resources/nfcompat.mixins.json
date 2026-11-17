@@ -42,6 +42,7 @@
     "guideme.GuideMEClientMixin",
     "guideme.GuideMEHotkeyMixin",
     "guideme.GuideMEReloadMixin",
+    "guideme.GuideScreenDebugCatchMixin",
     "guideme.NavigationUtilMixin",
     "guideme.FakeRenderEnvironmentMixin",
     "guideme.GuidebookLevelRendererMixin",
