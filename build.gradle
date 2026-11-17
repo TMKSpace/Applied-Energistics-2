@@ -435,3 +435,12 @@ java {
 	sourceCompatibility = JavaVersion.VERSION_25
 	targetCompatibility = JavaVersion.VERSION_25
 }
+// Гайд AE2: markdown-страницы лежат в каталоге `guidebook/` в корне репозитория (как в апстриме),
+// а GuideME читает их из ресурсов по пути assets/ae2/ae2guide. Апстрим делает этот перенос в
+// своём processResources, в Fabric-сборке его не было - отсюда "Page not found" на любой
+// странице гайда и "Data driven guides: []" в логе.
+processResources {
+	from('guidebook') {
+		into 'assets/ae2/ae2guide'
+	}
+}
