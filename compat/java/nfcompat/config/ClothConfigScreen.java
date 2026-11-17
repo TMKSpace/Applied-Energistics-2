@@ -45,30 +45,39 @@ public final class ClothConfigScreen {
                 .setTitle(Component.literal("Applied Energistics 2"));
 
         var entries = builder.entryBuilder();
-        var savers = new ArrayList<Runnable>();
 
         for (var config : NfCompat.container().getConfigs()) {
             if (!(config.getSpec() instanceof ModConfigSpec spec)) {
                 continue;
             }
             var category = builder.getOrCreateCategory(title(config));
-            for (var value : spec.getValues().valueMap().values()) {
-                if (value instanceof ModConfigSpec.ConfigValue<?> configValue) {
-                    addEntry(category, entries, configValue, savers);
-                }
-            }
+            addValues(category, entries, spec.getValues());
         }
 
+        // Записи сами применяют значения через setSaveConsumer, здесь только пишем TOML на диск.
         builder.setSavingRunnable(() -> {
-            for (var saver : savers) {
-                saver.run();
-            }
             for (var config : NfCompat.container().getConfigs()) {
                 config.save();
             }
         });
 
         return builder.build();
+    }
+
+    /**
+     * AE2 описывает конфиги секциями (`Builder.push("...")`), поэтому значения лежат не на
+     * верхнем уровне, а внутри вложенных {@code UnmodifiableConfig}. Обходим рекурсивно:
+     * листья — это {@code ConfigValue}, всё остальное — секции.
+     */
+    private static void addValues(ConfigCategory category, ConfigEntryBuilder entries,
+            com.electronwill.nightconfig.core.UnmodifiableConfig section) {
+        for (var value : section.valueMap().values()) {
+            if (value instanceof com.electronwill.nightconfig.core.UnmodifiableConfig nested) {
+                addValues(category, entries, nested);
+            } else if (value instanceof ModConfigSpec.ConfigValue<?> configValue) {
+                addEntry(category, entries, configValue);
+            }
+        }
     }
 
     private static Component title(ModConfig config) {
@@ -83,7 +92,7 @@ public final class ClothConfigScreen {
 
     @SuppressWarnings({ "unchecked", "rawtypes" })
     private static void addEntry(ConfigCategory category, ConfigEntryBuilder entries,
-            ModConfigSpec.ConfigValue<?> value, List<Runnable> savers) {
+            ModConfigSpec.ConfigValue<?> value) {
         var label = Component.literal(String.join(" → ", value.getPath()));
         var comment = value.getSpec().getComment();
         var tooltip = comment != null ? new Component[] { Component.literal(comment) } : new Component[0];
