@@ -33,6 +33,7 @@
     "guideme.ArgumentTypeInfosAccessor",
     "guideme.GuideMEClientMixin",
     "guideme.GuideMEHotkeyMixin",
+    "guideme.GuideMEReloadMixin",
     "guideme.GuideMERegisterByClassMixin",
     "guideme.RenderPipelineBuilderInvoker",
     "guideme.RenderPipelineToBuilderMixin"
