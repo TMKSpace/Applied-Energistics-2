@@ -4,6 +4,8 @@
   "package": "nfcompat.mixin",
   "compatibilityLevel": "JAVA_21",
   "mixins": [
+    "RenderPipelineBuilderInvoker",
+    "RenderPipelineToBuilderMixin",
     "ArgumentTypeInfosAccessor",
     "GuideMERegisterByClassMixin",
     "BlockEntityMixin",
