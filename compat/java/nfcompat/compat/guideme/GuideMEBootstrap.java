@@ -84,14 +84,11 @@ public final class GuideMEBootstrap {
      * Обёртка над `OpenGuideHotkey.init()` — вызывается миксином вместо прямого вызова
      * из конструктора `GuideMEClient`.
      *
-     * Зачем: `<clinit>` этого класса создаёт `KeyMapping` неофорджевским конструктором
-     * `(String, IKeyConflictContext, Type, int, Category)`. В ванильном `KeyMapping` такого
-     * конструктора нет (Mixin не умеет добавлять конструкторы), поэтому на Fabric это
-     * NoSuchMethodError. Само по себе оно не смертельно: хоткей «зажми клавишу у предмета»
-     * просто не появится, а гайд открывается кнопкой/предметом/командой.
-     *
-     * Ловим по месту вызова, а не гейтим весь GuideME: остальная часть конструктора
-     * (прокси, конфиг, reload-слушатель) должна доделаться — иначе гайд не откроется.
+     * Историю про неофорджевский конструктор `KeyMapping` закрывает `GuideMEHotkeyMixin`
+     * (редирект `NEW` на ванильный конструктор), поэтому `<clinit>` теперь проходит штатно
+     * и хоткей работает. Обёртка осталась как страховка: если GuideME сменит конструктор,
+     * `try/catch` не даст уронить остаток конструктора (прокси, конфиг, reload-слушатель) —
+     * гайд откроется кнопкой/предметом/командой, а в логе будет одна строка.
      */
     public static void initHotkey() {
         try {
@@ -99,8 +96,7 @@ public final class GuideMEBootstrap {
         } catch (Throwable t) {
             if (!hotkeyWarned) {
                 hotkeyWarned = true;
-                System.out.println("[nfcompat] хоткей GuideME пропущен: в ванильном KeyMapping нет"
-                        + " неофорджевского конструктора с IKeyConflictContext (" + t + ")");
+                System.out.println("[nfcompat] хоткей GuideME пропущен: " + t);
             }
         }
     }
