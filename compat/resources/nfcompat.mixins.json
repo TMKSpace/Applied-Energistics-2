@@ -21,6 +21,7 @@
     "client.GuiGraphicsExtractorMixin",
     "client.KeyMappingMixin",
     "client.SubmitNodeCollectorMixin",
+    "client.TextureAtlasMixin",
     "client.BlockEntityRenderersMixin",
     "client.EntityRenderersMixin",
     "client.FabricBlockStateModelMixin",
