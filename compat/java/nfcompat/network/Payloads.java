@@ -16,6 +16,12 @@ public final class Payloads {
     }
 
     public static void send(ServerPlayer player, CustomPacketPayload payload) {
+        // У фиктивного игрока (геймтесты, FakePlayer) соединения нет — отправлять некому.
+        // NeoForge в этом месте так же проверяет connection и молча выходит,
+        // Fabric'овский ServerPlayNetworking падает с NPE.
+        if (player.connection == null) {
+            return;
+        }
         ServerPlayNetworking.send(player, payload);
     }
 }
