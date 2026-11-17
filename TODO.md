@@ -27,9 +27,14 @@ Outbound: 16 энерго-предметов AE2; fluid/item-в-предмете
 Тест: ведро → бак → ячейка → терминал, и обратно; сравнить объёмы в тултипах.
 
 ## 4. Spatial storage
-`[~]` Ядро цело: уровень создаётся миксином `spatial.MinecraftServerMixin` (в логе видно, что
-`ae2:spatial_storage` жил), `SavedData` плотов, обмен блоками/BlockEntity, телепорт через ванильный
-`TeleportTransition`, генератор чанков — всё на ванили.
+`[x]` Ядро проверено в игре (MCP): пилоны 3×3×3, порт + контроллер + ячейка, редстоун → блоки
+уезжают в ячейку. `[ ]` **Spatial-измерение полностью тёмное** (`skyLight=0`, `blockLight=0`,
+хоть глаз выколи). Это **не наш порт**: у измерения `has_skylight=false`, а в 26.3 яркость без
+неба задаётся атрибутом `minecraft:gameplay/sky_light_level` (Незер ставит 4.0) — у AE2 его нет,
+у них в `InitDimensionTypes` стоит `// TODO 1.21.11: environmental effects`. То есть на NeoForge
+картина та же. Лечится одной строкой в `dimension_type/spatial_storage.json` + `InitDimensionTypes`
+(15.0 даёт полную яркость), но решено **оставить как в апстриме**; проверить правку на живом мире
+не удалось (dimension_type читается при загрузке мира, `/reload` его не перечитывает).
 `[x]` Чанк-лоадер: владельцы тикетов в персистентном `TicketOwnershipData` (SavedData в overworld),
 форс снимается только последним владельцем, `validateTickets` на `ServerLevelEvents.LOAD`,
 `LevelEvent.Load`/`ChunkEvent.Load` теперь постятся.
