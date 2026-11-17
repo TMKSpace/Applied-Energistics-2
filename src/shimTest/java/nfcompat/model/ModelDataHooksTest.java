@@ -132,7 +132,7 @@ class ModelDataHooksTest {
         // org.spongepowered.asm, который приезжает транзитивно с fabric-loader.
         // Саму аннотацию @Mixin проверить нечем — у неё RetentionPolicy.CLASS, в рантайме
         // её не видно, поэтому проверяем контракт: класс implements ModelDataProvider.
-        Class<?> mixin = Class.forName("nfcompat.mixin.BlockEntityMixin");
+        Class<?> mixin = Class.forName("nfcompat.mixin.common.BlockEntityMixin");
 
         assertThat(nfcompat.model.ModelDataProvider.class).isAssignableFrom(mixin);
         assertThat(mixin.getMethod("getModelData").getDeclaringClass()).isEqualTo(mixin);

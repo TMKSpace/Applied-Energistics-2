@@ -13,7 +13,7 @@
  * В `src` AE2 эти методы уже обрамлены `//#if FABRIC //#else @Override //#endif`, поэтому
  * после миксина они становятся настоящими переопределениями и на Fabric — править `src` не нужно.
  */
-package nfcompat.mixin;
+package nfcompat.mixin.common;
 
 import org.spongepowered.asm.mixin.Mixin;
 

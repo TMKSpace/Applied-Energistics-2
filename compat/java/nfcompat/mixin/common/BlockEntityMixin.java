@@ -8,7 +8,7 @@
  * рантайм-паритет: любой BlockEntity теперь является ModelDataProvider, и наш
  * хелпер отличает «свои» данные от пустых штатным instanceof.
  */
-package nfcompat.mixin;
+package nfcompat.mixin.common;
 
 import nfcompat.model.ModelDataProvider;
 import net.minecraft.world.level.block.entity.BlockEntity;

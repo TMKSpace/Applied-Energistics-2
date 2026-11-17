@@ -86,3 +86,25 @@ accessible field net/minecraft/client/gui/render/pip/PictureInPictureRenderer te
 accessible field net/minecraft/client/gui/render/pip/PictureInPictureRenderer textureView Lcom/mojang/renderpearl/api/textures/GpuTextureView;
 accessible field net/minecraft/client/gui/render/pip/PictureInPictureRenderer depthTexture Lcom/mojang/renderpearl/api/textures/GpuTexture;
 accessible field net/minecraft/client/gui/render/pip/PictureInPictureRenderer depthTextureView Lcom/mojang/renderpearl/api/textures/GpuTextureView;
+# --- nfcompat: GuideME (NeoForge-сборка) и приватные члены ванили (аудит доступов) ---
+# P0: LytWidget.render строит ScaledGuiGraphics из этих полей ДО вызова <init>
+accessible field net/minecraft/client/gui/GuiGraphicsExtractor guiRenderState Lnet/minecraft/client/renderer/state/gui/GuiRenderState;
+accessible field net/minecraft/client/gui/GuiGraphicsExtractor mouseX I
+accessible field net/minecraft/client/gui/GuiGraphicsExtractor mouseY I
+# P0: MinecraftFontMetrics.getAdvance -> приватный Font.getGlyphSource на каждый глиф
+accessible method net/minecraft/client/gui/Font getGlyphSource (Lnet/minecraft/network/chat/FontDescription;)Lnet/minecraft/client/gui/GlyphSource;
+# P1: GuidebookLevelRenderer.render (сцена гайда)
+accessible field net/minecraft/client/renderer/GameRenderer fogRenderer Lnet/minecraft/client/renderer/fog/FogRenderer;
+accessible field net/minecraft/client/renderer/GameRenderer globalSettingsUniform Lnet/minecraft/client/renderer/GlobalSettingsUniform;
+accessible field net/minecraft/client/renderer/GameRenderer useUiLightmap Z
+mutable field net/minecraft/client/renderer/GameRenderer useUiLightmap Z
+# P1: package-private RenderType.create из <clinit> InWorldAnnotationRenderer
+accessible method net/minecraft/client/renderer/rendertype/RenderType create (Ljava/lang/String;Lnet/minecraft/client/renderer/rendertype/RenderSetup;)Lnet/minecraft/client/renderer/rendertype/RenderType;
+# P1: package-private поля RenderSetup (site-export и аннотации)
+accessible field net/minecraft/client/renderer/rendertype/RenderSetup pipeline Lcom/mojang/renderpearl/api/pipeline/RenderPipeline;
+accessible field net/minecraft/client/renderer/rendertype/RenderSetup textures Ljava/util/Map;
+# P2: GuideOnStartup (показ гайда при входе) - ждёт завершения reload
+accessible field net/minecraft/client/gui/screens/LoadingOverlay reload Lnet/minecraft/server/packs/resources/ReloadInstance;
+# P3: датаген GuideME (в рантайме не стреляет)
+accessible field net/minecraft/client/data/models/ItemModelGenerators itemModelOutput Lnet/minecraft/client/data/models/ItemModelOutput;
+accessible field net/minecraft/client/data/models/ItemModelGenerators modelOutput Ljava/util/function/BiConsumer;
