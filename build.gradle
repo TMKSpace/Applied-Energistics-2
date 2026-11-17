@@ -469,3 +469,39 @@ processResources {
 		include 'assets/guideme/**'
 	}
 }
+
+// --- Джар «поделиться с людьми» -------------------------------------------
+// В dev GuideME и её зависимости лежат на classpath, поэтому сборка запускается, а перенести
+// джар в чужой инстанс нельзя: GuideME — не Fabric-мод (нет fabric.mod.json), значит её надо
+// вкладывать классами, вместе с snakeyaml (markdown-фронтматтер), directory-watcher (dev-вотчер
+// гайдов) и flatbuffers (индекс поиска). Складываем их содержимое в наш jar.
+configurations {
+	bundle {
+		transitive = false
+		canBeConsumed = false
+		canBeResolved = true
+	}
+}
+
+dependencies {
+	bundle("org.appliedenergistics:guideme:${project.guideme_version}")
+	bundle("org.yaml:snakeyaml:${project.snakeyaml_version}")
+	bundle("io.methvin:directory-watcher:${project.directory_watcher_version}")
+	bundle("com.google.flatbuffers:flatbuffers-java:${project.flatbuffers_version}")
+}
+
+tasks.named('jar') {
+	duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+	from({ configurations.bundle.collect { zipTree(it) } }) {
+		// метаданные чужих сборок не тащим: у GuideME это neoforge.mods.toml и свой mixin-конфиг,
+		// а MANIFEST/лицензии конфликтуют с нашими
+		exclude 'META-INF/MANIFEST.MF'
+		exclude 'META-INF/*.toml'
+		exclude 'META-INF/accesstransformer.cfg'
+		exclude 'META-INF/LICENSE*'
+		exclude 'META-INF/NOTICE*'
+		exclude 'fabric.mod.json'
+		exclude '*.mixins.json'
+		exclude 'module-info.class'
+	}
+}
