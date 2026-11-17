@@ -381,7 +381,15 @@ public class Platform {
             if (be != null) {
                 var packet = be.getUpdatePacket();
                 if (packet != null) {
+                    //#if FABRIC
+                    // У FakePlayer (геймтесты) нет соединения - на NeoForge такой вызов молча
+                    // уходил в пустоту, у Fabric это NPE и падение теста.
+                    if (serverPlayer.connection != null) {
+                        serverPlayer.connection.send(packet);
+                    }
+                    //#else
                     serverPlayer.connection.send(packet);
+                    //#endif
                 }
             }
         }
