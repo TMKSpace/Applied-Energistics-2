@@ -209,8 +209,8 @@ public final class ItemResource implements DataComponentHolderResource<Item> {
      * @param template the item stack template to check
      */
     public boolean matches(@Nullable ItemStackTemplate template) {
-        return innerStack.getItem() == template.item().value()
-                && innerStack.getComponentsPatch().equals(template.components());
+        // null-шаблон = пустой стек, ровно как в NeoForge (см. nfcompat.compat.ItemStackTemplates).
+        return nfcompat.compat.ItemStackTemplates.isSameItemSameComponents(innerStack, template);
     }
 
     /**

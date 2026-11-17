@@ -98,7 +98,7 @@ public final class InscriberTestPlots {
                         var inv = inscriber.getInternalInventory();
                         plotTestHelper.check(
                                 //#if FABRIC
-                                ItemStack.isSameItemSameComponents(inv.getStackInSlot(0), expectedTopSlot.create()),
+                                nfcompat.compat.ItemStackTemplates.isSameItemSameComponents(inv.getStackInSlot(0), expectedTopSlot),
                                 //#else
                                 ItemStack.isSameItemSameComponents(inv.getStackInSlot(0), expectedTopSlot),
                                 //#endif
@@ -106,7 +106,7 @@ public final class InscriberTestPlots {
                                 BlockPos.ZERO);
                         plotTestHelper.check(
                                 //#if FABRIC
-                                ItemStack.isSameItemSameComponents(inv.getStackInSlot(1), expectedBottomSlot.create()),
+                                nfcompat.compat.ItemStackTemplates.isSameItemSameComponents(inv.getStackInSlot(1), expectedBottomSlot),
                                 //#else
                                 ItemStack.isSameItemSameComponents(inv.getStackInSlot(1), expectedBottomSlot),
                                 //#endif
@@ -114,7 +114,7 @@ public final class InscriberTestPlots {
                                 BlockPos.ZERO);
                         plotTestHelper.check(
                                 //#if FABRIC
-                                ItemStack.isSameItemSameComponents(inv.getStackInSlot(2), expectedMiddleSlot.create()),
+                                nfcompat.compat.ItemStackTemplates.isSameItemSameComponents(inv.getStackInSlot(2), expectedMiddleSlot),
                                 //#else
                                 ItemStack.isSameItemSameComponents(inv.getStackInSlot(2), expectedMiddleSlot),
                                 //#endif
@@ -122,7 +122,7 @@ public final class InscriberTestPlots {
                                 BlockPos.ZERO);
                         plotTestHelper.check(
                                 //#if FABRIC
-                                ItemStack.isSameItemSameComponents(inv.getStackInSlot(3), expectedResult.create()),
+                                nfcompat.compat.ItemStackTemplates.isSameItemSameComponents(inv.getStackInSlot(3), expectedResult),
                                 //#else
                                 ItemStack.isSameItemSameComponents(inv.getStackInSlot(3), expectedResult),
                                 //#endif
