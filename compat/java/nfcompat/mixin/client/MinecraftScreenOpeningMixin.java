@@ -29,7 +29,7 @@ import org.spongepowered.asm.mixin.injection.ModifyVariable;
 @Mixin(Minecraft.class)
 public class MinecraftScreenOpeningMixin {
 
-    @ModifyVariable(method = "setScreen", at = @At("HEAD"), argsOnly = true)
+    @ModifyVariable(method = "setScreenAndShow", at = @At("HEAD"), argsOnly = true)
     private Screen nfcompat$postScreenOpening(@Nullable Screen screen) {
         if (screen == null) {
             return null;
