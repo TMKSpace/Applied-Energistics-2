@@ -429,27 +429,68 @@ Forge Config API Port **не подошёл**: его `net.neoforged.fml.config`
   + `--onto`, файл сохранён в UTF-8 BOM — иначе PS 5.1 ломает кириллицу).
 - **GuideME** — поднят и изолирован (см. выше в «Рантайм»).
 
+## Сессия «клиент и гайд» (17.11)
+
+Довели клиент до играбельного состояния и закрыли гайд целиком. Хронология крашей и что за
+каждым стояло (все правки — в шиме или в `//#if FABRIC`, апстрим не переписывали):
+
+1. **`Registry is already frozen` на старте клиента** — `bakeAll` морозил реестры мода до
+   ванильного `BuiltInRegistries.bootStrap()`, а тот сам зовёт `bindAllTagsToEmpty()` →
+   `validateWrite()` падает на замороженном реестре. Убрали ручной `freeze()` (морозит ваниль);
+   ручной оставили только если реестр реестров уже заморожен (тесты).
+2. **GuideME: `ArgumentTypeInfos.registerByClass`** — Mixin не может добавить non-private static,
+   поэтому `@Accessor` к `BY_CLASS` + `@Redirect` двух лямбд.
+3. **GuideME: `RenderPipeline.toBuilder()`** — добавлен instance-метод, копирующий состояние в
+   `Builder` (включая флаги shader defines).
+4. **GuideME: `registerExtensionPoint`** — NeoForge возвращает `void`, у нас был `T` → дескриптор
+   не совпадал.
+5. **GuideME: хоткей** — `NEW KeyMapping` с 5-арг конструктором подменён на ванильный; класс
+   больше не «отравляется» (`NoClassDefFoundError: Could not initialize class OpenGuideHotkey`).
+6. **GuideME: `SimpleJsonResourceReloadListener.scanDirectory`** — метод добавлен NeoForge,
+   падение обрывало весь перезагруз ресурспаков (и уводило клиент в recovery-экран, где Jade
+   падал на своём assert). Реализовали обход json'ов + `Codec#parse`.
+7. **GuideME: ассеты** — она не Fabric-мод (нет `fabric.mod.json`), поэтому её `assets/` не
+   попадали в ресурспак: спрайты были missing («Expected sprite guideme:window to be a
+   nine-slice sprite»). `processResources` копирует `assets/guideme/**` из джарника.
+8. **GuideME: `GuiGraphicsExtractor`** — три неофорджевских instance-метода
+   (`peekScissorStack`, `submitGuiElementRenderState`, `submitPictureInPictureRenderState`) +
+   AW на `ScissorStack` и приватный 5-арг конструктор (GuideME строит `ScaledGuiGraphics`).
+9. **GuideME: `Lazy`** — в NeoForge это **класс**, у нас был интерфейс → `IncompatibleClassChangeError`.
+10. **GuideME: `NeoForgeClientConfig`** — `ConfigValue#get()` без привязанного конфига бросает
+    `IllegalStateException`; привязываем in-memory конфиг через `acceptConfig`.
+11. **GuideME: `FluidTintSource`/`Blitter`** — иконка жидкости рисовалась ровным квадратом:
+    `.blending(false)` уводил в собственный пайплайн, собранный нашим `toBuilder`; тот терял
+    shader defines. Перенесли defines + принудительно оставляем `GUI_TEXTURED`.
+12. **Spatial** — работает end-to-end (пилоны, порт, контроллер, ячейка, редстоун), подсветка
+    области якоря рисуется (`ExtractLevelRenderStateEvent` + `SubmitCustomGeometryEvent`).
+    Тёмное spatial-измерение — поведение апстрима (у них TODO на environmental effects).
+
+Плюс: TOML-конфиги (чтение/запись/`Loading`/`Reloading`, `/ae2config reload` + 7 тестов),
+`ItemTooltipEvent` (из него же живёт хоткей гайда), `CapabilityInvalidation` (починил `ae2:subnet`),
+фейкплееру дали пустое соединение (починил `ae2:memcard_pattern_provider`), миксины разложены по
+`client/`, `common/`, `guideme/`, инструменты аудита GuideME — в `tools/guide-audit`.
+
+Итог: `clean`+`classes` зелёные, `shimTest` зелёный, **геймтесты 81/81**.
+
 ## Next
 
-Полный список дыр шима (с тестами и статусами) — в **`TODO.md`**. Ниже только ближайшее.
+Полный список дыр шима (с тестами и статусами) — в **`TODO.md`**. Ниже только то, что осталось.
 
-1. **Полный геймтест** — `runGameTest` без фильтра падает на NPE в `InscriberTestPlots`
-   (`expectedBottomSlot` = null): пробел порта, а не харнесса. После фикса — прогон всех 81.
-   `InternalInventoryTest` (юнит) не стартует: эфемерный сервер не поднимается за 120 с, не чиним.
-2. **Три шим-дырки из аудита**: `SubmitCustomGeometryEvent` не постится (area overlay не рисуется),
-   `MutableQuad.recalculateWinding()` — no-op (можно делегировать в `FaceBakery.recalculateWinding`,
-   AW уже открыт), тинт `MutableQuad` не доезжает до `BakedQuad` (в ванильном кваде нет цветов).
-3. **Гэп-список**: `OnDatapackSyncEvent`, чтение TOML в шиме (значения пока дефолтные),
-   entrypoints REI/Jade, `onChunkUnloaded` (`DeferredBlockEntityUnloader`), `onNeighborChange`
-   кабеля, `AECapabilities` наружу (`ME_STORAGE`, `CRAFTING_MACHINE`, `GENERIC_INTERNAL_INV`,
-   `IN_WORLD_GRID_NODE_HOST`, `CRANKABLE`), `ExtractBlockOutlineRenderStateEvent`.
-4. **Наковальня**: `AnvilMenuMixin` AE2 целится в `createResultInternal`, которого в ванили нет
-   (метод добавляет NeoForge) — миксин исключён, intrinsic-чары наковальни остаются непокрытыми.
-5. **Проверить в игре**: GuideME (гайд открывается, ME-сундук без кабеля не падает),
-   затем полный набор геймтестов.
-6. **Проба моста** — в шиме лежит временная команда `/nfcompat cap|parts|pp|provider`
-   (`nfcompat/debug/CapabilityProbeCommand`), полезная для разбора «шина не видит контейнер».
-   Удалить, когда надобность отпадёт.
+1. **Тинт квадов** (`QuadTinter`, точки каналов смарт-кабелей) — принято как граница шима:
+   в ванильном `BakedQuad` нет вершинных цветов; опционально точечный `tintIndex`-вариант.
+2. **`onNeighborChange` для чужих блоков** — сигнал инвалидации capability есть, но пинг при
+   изменении соседнего блока без участия AE2 (поставили сундук рядом) всё ещё нужен миксином.
+3. **`ExtractBlockOutlineRenderStateEvent`** — нет превью установки деталей и per-part обводки.
+4. **PiP-рендеры** — регистрируются, но состояния никто не отправляет → 3D-иконки жидкостей в
+   JEI/REI не рисуются.
+5. **Наковальня**: `AnvilMenuMixin` AE2 целится в `createResultInternal`, которого в ванили нет
+   (метод добавляет NeoForge) — миксин исключён, intrinsic-чары наковальни не покрыты.
+6. **Гэп-список**: `OnDatapackSyncEvent`, entrypoints REI/Jade, `onChunkUnloaded`
+   (`DeferredBlockEntityUnloader`), `AECapabilities` наружу (принято: Fabric-аналога нет),
+   Cloth Config + ModMenu (обсуждали, не делали), site-export GuideME и «гайд при входе».
+7. **Перед релизом**: снять dev-страховку рендера гайда (`-Dnfcompat.guide.debugCatch`),
+   удалить `/nfcompat cap|parts|pp|provider`, мёртвые `ofSlot()`.
+8. **`InternalInventoryTest`** (юнит) — эфемерный сервер не поднимается за 120 с; не чиним.
 
 ## Инструменты стенда
 
