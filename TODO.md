@@ -208,10 +208,14 @@ Reborn: AE2-источник сам наружу не толкает, работ
 миксин `@Mixin(Item.class) implements IItemExtension`, поэтому все 11 AE2-переопределений стали
 настоящими override; диспетчер — `ItemUseFirstBridge` на `UseBlockCallback` (регистрируется до
 `RightClickBlockBridge`). Включая `doesSneakBypassUse` для карты памяти.
-`[x]` **Инвалидация capability** — закрыто иначе: кэш в шиме убран целиком
-(`BlockCapabilityCache.getCapability()` всегда спрашивает провайдеры), поэтому устаревших
-хендлеров не бывает. Цена — лишние запросы на тик у шин/провайдеров; если профилировка покажет
-горячую точку, вернёмся к кэшу, но уже с настоящей инвалидацией по смене блока.
+`[x]` **Инвалидация capability** — закрыто в два шага. Сначала убрали кэш целиком
+(`BlockCapabilityCache.getCapability()` всегда спрашивает провайдеры), чтобы не было
+устаревших хендлеров. Затем выяснилось, что сам **сигнал** всё равно нужен: без него
+`StorageBusPart.updateTarget` просыпается один раз и, если цель ещё не готова, ставит
+`NO_UPDATE` навсегда (это валило `ae2:subnet`). Теперь `nfcompat.capabilities.CapabilityInvalidation`
+— настоящий реестр `(уровень, позиция) → слабые ссылки на `ICapabilityInvalidationListener``,
+`registerListener` пишет, `invalidate(holder)` доставляет; слушатель, вернувший `false`,
+выбрасывается. Цена — лишние запросы к провайдерам на сигнал; кэш не возвращаем.
 `[ ]` **`AECapabilities` наружу не выставлены:** `ME_STORAGE`, `CRAFTING_MACHINE`,
 `GENERIC_INTERNAL_INV`, `IN_WORLD_GRID_NODE_HOST`, `CRANKABLE` видны только внутри шима.
 В 1.20.1 все были публичными Fabric-lookup (`MEStorage.SIDED`, `GenericInternalInventory.SIDED`,
@@ -223,7 +227,9 @@ Reborn: AE2-источник сам наружу не толкает, работ
 
 ### P2 — заметно, но не ломает
 `[ ]` `onNeighborChange` кабеля мёртв (нет `INeighborChangeSensitive` + миксина на
-`Level#updateNeighbourForOutputSignal`): шина хранения не получает пинг соседа — миксин, `src` не трогаем.
+`Level#updateNeighbourForOutputSignal`). Частично закрыто: сам сигнал инвалидации теперь
+доставляется (`CapabilityInvalidation`), этого хватило для `ae2:subnet`. Остаётся пинг при
+изменении соседнего блока без участия AE2 (поставили сундук рядом) — нужен миксин, `src` не трогаем.
 `[ ]` `onChunkUnloaded` не вызывается, `setRemoved` срабатывает до сохранения чанка — риск
 потерять данные ноды. Портировать `DeferredBlockEntityUnloader` в шим.
 `[ ]` `ExtractBlockOutlineRenderStateEvent` не постится: нет превью установки деталей и
@@ -265,8 +271,10 @@ static), AW `ae2.accesswidener:78` уже открывает ровно её. Ф
 `[x]` `RegisterGameTestsEvent` + `RegisterEvent.register(...)` для `TEST_INSTANCE_TYPE` — ожили:
 `runGameTest` находит 81 тест, `ae2:tiny_tnt*` проходит 3/3. `ModFileScanData` больше не заглушка
 (`nfcompat.gametest.ModAnnotationScanner` сканирует `appeng/**` через ASM).
-`[ ]` Открытый остаток по геймтестам: полный `*:*` падает NPE в `InscriberTestPlots`
-(`expectedBottomSlot` = null).
+`[ ]` Открытый остаток по геймтестам: 81 тест доезжает до конца, 1 провал —
+`ae2:memcard_pattern_provider` (NPE: `serverPlayer.connection` null у фейкплеера при отправке
+пакета). `ae2:subnet` починен: причина была в мёртвом сигнале инвалидации capability
+(см. P1), а не в subnet-логике.
 `[ ]` Устаревший комментарий: `attachment/AttachmentType.java:8` утверждает, что attachment-API
 у Fabric нет — на самом деле есть `fabric-data-attachment-api-v1` (`AttachmentRegistry`,
 `AttachmentType`, `AttachmentTarget`, `AttachmentSyncPredicate`). Ключ реестра сейчас важнее API.
