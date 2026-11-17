@@ -248,11 +248,12 @@ per-part обводки (светится весь блок).
 проверено javap + логами), клиентский фолбэк `ClientModelDataLookup` удалён вместе с диагностикой.
 `[x]` Скайбокс spatial-измерения: событие постится, `EnvironmentRenderers` связывает измерение с
 id, `LevelRendererEnvironmentMixin` перехватывает небо/облака/погоду (в обычном мире — ваниль).
-`[x]` `ExtractLevelRenderStateEvent` + `SubmitCustomGeometryEvent` — **миксины добавлены**
-(`client.LevelExtractorMixin` — TAIL `LevelExtractor#extract(...)`; `client.LevelRendererSubmitGeometryMixin` —
-после `ParticlesRenderState.submit(...)` в `LevelRenderer#submitFeatures`). Свой рендер-пас не
-понадобился. Ждёт проверки в игре: подсветка области spatial. Хрупкое место — ванильные имена
-`extract`/`submitFeatures`/`ParticlesRenderState.submit` при обновлении MC.
+`[x]` `ExtractLevelRenderStateEvent` + `SubmitCustomGeometryEvent` — **работает, проверено в игре**
+(MCP): у `Spatial Anchor` включается overlay-режим, и вокруг его чанков рисуется подсветка.
+Миксины: `client.LevelExtractorMixin` (TAIL `LevelExtractor#extract(...)`) и
+`client.LevelRendererSubmitGeometryMixin` (после `ParticlesRenderState.submit(...)` в
+`LevelRenderer#submitFeatures`); свой рендер-пас не понадобился. Хрупкое место — ванильные
+имена `extract`/`submitFeatures`/`ParticlesRenderState.submit` при обновлении MC.
 `[x]` `MutableQuad.recalculateWinding()` — **закрыто**: делегирует в ванильный
 `FaceBakery#recalculateWinding(Vector3fc[], long[], Direction)` (метод есть в непатченной 26.3,
 открыт AW). `recomputeNormals()` после него не нужен: метод только циклически сдвигает вершины
