@@ -243,20 +243,19 @@ per-part обводки (светится весь блок).
 проверено javap + логами), клиентский фолбэк `ClientModelDataLookup` удалён вместе с диагностикой.
 `[x]` Скайбокс spatial-измерения: событие постится, `EnvironmentRenderers` связывает измерение с
 id, `LevelRendererEnvironmentMixin` перехватывает небо/облака/погоду (в обычном мире — ваниль).
-`[ ]` `ExtractLevelRenderStateEvent` + `SubmitCustomGeometryEvent` не постятся — area overlay
-не рисуется вообще. **Разбор (oracle): свой рендер-пас не нужен**, ваниль 26.3 уже умеет
-`OrderedSubmitNodeCollector.submitCustomGeometry(...)`, и `AreaOverlayRenderer` его зовёт.
-Нужны два тонких миксина: `@Inject(TAIL)` в `LevelExtractor#extract(DeltaTracker, Camera, float)`
-для extract-события и `@Inject(AFTER)` на `ParticlesRenderState.submit(...)` внутри
-`LevelRenderer#submitFeatures` для submit-события (свежая `PoseStack` + пустой список секций —
-AE2 сам транслирует на камеру, `getRenderableSections()` никто не читает). Слушатель уже
-зарегистрирован (`AppEngClient:309`), `//#if FABRIC`-гейты в `AreaOverlayRenderer` уже есть,
-`src` трогать не придётся. Хрупкое место — имена `submitFeatures`/`ParticlesRenderState.submit`.
-`[ ]` `MutableQuad.recalculateWinding()` — no-op, и комментарий в `MutableQuad.java:948` врёт:
-`FaceBakery#recalculateWinding(Vector3fc[], long[], Direction)` **есть в ванили 26.3** (private
-static), AW `ae2.accesswidener:78` уже открывает ровно её. Фикс на 10 строк: делегировать
-и затем `recomputeNormals`. В `src` метод сейчас не зовётся (только тест `CubeBuilderTest`,
-и он ходит в `FaceBakery` напрямую) — то есть это гигиена API, а не фича.
+`[x]` `ExtractLevelRenderStateEvent` + `SubmitCustomGeometryEvent` — **миксины добавлены**
+(`client.LevelExtractorMixin` — TAIL `LevelExtractor#extract(...)`; `client.LevelRendererSubmitGeometryMixin` —
+после `ParticlesRenderState.submit(...)` в `LevelRenderer#submitFeatures`). Свой рендер-пас не
+понадобился. Ждёт проверки в игре: подсветка области spatial. Хрупкое место — ванильные имена
+`extract`/`submitFeatures`/`ParticlesRenderState.submit` при обновлении MC.
+`[x]` `MutableQuad.recalculateWinding()` — **закрыто**: делегирует в ванильный
+`FaceBakery#recalculateWinding(Vector3fc[], long[], Direction)` (метод есть в непатченной 26.3,
+открыт AW). `recomputeNormals()` после него не нужен: метод только циклически сдвигает вершины
+вместе с UV. В `src` по-прежнему не зовётся — это гигиена API. Комментарий в шиме исправлен
+(раньше утверждал, что метода в ванили нет).
+`[ ]` Новая находка рядом: `MutableQuad.itemGlintRenderType()` возвращает поле `itemRenderType`
+вместо `itemGlintRenderType` (copy-paste, ~строка 484). Никем не зовётся, но при первом вызове
+даст неверный пайплайн.
 `[ ]` Тинт `MutableQuad` → `BakedQuad` — **принято как граница шима** (категория C): ванильный
 `BakedQuad` в 26.3 — record без цветов и нормалей, шим честно их дропает. Теряются: `QuadTinter`
 (фасады тинтованных блоков, `FacadeBuilder:248`) и точечные `setColorRGB` (канальные точки
@@ -283,12 +282,14 @@ static), AW `ae2.accesswidener:78` уже открывает ровно её. Ф
 (геймтесты регистрируются, pick-block проверен в игре), то есть это предупреждение на этапе
 pre-apply, а не отказ. Держать в голове при обновлении Mixin/ASM: если начнут молча не
 применяться, симптом — «мод грузится, но фича мертва без единой ошибки».
-`[ ]` Мелочи: `TinyTNTBlock.onCaughtFire` (огонь не поджигает мини-ТНТ),
+`[x]` Мелочи: `TinyTNTBlock.onCaughtFire` (огонь не поджигает мини-ТНТ),
 `SkyStoneChestRenderer.getRenderBoundingBox` (сундук моргает на краю фрустума), пайплайны
-`LINES_BEHIND_BLOCK`/`STORAGE_CELL_LEDS` без depth-state, `ModConfigEvent.Reloading` не постится,
-`RecipeSync.CLIENT_BUFFER` не чистится на disconnect, `ServerThread` не сбрасывает поток при
-новом мире, `FakePlayerFactory` без кэша, `InterModComms` в никуда, пустой экран конфига,
-нет entrypoint ModMenu, мост `Item.ITEM` мёртв с обеих сторон.
+`LINES_BEHIND_BLOCK`/`STORAGE_CELL_LEDS` без depth-state, `InterModComms` в никуда, пустой экран
+конфига, нет entrypoint ModMenu, мост `Item.ITEM` мёртв с обеих сторон.
+Закрыто отдельным заходом: `ModConfigEvent.Reloading` постится (+ команда `/ae2config reload`,
+файловый вотчер **не** делаем — как в NeoForge вне dev), `RecipeSync.CLIENT_BUFFER` чистится на
+disconnect, `ServerThread` сбрасывается на `SERVER_STOPPED`, `FakePlayerFactory` кэширует
+`(уровень, профиль)` и чистится на выгрузке/остановке.
 `[ ]` Удалить временное перед релизом: `/nfcompat cap|parts|pp|provider`, мёртвые `ofSlot()`.
 
 ## Позже: разложить код на три слоя (идея пользователя)
