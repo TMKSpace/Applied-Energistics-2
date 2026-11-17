@@ -51,13 +51,6 @@ public final class InitDimensionTypes {
                 EnvironmentAttributeMap.builder()
                         .set(EnvironmentAttributes.BED_RULE, BedRule.DESTROY_ON_USE)
                         .set(EnvironmentAttributes.RESPAWN_ANCHOR_WORKS, false)
-                        //#if FABRIC
-                        // В 26.3 яркость измерения без скайлайта задаётся атрибутом
-                        // `minecraft:gameplay/sky_light_level` (так делает ванильный Незер: 4.0).
-                        // NeoForge-сборка AE2 этот атрибут не ставит, и spatial-измерение чёрное
-                        // «хоть глаз выколи»: света 0 и днём, и ночью. Ставим полную яркость.
-                        .set(EnvironmentAttributes.SKY_LIGHT_LEVEL, 15.0f)
-                        //#endif
                         // TODO 1.21.11: environmental effects SpatialStorageDimensionIds.SKY_PROPERTIES_ID
                         .build(),
                 timelines.getOrThrow(TimelineTags.UNIVERSAL),
