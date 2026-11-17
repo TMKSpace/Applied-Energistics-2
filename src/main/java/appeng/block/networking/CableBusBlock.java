@@ -337,12 +337,18 @@ public class CableBusBlock extends AEBaseEntityBlock<CableBusBlockEntity> implem
     }
 
     //#if FABRIC
-    //#else
-    @Override
-    //#endif
+    // На Fabric метод есть в шиме как `IBlockExtension#onNeighborChange` (его зовёт
+    // nfcompat.mixin.common.LevelNeighborChangeMixin), но компилятор миксинов не видит,
+    // поэтому @Override не ставим.
     public void onNeighborChange(BlockState state, LevelReader level, BlockPos pos, BlockPos neighbor) {
         this.cb(level, pos).onNeighborChanged(level, pos, neighbor);
     }
+    //#else
+    @Override
+    public void onNeighborChange(BlockState state, LevelReader level, BlockPos pos, BlockPos neighbor) {
+        this.cb(level, pos).onNeighborChanged(level, pos, neighbor);
+    }
+    //#endif
 
     /**
      * WTF does this do you ask?

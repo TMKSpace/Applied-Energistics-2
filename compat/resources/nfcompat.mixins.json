@@ -5,6 +5,8 @@
   "compatibilityLevel": "JAVA_21",
   "mixins": [
     "common.BlockEntityMixin",
+    "common.LevelNeighborChangeMixin",
+    "common.BlockNeighborChangeMixin",
     "common.LevelAccessorMixin",
     "common.CreativeModeTabMixin",
     "common.ItemExtensionMixin",
