@@ -271,6 +271,49 @@ fabricApi {
 	}
 }
 
+// ---------------------------------------------------------------------------
+// Gametest: запуск ванильного GameTestServer (реестровый путь: Registries.TEST_INSTANCE,
+// Registries.TEST_ENVIRONMENT) из Fabric-раннера.
+//
+// createSourceSet=false — тесты живут не в отдельном сорсете (appeng.server.testplots
+// и так в main), enableClientGameTests=false — клиент не поднимаем (нет GUI и лишнего
+// run-каталога), eula=true — Loom сам кладёт eula.txt в СВОЙ run-каталог
+// (build/run/gameTest), сервер пользователя в D:\Servers\Minecraft не затрагивается.
+//
+// GameTestServer не публикуется в сеть (isPublished() = false) и порт не слушает,
+// так что конфликта с чужим сервером нет даже при дефолтном server-port.
+//
+// -Dappeng.tests=true включает регистрацию тестплотов AE2 (AppEngBase#registerTests).
+// -Dfabric-api.gametest.filter ограничивает прогон: в фильтр передаётся regex по id теста.
+// ---------------------------------------------------------------------------
+fabricApi {
+	configureTests {
+		createSourceSet = false
+		enableClientGameTests = false
+		eula = true
+	}
+}
+
+loom {
+	runs {
+		gameTest {
+			vmArg '-Dappeng.tests=true'
+			// Включает реестровый путь: GameTestHooks.isGametestEnabled() ->
+			// пост RegisterGameTestsEvent до заморозки TEST_INSTANCE.
+			vmArg '-Dneoforge.gametest.enabled=true'
+			// По умолчанию гоняем один короткий плот (см. AE2-PATCHES.md, если нужен весь набор:
+			// убрать фильтр или задать свой через -PgtFilter=...).
+			vmArg "-Dfabric-api.gametest.filter=${project.findProperty('gtFilter') ?: '*'}"
+		}
+	}
+}
+
+// configureTests вешает runGameTest в check. Нам это не нужно: `gradlew build`
+// не должен поднимать игровой сервер. Убираем только эту зависимость.
+tasks.matching { it.name == 'check' }.configureEach {
+	setDependsOn(dependsOn.findAll { !it.toString().toLowerCase().contains('gametest') })
+}
+
 dependencies {
 	minecraft "com.mojang:minecraft:${project.minecraft_version}"
 	// MC 26.x поставляется необфусцированным — mappings не задаются вообще
