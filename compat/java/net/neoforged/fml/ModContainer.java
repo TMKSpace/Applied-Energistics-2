@@ -54,10 +54,22 @@ public class ModContainer {
     }
 
     public void registerConfig(ModConfig.Type type, ModConfigSpec spec) {
-        registerConfig(type, spec, null);
+        registerConfig(type, (IConfigSpec) spec, null);
     }
 
     public void registerConfig(ModConfig.Type type, ModConfigSpec spec, @Nullable String fileName) {
+        registerConfig(type, (IConfigSpec) spec, fileName);
+    }
+
+    /**
+     * Вариант для чужих библиотек (GuideME передаёт {@code IConfigSpec}, а не конкретный
+     * {@code ModConfigSpec}) — в NeoForge это одна и та же перегрузка, у нас нужен мост.
+     */
+    public void registerConfig(ModConfig.Type type, IConfigSpec spec) {
+        registerConfig(type, spec, null);
+    }
+
+    public void registerConfig(ModConfig.Type type, IConfigSpec spec, @Nullable String fileName) {
         String name = fileName != null ? fileName : getModId() + "-" + type.getSerializedName() + ".toml";
         Path path = configDir().resolve(name);
 
