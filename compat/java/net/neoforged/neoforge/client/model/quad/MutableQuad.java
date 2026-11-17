@@ -18,6 +18,7 @@ import net.minecraft.client.renderer.chunk.ChunkSectionLayer;
 import net.minecraft.client.renderer.rendertype.RenderType;
 import net.minecraft.client.renderer.texture.TextureAtlas;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
+import net.minecraft.client.resources.model.cuboid.FaceBakery;
 import net.minecraft.client.resources.model.geometry.BakedQuad;
 import net.minecraft.client.resources.model.sprite.Material;
 import net.minecraft.core.Direction;
@@ -945,11 +946,14 @@ public class MutableQuad {
      *
      * <p>It uses the current {@linkplain #direction() direction} and <strong>only works correctly for axis-aligned quads</strong>.
      *
-     * <p>SHIM: {@code FaceBakery#recalculateWinding} does not exist in unpatched MC 26.3 (it is a NeoForge addition),
-     * so this is intentionally a no-op. Nothing in AE2 calls it; if that changes, the winding logic has to be
-     * reimplemented inside the shim.
+     * <p>SHIM: this is <em>not</em> a NeoForge-only addition - unpatched vanilla 26.3 already contains the same logic
+     * as {@code FaceBakery#recalculateWinding} ({@code private static}), and {@code ae2.accesswidener} opens it for us.
+     * It only cyclically rotates the vertex order, so normals stay valid and no {@link #recomputeNormals(boolean)}
+     * call is needed here. (Nothing in AE2 calls this method yet; {@code CubeBuilderTest} drives {@code FaceBakery}
+     * directly.)
      */
     public MutableQuad recalculateWinding() {
+        FaceBakery.recalculateWinding(positions, uvs, direction);
         return this;
     }
 
