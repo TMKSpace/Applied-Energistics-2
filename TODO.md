@@ -252,16 +252,18 @@ per-part обводки (светится весь блок).
 `[~]` `RegisterPictureInPictureRenderersEvent` постится и рендерер регистрируется, но состояния
 никто не отправляет: `FluidBlockRendering` нужен доступ к `GuiGraphicsExtractor` (AW на
 `scissorStack`/`guiRenderState` либо интерфейс-миксин). Пока 3D-иконки жидкости в JEI/REI не рисуются.
-`[ ]` **После ресайза окна 3D-сцена в гайде рисуется растянутой** (PIP-текстура сцены
-натягивается на новый прямоугольник). Наши методы экстрактора сверены с патчем NeoForge 26.3
-(`patches/net/minecraft/client/gui/GuiGraphicsExtractor.java.patch`): `submitGuiElementRenderState`,
-`submitPictureInPictureRenderState` и `peekScissorStack` совпадают дословно
-(`guiRenderState.addGuiElement` / `.addPicturesInPictureState` / `scissorStack.peek`), то есть
-подмена тут не виновата — это GuideME держит старый viewport/размер сцены после `resize`.
-Смотреть: `LytGuidebookScene$Viewport` (пересчёт `bounds`/камеры), `ScenePictureInPictureRenderer.State`
-(`x0..y1` в виртуальных единицах + `pose`) и ванильный `PictureInPictureRenderer.prepare`
-(пересоздание текстуры по размеру). Воспроизведение: изменить размер окна и открыть страницу
-со сценой; после закрытия/открытия гайда не проверялось.
+`[ ]` **После ресайза окна 3D-сцена в гайде растягивается по ширине** (и переоткрытие гайда
+НЕ помогает, то есть это не стейл, а рассинхрон единиц). Наши методы экстрактора сверены с патчем
+NeoForge 26.3 (`patches/net/minecraft/client/gui/GuiGraphicsExtractor.java.patch`): всё совпадает
+дословно, подмена не виновата. Ванильный `PictureInPictureRenderer.prepare` считает размер текстуры
+как `(x1-x0)*guiScale`, а блит рисует `(x0..x1)` через `state.pose()`, то есть GuideME обязан
+отдавать `x0..y1` и `pose` в согласованных единицах. Вероятная причина: `scene.getCameraSettings()
+.setViewportSize(prefSize)` в `LytGuidebookScene.Viewport` использует размер в других единицах, чем
+`bounds` после смены `effectiveScale` — камера рендерит один аспект, а блитится в другой.
+Смотреть: `LytGuidebookScene.Viewport.onLayoutMoved/render` (`prefSize`, `bounds`,
+`setViewportSize`), `ScenePictureInPictureRenderer.State` и `IndepentScaleScreen.calculateEffectiveScale`.
+Воспроизведение: изменить размер окна → открыть любую страницу со сценой (например «The Crafting CPU»).
+До фикса лечится перезапуском клиента.
 `[x]` `BuildCreativeModeTabContentsEvent` постится из миксина на `CreativeModeTab#buildContents` —
 ~19 предметов вернулись в ванильные вкладки.
 `[x]` Model data: снапшотом служит сам `RenderSectionRegion` (у него рабочий `getBlockEntity`,
