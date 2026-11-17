@@ -23,8 +23,17 @@ public final class ServerThread {
     private static final boolean DEDICATED;
 
     static {
-        DEDICATED = FabricLoader.getInstance().getEnvironmentType() != net.fabricmc.api.EnvType.CLIENT
-                || FMLEnvironment.dist == Dist.DEDICATED_SERVER;
+        DEDICATED = detectDedicated();
+    }
+
+    private static boolean detectDedicated() {
+        try {
+            return FabricLoader.getInstance().getEnvironmentType() != net.fabricmc.api.EnvType.CLIENT
+                    || FMLEnvironment.dist == Dist.DEDICATED_SERVER;
+        } catch (Throwable ignored) {
+            // Вне запуска игры (юнит-тесты) лоадера нет - считаем себя сервером.
+            return true;
+        }
     }
 
     private ServerThread() {

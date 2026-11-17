@@ -73,3 +73,6 @@ accessible field net/minecraft/client/renderer/item/properties/numeric/RangeSele
 accessible field net/minecraft/client/renderer/item/properties/select/SelectItemModelProperties ID_MAPPER Lnet/minecraft/util/ExtraCodecs$LateBoundIdMapper;
 accessible field net/minecraft/client/renderer/item/properties/conditional/ConditionalItemModelProperties ID_MAPPER Lnet/minecraft/util/ExtraCodecs$LateBoundIdMapper;
 accessible field net/minecraft/client/renderer/blockentity/BlockEntityRenderers PROVIDERS Ljava/util/Map;
+# Только для юнит-тестов (CubeBuilderTest): апстрим дергает приватный хелпер
+# FaceBakery#recalculateWinding напрямую. На игру не влияет - метод остаётся тем же.
+accessible method net/minecraft/client/resources/model/cuboid/FaceBakery recalculateWinding ([Lorg/joml/Vector3fc;[JLnet/minecraft/core/Direction;)V

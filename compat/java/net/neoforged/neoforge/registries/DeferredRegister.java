@@ -47,6 +47,7 @@ import java.util.function.Supplier;
 import java.util.function.UnaryOperator;
 
 import net.minecraft.core.Holder;
+import net.minecraft.core.MappedRegistry;
 import net.minecraft.core.Registry;
 import net.minecraft.core.component.DataComponentType;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -149,7 +150,16 @@ public class DeferredRegister<T> {
 
     private void registerNow(DeferredHolder<T, ?> holder) {
         Registry<T> registry = lookupRegistry();
-        T value = entries.get(holder).get();
+        final T value;
+        try {
+            value = entries.get(holder).get();
+        } catch (RuntimeException e) {
+            // Диагностика: фабрика создаёт объект ДО того, как мы успели что-то проверить.
+            // Для Item/Block конструктор сам лезет в реестр за intrusive holder'ом, и на
+            // замороженном реестре падает глубоко внутри ванили — по стеку не видно, кто
+            // виноват. Оборачиваем, чтобы в сообщении были и реестр, и id.
+            throw registrationFailure(holder, registry, "создать", e);
+        }
 
         if (registry == null) {
             // Реестра на Fabric нет - держим значение локально (пункт 2).
@@ -169,8 +179,86 @@ public class DeferredRegister<T> {
             }
         }
 
-        Holder.Reference<T> reference = Registry.registerForHolder(registry, key, value);
-        ((DeferredHolder<T, ?>) holder).bindTo(reference);
+        try {
+            Holder.Reference<T> reference = registerWithIntrusiveHolder(registry, key, value);
+            ((DeferredHolder<T, ?>) holder).bindTo(reference);
+        } catch (RuntimeException e) {
+            throw registrationFailure(holder, registry, "зарегистрировать", e);
+        }
+    }
+
+    /**
+     * Понятная ошибка вместо «This registry can't create intrusive holders» из недр Item.
+     * Поведение не меняется (исключение всё равно летит наружу), меняется только текст.
+     */
+    private IllegalStateException registrationFailure(DeferredHolder<T, ?> holder, @Nullable Registry<T> registry,
+            String what, RuntimeException cause) {
+        var sb = new StringBuilder("nfcompat: не удалось ").append(what).append(" запись ")
+                .append(holder.getId())
+                .append(" реестра ")
+                .append(this.registryKey.identifier());
+        if (registry == null) {
+            sb.append(" (реестра нет на Fabric — значение кладётся в локальную карту)");
+        } else {
+            sb.append(". Реестр уже существует, значит вероятная причина — он заморожен:"
+                    + " DeferredRegister в шиме регистрирует нетерпеливо, поэтому вызов должен"
+                    + " происходить до Bootstrap.bootStrap()/заморозки (см. шапку DeferredRegister)");
+        }
+        return new IllegalStateException(sb.toString(), cause);
+    }
+
+    /**
+     * Регистрирует значение, при необходимости создав ему intrusive holder.
+     * <p>
+     * Часть ванильных реестров (ITEM, BLOCK, DATA_COMPONENT_TYPE, ...) создана с
+     * intrusive holders: {@code MappedRegistry#register} требует, чтобы значение уже было
+     * заведено в карте {@code unregisteredIntrusiveHolders}, иначе падает с
+     * "Missing intrusive holder". Ваниль делает это в конструкторах Item/Block, NeoForge -
+     * своим RegisterEvent. Шиму дешевле позвать {@code createIntrusiveHolder} самим: если
+     * реестр intrusive holders не поддерживает, метод кинет IllegalStateException, и мы
+     * просто регистрируем как обычно.
+     */
+    private static <T> Holder.Reference<T> registerWithIntrusiveHolder(Registry<T> registry, ResourceKey<T> key,
+            T value) {
+        if (registry instanceof MappedRegistry<T> mapped) {
+            try {
+                mapped.createIntrusiveHolder(value);
+            } catch (IllegalStateException ignored) {
+                // Реестр без intrusive holders - обычный путь регистрации.
+            }
+        }
+        var reference = Registry.registerForHolder(registry, key, value);
+        // MappedRegistry связывает значение с holder'ом только в freeze(). Пока реестр
+        // разморожен (мы его разморозили ради регистрации мода), holder остаётся пустым, а
+        // AE2 зовёт DeferredHolder#get() сразу после register() (см. AERecipeTypes). Привязываем
+        // сами - ровно то, что делает freeze().
+        bindReferenceValue(reference, value);
+        return reference;
+    }
+
+    private static void bindReferenceValue(Holder.Reference<?> reference, Object value) {
+        try {
+            var bindValue = BIND_VALUE.get();
+            if (bindValue == null) {
+                return;
+            }
+            bindValue.invoke(reference, value);
+        } catch (ReflectiveOperationException ignored) {
+            // Не смогли - значение привяжется при финальном freeze() в bootstrap.
+        }
+    }
+
+    private static final java.util.concurrent.atomic.AtomicReference<java.lang.reflect.Method> BIND_VALUE = new java.util.concurrent.atomic.AtomicReference<>(
+            computeBindValue());
+
+    private static java.lang.reflect.Method computeBindValue() {
+        try {
+            var method = Holder.Reference.class.getDeclaredMethod("bindValue", Object.class);
+            method.setAccessible(true);
+            return method;
+        } catch (ReflectiveOperationException | RuntimeException e) {
+            return null;
+        }
     }
 
     /** Настоящий реестр по ключу или null, если такого реестра на Fabric нет. */

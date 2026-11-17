@@ -48,3 +48,6 @@ replay_*.log
 
 # локальные рантайм-джары (MCPFabric и пр.)
 /libs/
+
+# артефакты запусков
+/crash-reports/

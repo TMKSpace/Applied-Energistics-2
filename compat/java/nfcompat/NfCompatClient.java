@@ -31,10 +31,20 @@ import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.server.ServerLifecycleHooks;
 
 import appeng.client.AppEngClient;
+import nfcompat.client.GuideMEBootstrap;
 
 public final class NfCompatClient implements ClientModInitializer {
     @Override
     public void onInitializeClient() {
+        // 0. GuideME. На NeoForge библиотека — отдельный мод, и его создаёт загрузчик;
+        //    на Fabric этого никто не делал, поэтому `GuideME.<clinit>` (регистрация
+        //    предмета `guideme:guide`) срабатывал лениво — при первом рендере
+        //    SimpleRenderContext, то есть уже после заморозки реестров. Тогда
+        //    `Item.<init>` падал с "This registry can't create intrusive holders".
+        //    Поднимаем здесь — в том же окне, где AE2 регистрирует свои предметы.
+        //    Строго до runRegistrationPhases (см. ниже) и до `new AppEngClient`.
+        GuideMEBootstrap.init();
+
         // Рантайм-события (тики, жизненный цикл сервера, команды) — то, что на NeoForge
         // рассылает загрузчик. Без них в одиночной игре не выставляется текущий сервер,
         // не тикает очередь блок-сущностей и не считается питание сети.
@@ -44,16 +54,14 @@ public final class NfCompatClient implements ClientModInitializer {
 
         new AppEngClient(NeoForge.EVENT_BUS, NfCompat.container());
 
-        // 0. Клиентские рантайм-события (тики, вход в мир, клавиши, рендереры,
+        // 0b. Клиентские рантайм-события (тики, вход в мир, клавиши, рендереры,
         //    частицы, команды). На NeoForge их рассылает сам загрузчик; без них
         //    клиент AE2 наполовину мёртв: нет тиков кабелей, нет BER-ов блоков.
         //    Ставим после конструктора: часть событий рассылается сразу.
         ClientEventBridge.install();
 
-        // GuideME не поднимаем: его статическая инициализация требует
-        // ArgumentTypeInfos.registerByClass — это патч NeoForge к ванили, а Mixin не
-        // позволяет добавить туда public static метод. Открытие гайда гасит
-        // GuidesCommonMixin, чтобы кнопка «?» не роняла клиент.
+        // GuideME поднят в начале метода (GuideMEBootstrap.init): кнопка «?» и открытие
+        // гайда работают штатно, отдельной заглушки для `GuidesCommon.openGuide` больше нет.
 
         // 1. Общие этапы: регистрация реестров, типов пакетов, capability.
         NfCompat.runRegistrationPhases();

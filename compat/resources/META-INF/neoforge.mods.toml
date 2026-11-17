@@ -1,0 +1,18 @@
+# Заглушка NeoForge-метаданных мода для шима nfcompat.
+#
+# Зачем она нужна в Fabric-сборке:
+#  - апстримные юнит-тесты AE2 (appeng.client.gui.MockResourceManager) ищут на classpath
+#    именно `/META-INF/neoforge.mods.toml`, чтобы от него отсчитать корень ассетов
+#    (build/resources/main). Без файла в *каталоге* они находят только такой же файл
+#    внутри jar'а GuideME и падают: "Failed to convert asset root to a path on disk";
+#  - сам шим и часть инструментария AE2 исторически ожидают этот файл у NeoForge-мода.
+#
+# В игре файл ни на что не влияет: Fabric читает fabric.mod.json.
+modLoader = "javafml"
+loaderVersion = "[4,)"
+license = "LGPL-3.0-only"
+
+[[mods]]
+modId = "ae2"
+version = "26.3.1-probe"
+displayName = "Applied Energistics 2 (nfcompat shim)"

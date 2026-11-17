@@ -35,6 +35,10 @@ public final class RegistryCallbacks {
      * регистраций AE2 (см. {@code NfCompat.runRegistrationPhases}).
      */
     public static void bakeAll() {
+        // Значения, зарегистрированные после ванильного freeze(), ещё не привязаны к своим
+        // holder'ам - а AEKeyTypesInternal читает реестр через holder. См. RegistryBinding.
+        RegistryBinding.bindAllValues();
+
         var pending = new ArrayList<>(PENDING);
         PENDING.clear();
         for (var runnable : pending) {

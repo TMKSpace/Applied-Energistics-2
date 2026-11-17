@@ -100,6 +100,42 @@ sourceSets {
 }
 
 // ---------------------------------------------------------------------------
+// Сорсет test: юнит-тесты самого AE2 (`src/test/java`, апстрим — не правим).
+//
+// Тесты берут классы и ресурсы main как обычный потребитель (main зелёный),
+// поэтому srcDirs/srcDir явно, без опоры на дефолты Loom.
+//
+// Исключений по файлам нет: NeoForge test framework, на который завязан апстрим
+// (`net.neoforged.testframework.junit.EphemeralTestServerProvider` + `@BootstrapMinecraft`),
+// портирован в compat/java под тем же FQN. См. EphemeralTestServerProvider.java.
+// ---------------------------------------------------------------------------
+sourceSets {
+	test {
+		java {
+			srcDirs = ['src/test/java']
+
+			// Апстримные тесты написаны под другую ревизию ванильного/NeoForge API и
+			// на нашем 26.3 не компилируются даже с портированным test framework.
+			// Это НЕ пробел шима: чинится только правкой src/test (запрещено) или
+			// ревизией самой ваниллы/NeoForge-патча.
+			// - Item#getMaxDamage(ItemStack) в 26.3 нет (прочность уехала в item stack/components)
+			exclude 'appeng/api/stacks/AEItemKeyTest.java'
+			// - Language#getLanguageData() есть только у ClientLanguage (нужен каст)
+			exclude 'appeng/client/InitScreensTest.java'
+			// - RecipeOutput#accept(..., ICondition...) - это NeoForge-патч, у ванили 3 аргумента;
+			//   RecipeManager#recipeMap() в 26.3 нет (поле private Map)
+			exclude 'appeng/crafting/pattern/AECraftingPatternTest.java'
+			// - SavedDataStorage(Level, Path, DataFixer, RegistryAccess) - старый ctor,
+			//   в 26.3 он (Path, DataFixer, HolderLookup.Provider)
+			exclude 'appeng/server/services/compass/ServerCompassServiceTest.java'
+		}
+		resources.srcDirs = []
+		compileClasspath = sourceSets.main.output + sourceSets.main.compileClasspath + configurations.testCompileClasspath
+		runtimeClasspath = output + compileClasspath + configurations.testRuntimeClasspath
+	}
+}
+
+// ---------------------------------------------------------------------------
 // Препроцессор: //#if FABRIC / //#if NEOFORGE / //#else / //#endif
 //
 // Java препроцессора не имеет, а сигнатуры ванильных конструкторов NeoForge меняет,
@@ -250,6 +286,11 @@ dependencies {
 	implementation "org.jspecify:jspecify:1.0.0"
 	implementation "org.jetbrains:annotations:26.0.2"
 
+	// Только для компиляции: в compat/java лежит порт NeoForge EphemeralTestServerProvider
+	// (net.neoforged.testframework.junit) - это JUnit 5 extension, нужный юнит-тестам AE2.
+	// В рантайме игры он не загружается, поэтому compileOnly, а не implementation.
+	compileOnly "org.junit.jupiter:junit-jupiter-api:5.13.4"
+
 	// --- Моды в рантайме dev-клиента ---
 	// Те же артефакты, что и compileOnly ниже, но подключённые в рантайм: иначе
 	// Fabric их не увидит при запуске. В Loom 1.19 (MC 26.x, без обфускации) mod*
@@ -293,10 +334,20 @@ dependencies {
 	localRuntime "teamreborn:energy:5.0.0"
 
 	// --- тесты ---
-	// JUnit 5 + AssertJ: тесты шима и core-механик не требуют запуска игры
-	testImplementation "org.junit.jupiter:junit-jupiter:5.11.4"
+	// JUnit 5 + AssertJ: тесты шима и core-механик не требуют запуска игры.
+	// ВАЖНО: версии задаются BOM'ом. Без него Mockito тянет junit-jupiter-api 5.13.4,
+	// а объявленный junit-jupiter 5.11.4 держит compileClasspath на 5.11.4 — и на
+	// запуске JUnit падает с NoSuchMethodError из-за рассинхрона api/engine/commons.
+	testImplementation platform("org.junit:junit-bom:5.13.4")
+	testImplementation "org.junit.jupiter:junit-jupiter"
 	testImplementation "org.assertj:assertj-core:3.26.3"
-	testRuntimeOnly "org.junit.platform:junit-platform-launcher:1.11.4"
+	// Апстримный InternalInventoryTest использует IteratorTester из guava-testlib.
+	testImplementation "com.google.guava:guava-testlib:33.6.0-jre"
+	// Апстримные тесты AE2 активно мокают (GridNode/Level/реестры), Mockito 5.24
+	// тянет byte-buddy, который умеет class-файлы Java 25 (release = 25 ниже).
+	testImplementation "org.mockito:mockito-core:5.24.0"
+	testImplementation "org.mockito:mockito-junit-jupiter:5.24.0"
+	testRuntimeOnly "org.junit.platform:junit-platform-launcher"
 
 	// то же для сорсета shimTest (см. блок sourceSets выше)
 	shimTestImplementation "org.junit.jupiter:junit-jupiter:5.11.4"
@@ -318,6 +369,10 @@ tasks.register('shimTest', Test) {
 
 tasks.named('test') {
 	useJUnitPlatform()
+	// Автодетект расширений JUnit: через META-INF/services подхватывается порт
+	// EphemeralTestServerProvider и бутстрапит игру до первого теста (см. его beforeAll).
+	// Так тесты без @BootstrapMinecraft ведут себя как в NeoForge, где мод уже загружен.
+	systemProperty 'junit.jupiter.extensions.autodetection.enabled', 'true'
 	testLogging {
 		events 'passed', 'failed', 'skipped'
 		exceptionFormat = 'full'
