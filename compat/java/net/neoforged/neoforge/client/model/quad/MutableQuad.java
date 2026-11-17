@@ -482,7 +482,9 @@ public class MutableQuad {
     @Contract(pure = true)
     @Nullable
     public RenderType itemGlintRenderType() {
-        return itemRenderType;
+        // nfcompat: было `return itemRenderType;` — copy-paste, из-за которого геттер глинта
+        // отдавал обычный item-пайплайн. Возвращаем своё поле (как required-вариант ниже).
+        return itemGlintRenderType;
     }
 
     @Contract(pure = true)
