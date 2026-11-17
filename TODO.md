@@ -262,8 +262,12 @@ NeoForge 26.3 (`patches/net/minecraft/client/gui/GuiGraphicsExtractor.java.patch
 `bounds` после смены `effectiveScale` — камера рендерит один аспект, а блитится в другой.
 Смотреть: `LytGuidebookScene.Viewport.onLayoutMoved/render` (`prefSize`, `bounds`,
 `setViewportSize`), `ScenePictureInPictureRenderer.State` и `IndepentScaleScreen.calculateEffectiveScale`.
-Воспроизведение: изменить размер окна → открыть любую страницу со сценой (например «The Crafting CPU»).
-До фикса лечится перезапуском клиента.
+Наблюдение: растяжение ловится **в момент ресайза**, а в settled-состоянии страница рисуется
+правильно (сверено с исходником страницы: `GameScene zoom="4"` + `crafting_cpus.snbt` +
+`IsometricCamera yaw=195 pitch=30`, то есть широкий блок — это сама сборка из трёх CPU, а не
+растяжение; `BlockImage scale="4"` для четырёх блоков тоже совпадает с тем, что видно в мире,
+включая белый экран пустого Crafting Monitor). Понижено до косметики: если поймается стабильно —
+копать те же места.
 `[x]` `BuildCreativeModeTabContentsEvent` постится из миксина на `CreativeModeTab#buildContents` —
 ~19 предметов вернулись в ванильные вкладки.
 `[x]` Model data: снапшотом служит сам `RenderSectionRegion` (у него рабочий `getBlockEntity`,
