@@ -19,6 +19,7 @@
     "client.MultipartSelectorMixin",
     "client.SimpleModelSelectorsMixin",
     "client.BlockColorsMixin",
+    "client.FeatureRenderDispatcherMixin",
     "client.GuiGraphicsExtractorMixin",
     "client.KeyMappingMixin",
     "client.SubmitNodeCollectorMixin",
