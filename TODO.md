@@ -66,14 +66,25 @@ Reborn: AE2-источник сам наружу не толкает, работ
 Тест: item-P2P между двумя сетями; FE-P2P → внешний потребитель.
 
 ## 8. Интеграции
-`[ ]` JEI: плагин теперь грузится (entrypoint), но падает в `registerP2PAttunement` (п. 2).
+`[x]` JEI: плагин грузится (entrypoint `jei_mod_plugin`), `FabricTypes.FLUID_STACK` +
+`setFluidRenderer`, P2P-аттюнмент больше не падает на пустых списках. Реальный вывод
+в игре не смотрели.
 `[ ]` REI — не проверялся вовсе.
 `[ ]` Jade — плагин грузится, реальный вывод не смотрели.
-`[x]` GuideME — сознательно выключен (`ArgumentTypeInfos.registerByClass` недоступен миксином).
+`[x]` GuideME — работает. Всё GuideME-специфичное изолировано в `nfcompat/compat/guideme`
+и `nfcompat/mixin/guideme` (7 файлов, каталог удаляется целиком, без него шим живёт).
+Закрыты три неофорджевские сигнатуры: `ArgumentTypeInfos.registerByClass` (`@Accessor`
+к `BY_CLASS` + `@Redirect` двух лямбд), `ModContainer.registerExtensionPoint` (возврат
+`void`), `RenderPipeline.toBuilder()` (`@Unique`-метод, копирующий состояние в `Builder`).
+Миксины GuideME — в секции `"client"`: их таргеты (`guideme.internal.*`,
+`com.mojang.renderpearl.*`) на сервере отсутствуют и роняли запуск в PREPARE.
+Открыто: хоткей GuideME отключён (5-арг `KeyMapping` с `IKeyConflictContext` не шимим,
+в логе "хоткей GuideME пропущен").
 
 ## 9. Мелочи, замеченные по пути
-`[ ]` `FluidBlitter`: цвет жидкости на Fabric принудительно `-1` (белый) — вместо тинта.
-Можно взять `FluidVariantAttributes.getAssociatedColor`.
+`[x]` `FluidBlitter`: тинт жидкости закрыт. `FluidTint` берёт цвет из
+`FluidVariantAttributes.getAssociatedColor` (плюс `FluidModelData`), цвет доезжает до
+`FluidBlitter`/`FluidKeyRenderer`/`SkyStoneTankRenderer`; `-1` остался только фолбэком.
 `[ ]` `Blitter.copy()` не копирует `blending`/`transform` (сейчас нигде не стреляет — все
 использования задают флаги после `copy()`).
 `[ ]` `Blitter.GUI_TEXTURED_OPAQUE` на Fabric = обычный `GUI_TEXTURED` (блендинг включён).
@@ -90,13 +101,16 @@ Reborn: AE2-источник сам наружу не толкает, работ
 «как было» всегда известно.
 
 ### B. Закрываемо, но это решение, а не код
-- **Датаген.** В `build.gradle` задачи датагена нет: `src/generated/resources` — JSON'ы,
-  закоммиченные апстримом. Мы их наследуем, но перегенерировать не можем. Если апстрим
-  поменяет генератор, наши JSON'ы тихо устареют. Решение: либо не трогать (живём на
-  апстримных данных), либо портировать датаген-провайдеры (большая работа).
-- **Геймтесты.** `src/test/java` пуст, остался только `GameTestPlotAdapter` без потребителя,
-  а `RegisterGameTestsEvent` никто не постит. Портирование 55 тестов на Fabric Gametest API —
-  отдельный проект, не про шим.
+- **Датаген.** Fabric-датаген подключён (`configureDataGeneration`), но registry-записи
+  (рецепты/лут/адвансменты/ворлдген) он не выгружает: прогон дал 899 совпавших файлов и 1087
+  отсутствующих. Источник правды — `src/generated` апстрима; если апстрим поменяет генератор,
+  наши JSON'ы тихо устареют. Решение: жить на апстримных данных (или портировать провайдеры).
+- **Геймтесты.** Харнесс есть и работает: `runGameTest` (-PgtFilter) поднимает обычный
+  `GameTestServer` на ванильных реестрах `TEST_ENVIRONMENT`/`TEST_INSTANCE`, шим постит
+  `RegisterGameTestsEvent` + эмулирует `ModList.getAllScanData` (без него `TestPlots` не находит
+  плоты). `TEST_INSTANCE` = 81 (`ae2:tiny_tnt*` — 3/3 passed). Полный набор падает на NPE
+  в `InscriberTestPlots` (`expectedBottomSlot` = null) — это пробел порта, а не харнесса.
+  `InternalInventoryTest` не стартует (эфемерный сервер, таймаут 120 с) — не чиним.
 - **Интеграции.** GuideME требует патча джара на сборке; EMI и WTHIT вырезаны осознанно;
   REI не проверялся вовсе.
 
@@ -153,6 +167,37 @@ Reborn: AE2-источник сам наружу не толкает, работ
 Аудит `compat/java/net/neoforged`, `compat/java/nfcompat` и FABRIC-веток в `src`.
 Ниже только то, что влияет на игру; «осознанно пустое» не перечисляем.
 
+### Итоги трёх аудитов: что оказалось дублем, а что реализацией
+
+- **Дубли ванили/Fabric (можно сводить, риск разный):** `BlockStateModelHooks` +
+  `NeoForgeExtraCodecs` — Fabric уже умеет type-dispatch блокстейт-моделей
+  (`CustomUnbakedBlockStateModel.register`); `GameData` — одна строка `Block.getId/stateById`;
+  `fml/loading/FMLLoader` дублирует обход `FabricLoader.getAllMods()` из `ModList`.
+- **Мёртвое (0 вызовов, удаляемо):** `registries/callback/*` + `IRegistryExtension` (AE2 ходит
+  через `nfcompat.registry.RegistryCallbacks`), ~150 строк мёртвого API `DeferredRegister`,
+  `FMLDedicatedServerSetupEvent`, `ModelEvent.{ModifyBakingResult,BakingCompleted,RegisterLoaders}`,
+  `UnbakedModelLoader`, `CustomBlockModelDefinition`, `BakedColors`, мёртвые члены
+  `DeferredItem/DeferredBlock.toStack()`, `RegistryBuilder.isSynced()/maxId()`, `InterModComms`.
+  Часть уже вычищена (78 файлов, +328/−4130).
+- **Настоящая реализация (не дубль, не трогать):** `MutableQuad`/`QuadTransforms`/`UVTransform`
+  (ваниль не умеет собирать квад из 4 вершин), `fml/config/*` + `ModContainer.registerConfig`
+  (TOML через night-config), `RegisterEvent`/`ModLoader`/`ModWorkManager`/`ParallelDispatchEvent`,
+  `OrHolderSet`, `datamaps/*`, `testframework/junit/EphemeralTestServerProvider` (на нём все
+  юнит-тесты), `SidedThreadGroups` + `nfcompat.ServerThread`.
+- **Правило, которое из этого следует:** шим = **адаптер** там, где в ванили/Fabric есть
+  эквивалент, и **реализация** только там, где эквивалента нет (quads, конфиги, MOD-шина,
+  капабилити AE2). «Сначала искать существующее», иначе получаем `BlockStateModelHooks`
+  поверх готового Fabric API.
+
+### `Registry is already frozen` — риск и как он закрыт
+
+`ModRegistries.expose` вызывается из `NewRegistryEvent`, то есть во время mod-init. Это
+заставляет `BuiltInRegistries` инициализироваться и заморозиться раньше, чем
+`fabric-registry-sync` вызовет `BuiltInRegistries.bootStrap()` в `Main.afterModInit`.
+Шим снимает флаг `frozen` (`MappedRegistry.frozen` через reflection) и перевязывает holder'ы
+в значения блоков. Риск остаётся один: ваниль переименует/унесёт поле `frozen` — тогда
+падение будет громким и на старте, чинится одной строкой. Проверять при каждом rebase.
+
 ### P0 — краш
 `[x]` **Standalone-модели** — закрыто. `StandaloneModels` держит карту из
 `ModelEvent.RegisterStandalone` и отдаёт её Fabric-плагину `ModelLoadingPlugin` (`ExtraModelKey`),
@@ -171,6 +216,10 @@ Reborn: AE2-источник сам наружу не толкает, работ
 `GENERIC_INTERNAL_INV`, `IN_WORLD_GRID_NODE_HOST`, `CRANKABLE` видны только внутри шима.
 В 1.20.1 все были публичными Fabric-lookup (`MEStorage.SIDED`, `GenericInternalInventory.SIDED`,
 `ICraftingMachine.SIDED`, `ICrankable.LOOKUP`) — переносится в шим без правок `src`.
+Поправка аудита transfer/capabilities: у этих пяти типов Fabric-аналога нет вообще, и наружу
+их видно только через собственные `BlockApiLookup` шима. Ценность — только для сторонних
+аддонов к AE2 (у нас таких нет), своих потребителей у AE2 внутри достаточно. Вывод: **не
+блокер**, делать только если появится аддон; пометить как «осознанно внутри».
 
 ### P2 — заметно, но не ломает
 `[ ]` `onNeighborChange` кабеля мёртв (нет `INeighborChangeSensitive` + миксина на
@@ -194,8 +243,14 @@ id, `LevelRendererEnvironmentMixin` перехватывает небо/обла
 в 26.3 поля в `BlockStateModelPart` нет, значит нужен свой флаг в шиме либо принять.
 
 ### P3 — косметика, мёртвый код, дев-инфраструктура
-`[ ]` `RegisterGameTestsEvent` + `RegisterEvent.register(...)` для `TEST_INSTANCE_TYPE` мертвы —
-геймтесты не запускаются вовсе.
+`[x]` `RegisterGameTestsEvent` + `RegisterEvent.register(...)` для `TEST_INSTANCE_TYPE` — ожили:
+`runGameTest` находит 81 тест, `ae2:tiny_tnt*` проходит 3/3. `ModFileScanData` больше не заглушка
+(`nfcompat.gametest.ModAnnotationScanner` сканирует `appeng/**` через ASM).
+`[ ]` Открытый остаток по геймтестам: полный `*:*` падает NPE в `InscriberTestPlots`
+(`expectedBottomSlot` = null).
+`[ ]` Устаревший комментарий: `attachment/AttachmentType.java:8` утверждает, что attachment-API
+у Fabric нет — на самом деле есть `fabric-data-attachment-api-v1` (`AttachmentRegistry`,
+`AttachmentType`, `AttachmentTarget`, `AttachmentSyncPredicate`). Ключ реестра сейчас важнее API.
 `[ ]` Мелочи: `TinyTNTBlock.onCaughtFire` (огонь не поджигает мини-ТНТ),
 `SkyStoneChestRenderer.getRenderBoundingBox` (сундук моргает на краю фрустума), пайплайны
 `LINES_BEHIND_BLOCK`/`STORAGE_CELL_LEDS` без depth-state, `ModConfigEvent.Reloading` не постится,
