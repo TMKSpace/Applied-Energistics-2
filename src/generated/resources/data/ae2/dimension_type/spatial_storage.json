@@ -6,7 +6,8 @@
       "can_sleep": "never",
       "destroy_on_use": true
     },
-    "minecraft:gameplay/respawn_anchor_works": false
+    "minecraft:gameplay/respawn_anchor_works": false,
+    "minecraft:gameplay/sky_light_level": 15.0
   },
   "coordinate_scale": 1.0,
   "has_ceiling": false,
