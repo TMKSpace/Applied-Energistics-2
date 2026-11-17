@@ -39,13 +39,20 @@ public final class RegistryCallbacks {
         // holder'ам - а AEKeyTypesInternal читает реестр через holder. См. RegistryBinding.
         RegistryBinding.bindAllValues();
 
-        // В NeoForge реестры мода замораживаются сразу после всех регистраций. Теперь наш
-        // реестр лежит в реестре реестров (см. ModRegistries), то есть попадает в RegistryAccess,
-        // а ваниль считает такие реестры "загруженными": TagNetworkSerialization зовёт
-        // getTags() (у незамороженного - "Tags not bound"), TagLoader - prepareTagReload
-        // ("Invalid method used for tag loading"). Поэтому морозим здесь, когда регистрация
-        // уже закончена, но сервер ещё не стартовал.
+        // МОРОЗИТЬ РЕЕСТРЫ ЗДЕСЬ НЕЛЬЗЯ. Наш реестр уже лежит в реестре реестров (ModRegistries),
+        // а ванильный `BuiltInRegistries.bootStrap()` (он идёт ПОЗЖЕ мода: у клиента -
+        // Minecraft.afterModInit, у сервера - Main.afterModInit) для каждого реестра делает
+        // `bindAllTagsToEmpty()` -> `validateWrite()`, а тот бросает
+        // "Registry is already frozen", если реестр заморожен. Дальше он сам зовёт `freeze()`.
+        // То есть морозит их ваниль, и ей нужно видеть их размороженными.
+        //
+        // Ручной freeze нужен только когда bootstrap уже прошёл (поздний вызов bakeAll,
+        // юнит-тесты): тогда ваниль этот реестр больше не тронет и заморозить его некому.
+        var freezeOurselves = ModRegistries.isRootFrozen();
         for (var registry : net.neoforged.neoforge.registries.NewRegistryEvent.getCreatedRegistries()) {
+            if (!freezeOurselves) {
+                continue;
+            }
             try {
                 registry.freeze();
             } catch (RuntimeException e) {
