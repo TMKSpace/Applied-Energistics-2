@@ -204,6 +204,32 @@ id, `LevelRendererEnvironmentMixin` перехватывает небо/обла
 нет entrypoint ModMenu, мост `Item.ITEM` мёртв с обеих сторон.
 `[ ]` Удалить временное перед релизом: `/nfcompat cap|parts|pp|provider`, мёртвые `ofSlot()`.
 
+## Позже: разложить код на три слоя (идея пользователя)
+
+Сейчас у нас две пачки: `compat/java/net/neoforged/**` (NeoForge-совместимый API, под который
+компилируется AE2) и `compat/java/nfcompat/**` (наша склейка). Проблема: в `net/neoforged/**`
+уже есть прямые вызовы Fabric (`BlockCapability` → `FabricCapabilities`, `ItemCapability` →
+`FabricItemCapabilities`), то есть «извлекаемый шим» протёк в сторону Fabric.
+
+Предлагаемая раскладка:
+
+- `net/neoforged/**` — **только** NeoForge-API. Ни одного `import net.fabricmc.*`. Всё, что нужно
+  от платформы, — через SPI-интерфейсы (`CapabilityBridge`, `ModelDataBridge`, `EventBusBridge`),
+  реализации подключаются при инициализации.
+- `compat/**` — **шов** между Fabric и NeoForge: entrypoints, постинг событий, миксины, реестры,
+  подписка SPI-реализаций. Это то, что нельзя унести ни в одну из сторон.
+- `fabric/**` — **Fabric-специфика**: адаптеры `ItemStorage`/`FluidStorage`/`EnergyStorage`,
+  `UseBlockCallback`-диспетчеры, `ModelLoadingPlugin`, датаген-вход.
+
+Правила зависимостей: `net.neoforged` не знает про Fabric; `compat` знает про оба; `fabric`
+знает про Fabric + ваниль + типы `net.neoforged`.
+Проверка: grep/AST-тест «в `net/neoforged/**` нет `net.fabricmc`» в `shimTest`.
+
+Цена: переименование пакетов `nfcompat.*` → `compat.*`/`fabric.*` заденет ссылки в `src/`,
+которые лежат в `//#if FABRIC`-блоках (`nfcompat.ServerThread`, `nfcompat.bridge.FluidTint` и т.п.) —
+правки механические, но их надо делать одним заходом, когда все лейны молчат.
+Пока не начинаем: сначала добить функционал, потом рефакторинг.
+
 ## Уже закрыто (чтобы не искали заново)
 
 `[x]` Кабель и все динамические блок-модели — позиционный `collectParts` через
