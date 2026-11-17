@@ -348,6 +348,11 @@ dependencies {
 	// Только для рантайма, в компиляции не нужен. Лежит в libs/ (см. .gitignore).
 	localRuntime files("libs/mcpfabric-0.10.0+26.3.jar")
 
+	// Cloth Config + Mod Menu: только для компиляции экрана настроек (nfcompat.config.ClothConfigScreen).
+	// В рантайме их приносит модпак; в релизной сборке заменить на maven-зависимость.
+	compileOnly files("libs/cloth-config-fabric-26.3.159.jar", "libs/modmenu-21.0.0.jar")
+	localRuntime files("libs/cloth-config-fabric-26.3.159.jar", "libs/modmenu-21.0.0.jar")
+
 	// --- Сторонние API только для компиляции ---
 	// nightconfig: движок конфигов, на нём построен вендоренный ModConfigSpec.
 	implementation "com.electronwill.night-config:core:3.6.7"
