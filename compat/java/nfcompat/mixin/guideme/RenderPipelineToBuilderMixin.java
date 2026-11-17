@@ -64,11 +64,25 @@ public abstract class RenderPipelineToBuilderMixin {
     public abstract PrimitiveTopology getPrimitiveTopology();
 
     @Shadow
+    public abstract net.minecraft.client.renderer.ShaderDefines getShaderDefines();
+
+    @Shadow
     public abstract int pushConstantSize();
 
     public RenderPipeline.Builder toBuilder() {
         var builder = RenderPipelineBuilderInvoker.nfcompat$newBuilder();
         builder.withLocation(getLocation());
+
+        // Shader defines: в Builder есть только withShaderDefine(String) для флагов и
+        // (String,int/float) для значений. Мы переносим флаги (PER_FACE_LIGHTING, EMISSIVE и
+        // т.п.) — без них копия пайплайна выбирает другой вариант шейдера. String-valued
+        // defines перенести нечем (нет перегрузки String,String) — их у GUI-пайплайнов нет.
+        var defines = getShaderDefines();
+        if (defines != null && !defines.isEmpty()) {
+            for (var flag : defines.flags()) {
+                builder.withShaderDefine(flag);
+            }
+        }
 
         var vertexShader = getShaders().get(ShaderType.VERTEX);
         if (vertexShader != null) {
