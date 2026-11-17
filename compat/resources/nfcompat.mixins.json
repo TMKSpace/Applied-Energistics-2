@@ -19,6 +19,7 @@
     "SimpleModelSelectorsMixin",
     "client.BlockColorsMixin",
     "client.GuiGraphicsExtractorMixin",
+    "client.KeyMappingMixin",
     "client.BlockEntityRenderersMixin",
     "client.EntityRenderersMixin",
     "client.FabricBlockStateModelMixin",
@@ -35,6 +36,7 @@
     "guideme.GuideMEClientMixin",
     "guideme.GuideMEHotkeyMixin",
     "guideme.GuideMEReloadMixin",
+    "guideme.NavigationUtilMixin",
     "guideme.GuideMERegisterByClassMixin",
     "guideme.RenderPipelineBuilderInvoker",
     "guideme.RenderPipelineToBuilderMixin"

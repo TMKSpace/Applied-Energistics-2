@@ -26,6 +26,7 @@ import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.navigation.ScreenRectangle;
 import net.minecraft.client.renderer.state.gui.GuiElementRenderState;
 import net.minecraft.client.renderer.state.gui.GuiRenderState;
+import net.minecraft.client.renderer.state.gui.pip.PictureInPictureRenderState;
 
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -45,5 +46,9 @@ public abstract class GuiGraphicsExtractorMixin {
 
     public void submitGuiElementRenderState(GuiElementRenderState state) {
         guiRenderState.addGuiElement(state);
+    }
+
+    public void submitPictureInPictureRenderState(PictureInPictureRenderState state) {
+        guiRenderState.addPicturesInPictureState(state);
     }
 }
