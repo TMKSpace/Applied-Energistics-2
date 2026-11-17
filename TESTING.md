@@ -6,8 +6,9 @@
 
 ## 1. Юнит-тесты: почти бесплатно
 
-AE2 тестируется **обычным JUnit 5**, не геймтестами. В `src/test/java` (живёт в клоне AE2,
-в стенд ещё не перенесён) — 55 файлов, 43 тестовых класса. Покрытие прицельно серверное:
+AE2 тестируется **обычным JUnit 5**, не геймтестами. `src/test/java` уже перенесён в стенд
+(55 файлов, 43 тестовых класса), сорсет `test` подключён, а `net.neoforged.testframework.junit`
+шимится в `compat/java` — тесты гоняются без правок AE2. Покрытие прицельно серверное:
 
 | группа | классы |
 |---|---|
@@ -21,28 +22,32 @@ AE2 тестируется **обычным JUnit 5**, не геймтестам
 и NBT-кодеки. Пользовательский сценарий «3 подтверждено: серверная часть тестируется
 геймтестами без рендера» закрывается дешевле, чем геймтестами.
 
-### Что мешает запустить их сейчас
+### Как запускать
 
-Тесты помечены `@BootstrapMinecraft`, а это:
-
-```java
-@ExtendWith({ EphemeralTestServerProvider.class, BootstrapMinecraftExtension.class })
+```
+.\gradlew.bat test                     # 459 тестов: 458 passed, 1 падение
 ```
 
-`EphemeralTestServerProvider` — из **NeoForge testframework** (`net.neoforged.testframework.junit`),
-на Fabric его нет. Значит для запуска нужно:
+Один падающий — `InternalInventoryTest`: «Ephemeral test server did not start within 120
+seconds». Это подъём настоящего `MinecraftServer` внутри теста; чинить не планировали,
+остальные тесты от него не зависят.
 
-1. Перенести `src/test/java` в стенд как отдельный `test` sourceset.
-2. Добавить в `build.gradle`: `testImplementation junit-jupiter`, `assertj-core`,
-   `testImplementation sourceSets.main.output`.
-3. **Написать шим тест-фреймворка**: `net.neoforged.testframework.junit.EphemeralTestServerProvider`
-   (JUnit-расширение, поднимающее настоящий `MinecraftServer` в процессе: `Bootstrap.bootStrap()`
-   + `MinecraftServer.spin(...)`) и свой `BootstrapMinecraftExtension`. Это тот же приём, что и
-   везде: подменяем NeoForge, а не правим AE2.
-4. `gradlew test`.
+Часть тестов шима (5 штук) помечена `SKIPPED`: им нужен Fabric-рантайм (`FluidVariant` вне
+загрузчика не создать). Отдельная задача `shimTest` гоняет только шим и не зависит от
+`compileJava`.
 
-Оценка: перенос — механический; шим тест-фреймворка — самая содержательная часть (нужно
-аккуратно поднять сервер и корректно его гасить между тестами).
+### Геймтесты (нужен настоящий мир)
+
+```
+.\gradlew.bat runGameTest "-PgtFilter=ae2:tiny_tnt*"
+```
+
+В 26.3 геймтесты — это датапак-реестры `TEST_ENVIRONMENT`/`TEST_INSTANCE`, а Fabric-раннер
+поднимает обычный `GameTestServer` (порт не слушается). Шим постит `RegisterGameTestsEvent`
+и эмулирует `ModList.getAllScanData` (без него `TestPlots` не находит ни одного плота).
+`TEST_INSTANCE` = 81: 80 плотов AE2 + `minecraft:always_pass`. Фильтр — resource selector,
+не регэксп (`*:*` — все, `ae2:tiny_tnt*` — группа). Полный набор пока падает на NPE
+в `InscriberTestPlots` (`expectedBottomSlot` = null) — это пробел порта.
 
 ---
 

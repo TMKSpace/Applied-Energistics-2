@@ -338,8 +338,15 @@ Forge Config API Port **не подошёл**: его `net.neoforged.fml.config`
 - **Model data в рендер-регионе** — `RenderChunkRegion.getBlockEntity()` при сборке меша чанка
   всегда отдаёт `null`, поэтому `nfcompat/model/client/ClientModelDataLookup` добирает block entity
   из клиентского мира по позиции.
-- **GuideME не поднимаем** — его статическая инициализация требует `ArgumentTypeInfos.registerByClass`
-  (патч NeoForge), а Mixin не может добавить non-private static метод. Кнопка «?» погашена `GuidesCommonMixin`.
+- **GuideME поднимается** (`nfcompat/compat/guideme/GuideMEBootstrap`). Его статическая
+  инициализация требует трёх неофорджевских сигнатур; закрыты так: `ArgumentTypeInfos.registerByClass`
+  — `@Accessor` к приватной карте `BY_CLASS` + `@Redirect` двух лямбд в `guideme.internal.GuideME`;
+  `ModContainer.registerExtensionPoint` — возвращает `void`, как в NeoForge;
+  `RenderPipeline.toBuilder()` — `@Unique`-метод, копирующий состояние в `Builder` (`@Invoker("<init>")`).
+  Всё GuideME-специфичное изолировано в `nfcompat/compat/guideme` + `nfcompat/mixin/guideme`
+  (7 файлов, каталог удаляется целиком). Миксины — в секции `"client"`: таргеты
+  `guideme.internal.*` и `com.mojang.renderpearl.*` на сервере отсутствуют. Хоткей GuideME
+  отключён (5-арг `KeyMapping` с `IKeyConflictContext` не шимим — в логе "хоткей GuideME пропущен").
 - **Кабель и все динамические блок-модели** — рисуются. Причина, почему раньше не рисовались:
   ванильный `BlockStateModel.collectParts(RandomSource, List)` не получает ни мира, ни позиции, а
   Indigo (Fabric API) зовёт именно его через `FabricBlockStateModel.emitQuads`. Мир/позиция при этом
@@ -403,20 +410,43 @@ Forge Config API Port **не подошёл**: его `net.neoforged.fml.config`
 `PayloadRegistrar`), плюс временный миксин на `MEStorageScreen.extractSlot`, печатавший
 `entry/visible/total`. По этим числам сразу видно, где рвётся: сеть, фильтр представления или слот.
 
+## Крупные лоты после первого запуска сервера
+
+- **Реестры AE2 в `RegistryAccess`** — `ae2:keytypes` публикуется в `BuiltInRegistries.REGISTRY`
+  (`nfcompat/registry/ModRegistries.expose`) и замораживается, `RegistryCallbacks.bakeAll`
+  вызывается после блока `RegisterEvent`. Без этого `RegistryAccess` STATIC-слой не видел
+  модовый реестр, и `AEKeyTypes` оставался пустым.
+- **Чистка шима** — 78 файлов, +328/−4130 строк: мёртвые события, `CapabilityHooks`,
+  `WorldlyContainerWrapper`, `ItemStacksResourceHandler`, мёртвые члены. Проверено полной
+  `clean` → `classes` (инкрементальная сборка удалений не замечает).
+- **Юнит-тесты AE2** — `src/test/java` восстановлен из апстрима (55 файлов), шим тест-фреймворка
+  (`EphemeralTestServerProvider`, `BootstrapMinecraftExtension`), сорсет `test` с исключениями
+  по дрейфу API. Итог: 459 тестов, 1 падение (`InternalInventoryTest` — эфемерный сервер не
+  поднимается за 120 с).
+- **Геймтесты** — `runGameTest` (см. инструменты стенда). Шим постит `RegisterGameTestsEvent`
+  и эмулирует `ModList.getAllScanData`; `TEST_INSTANCE` = 81 (80 плотов AE2 + `always_pass`).
+- **Rebase на апстрим** — `0ec5952`; `sync-upstream.ps1` починен (`--depth=200` + `merge-base`
+  + `--onto`, файл сохранён в UTF-8 BOM — иначе PS 5.1 ломает кириллицу).
+- **GuideME** — поднят и изолирован (см. выше в «Рантайм»).
+
 ## Next
 
 Полный список дыр шима (с тестами и статусами) — в **`TODO.md`**. Ниже только ближайшее.
 
-1. **JEI: P2P-attunement** — плагин теперь грузится, но падает на `Ingredient.of([])` в
-   `registerP2PAttunement` (пустые списки, потому что item-capabilities не смостены). Нужен
-   `//#if FABRIC`-гейт на пропуск пустых списков (и/или мост `Fluid.ITEM`/`Energy.ITEM`).
-3. **Гэп-список**: `Player#getDestroySpeed` (скайстоун ×50), `LivingEntity#onClimbable` (лазание
-   по кабелю), `OnDatapackSyncEvent`, `FabricExternalStorageStrategy` (пустой файл — теперь можно
-   и удалить, мост живёт в `FabricCapabilities`), `StandaloneModels` (null), чтение TOML в шиме,
-   entrypoints REI/Jade.
+1. **Полный геймтест** — `runGameTest` без фильтра падает на NPE в `InscriberTestPlots`
+   (`expectedBottomSlot` = null): пробел порта, а не харнесса. После фикса — прогон всех 81.
+   `InternalInventoryTest` (юнит) не стартует: эфемерный сервер не поднимается за 120 с, не чиним.
+2. **Три шим-дырки из аудита**: `SubmitCustomGeometryEvent` не постится (area overlay не рисуется),
+   `MutableQuad.recalculateWinding()` — no-op (можно делегировать в `FaceBakery.recalculateWinding`,
+   AW уже открыт), тинт `MutableQuad` не доезжает до `BakedQuad` (в ванильном кваде нет цветов).
+3. **Гэп-список**: `OnDatapackSyncEvent`, чтение TOML в шиме (значения пока дефолтные),
+   entrypoints REI/Jade, `onChunkUnloaded` (`DeferredBlockEntityUnloader`), `onNeighborChange`
+   кабеля, `AECapabilities` наружу (`ME_STORAGE`, `CRAFTING_MACHINE`, `GENERIC_INTERNAL_INV`,
+   `IN_WORLD_GRID_NODE_HOST`, `CRANKABLE`), `ExtractBlockOutlineRenderStateEvent`.
 4. **Наковальня**: `AnvilMenuMixin` AE2 целится в `createResultInternal`, которого в ванили нет
    (метод добавляет NeoForge) — миксин исключён, intrinsic-чары наковальни остаются непокрытыми.
-5. **GuideME** — нужен патч джара на сборке (отложено).
+5. **Проверить в игре**: GuideME (гайд открывается, ME-сундук без кабеля не падает),
+   затем полный набор геймтестов.
 6. **Проба моста** — в шиме лежит временная команда `/nfcompat cap|parts|pp|provider`
    (`nfcompat/debug/CapabilityProbeCommand`), полезная для разбора «шина не видит контейнер».
    Удалить, когда надобность отпадёт.
@@ -431,10 +461,9 @@ Forge Config API Port **не подошёл**: его `net.neoforged.fml.config`
   `localRuntime` в `build.gradle`; MCP-сервер собран в
   `C:\Users\Kot\.config\opencode\tools\mcpfabric\mcp-server` и прописан в глобальном `opencode.jsonc`.
   Через него же удобно ловить числа: `/nfcompat cap`, `/nfcompat provider`.
-
-## Инструменты стенда
-
-Скрипты лежат в корне проекта, **логи прогонов — в `.opencode/`** (каталог в `.gitignore`).
+- **Геймтесты** — `.\gradlew.bat runGameTest "-PgtFilter=ae2:tiny_tnt*"`; без `-PgtFilter`
+  гоняется `*:*` (81 тест), отчёт можно получить через `fabric-api.gametest.report-file`.
+  Каталог `build/run/gameTest`, сеть не поднимается (`GameTestServer.isPublished() == false`).
 
 - `build.ps1` — собрать и сразу разобрать: `powershell -File build.ps1`
   (сам нумерует `build-probeN.log`, кладёт в `.opencode`, гоняет `analyze.ps1` + `compat-summary.ps1`).
