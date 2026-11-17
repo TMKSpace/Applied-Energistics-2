@@ -18,6 +18,7 @@
     "MultipartSelectorMixin",
     "SimpleModelSelectorsMixin",
     "client.BlockColorsMixin",
+    "client.GuiGraphicsExtractorMixin",
     "client.BlockEntityRenderersMixin",
     "client.EntityRenderersMixin",
     "client.FabricBlockStateModelMixin",
