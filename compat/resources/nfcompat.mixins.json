@@ -39,6 +39,9 @@
     "guideme.GuideMEHotkeyMixin",
     "guideme.GuideMEReloadMixin",
     "guideme.NavigationUtilMixin",
+    "guideme.FakeRenderEnvironmentMixin",
+    "guideme.GuidebookLevelRendererMixin",
+    "guideme.GuidebookLevelMixin",
     "guideme.GuideMERegisterByClassMixin",
     "guideme.RenderPipelineBuilderInvoker",
     "guideme.RenderPipelineToBuilderMixin"
