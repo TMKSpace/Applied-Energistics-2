@@ -27,7 +27,7 @@
  * Всё в try/catch(Throwable): если библиотека не поднялась, клиент должен жить
  * дальше (тогда в логе будет понятная причина, а не стек из `Item.<init>`).
  */
-package nfcompat.client;
+package nfcompat.compat.guideme;
 
 import net.neoforged.neoforge.common.NeoForge;
 

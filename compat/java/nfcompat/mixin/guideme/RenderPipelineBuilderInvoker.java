@@ -6,7 +6,7 @@
  * (см. `RenderPipelineToBuilderMixin`), а для этого нужен экземпляр Builder'а, чей
  * конструктор приватный.
  */
-package nfcompat.mixin;
+package nfcompat.mixin.guideme;
 
 import com.mojang.renderpearl.api.pipeline.RenderPipeline;
 import org.spongepowered.asm.mixin.Mixin;

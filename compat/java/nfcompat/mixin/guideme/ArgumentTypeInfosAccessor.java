@@ -7,7 +7,7 @@
  * поэтому сам метод живёт в `nfcompat.compat.GuideMECompat`, а карту мы достаём
  * аксессором.
  */
-package nfcompat.mixin;
+package nfcompat.mixin.guideme;
 
 import java.util.Map;
 
