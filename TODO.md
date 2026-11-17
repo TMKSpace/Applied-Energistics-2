@@ -213,11 +213,14 @@ id, `LevelRendererEnvironmentMixin` перехватывает небо/обла
 
 Предлагаемая раскладка:
 
-- `net/neoforged/**` — **только** NeoForge-API. Ни одного `import net.fabricmc.*`. Всё, что нужно
-  от платформы, — через SPI-интерфейсы (`CapabilityBridge`, `ModelDataBridge`, `EventBusBridge`),
-  реализации подключаются при инициализации.
-- `compat/**` — **шов** между Fabric и NeoForge: entrypoints, постинг событий, миксины, реестры,
-  подписка SPI-реализаций. Это то, что нельзя унести ни в одну из сторон.
+- `net/neoforged/**` — **только** NeoForge-API. Обращений к Fabric минимум и только через
+  **закрытый список** бриджей в `fabric/**`: `FabricCapabilities`, `FabricItemCapabilities`,
+  `FabricEnergy`, `ModelDataLookup`. Никаких «SPI», реестров провайдеров и reflection — список
+  фиксированный, проверяется грепом: если в `net/neoforged/**` появился `import net.fabricmc.*`,
+  кроме этих четырёх классов, тест в `shimTest` падает.
+  Если однажды понадобится вынимать `net/neoforged` в отдельный артефакт — тогда и только тогда
+  вводим один статический хук (`static volatile Hook`, сеттер), а не абстракцию заранее.
+- `compat/**` — **шов** между Fabric и NeoForge: entrypoints, постинг событий, миксины, реестры.
 - `fabric/**` — **Fabric-специфика**: адаптеры `ItemStorage`/`FluidStorage`/`EnergyStorage`,
   `UseBlockCallback`-диспетчеры, `ModelLoadingPlugin`, датаген-вход.
 
