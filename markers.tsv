@@ -18,9 +18,9 @@ src\main\java\appeng\block\crafting\AbstractCraftingUnitBlock.java	45	#if FABRIC
 src\main\java\appeng\block\misc\TinyTNTBlock.java	89		
 src\main\java\appeng\block\networking\CableBusBlock.java	65	#if FABRIC	import nfcompat.model.ModelDataHooks;  import appeng.api.parts.IFacadeContainer; import appeng.api.parts.IFacadePart; import appeng.api.util.AEColor; import app
 src\main\java\appeng\block\networking\CableBusBlock.java	175		
-src\main\java\appeng\block\networking\CableBusBlock.java	339		
-src\main\java\appeng\block\networking\CableBusBlock.java	369		modelData = ModelDataHooks.get(be);
-src\main\java\appeng\block\networking\CableBusBlock.java	375		modelData = ModelDataHooks.get(renderView, pos);
+src\main\java\appeng\block\networking\CableBusBlock.java	339	поэтому @Override не ставим.	public void onNeighborChange(BlockState state, LevelReader level, BlockPos pos, BlockPos neighbor) { this.cb(level, pos).onNeighborChanged(level, pos, neighbor)
+src\main\java\appeng\block\networking\CableBusBlock.java	375		modelData = ModelDataHooks.get(be);
+src\main\java\appeng\block\networking\CableBusBlock.java	381		modelData = ModelDataHooks.get(renderView, pos);
 src\main\java\appeng\block\qnb\QuantumBaseBlock.java	42	#if FABRIC	import nfcompat.model.ModelDataHooks;  import appeng.block.AEBaseEntityBlock; import appeng.blockentity.qnb.QuantumBridgeBlockEntity;  public abstract class Qua
 src\main\java\appeng\block\spatial\MatrixFrameBlock.java	73		
 src\main\java\appeng\block\spatial\MatrixFrameBlock.java	91		
@@ -114,27 +114,30 @@ src\main\java\appeng\recipes\transform\TransformLogic.java	231	#else	holderSets.
 src\main\java\appeng\recipes\transform\TransformLogic.java	281		if (true) { // ванильный Ingredient не "кастомный"
 src\main\java\appeng\recipes\transform\TransformLogic.java	286	#endif	holderSets.add(net.minecraft.core.HolderSet.direct(ingredient.items().toList()));
 src\main\java\appeng\server\services\ChunkLoadState.java	3	#if FABRIC	import net.minecraft.util.datafix.DataFixTypes; import net.neoforged.neoforge.server.ServerLifecycleHooks;  import java.util.ArrayList; import java.util.HashMap
+src\main\java\appeng\server\services\ChunkLoadingService.java	29	спрашиваем бухгалтерию тикетов шима: там лежат именно наши владельцы, чужие форсы не в счёт.	import net.neoforged.neoforge.common.world.chunk.TicketOwnershipQueries; import net.neoforged.neoforge.event.server.ServerAboutToStartEvent; import net.neoforge
 src\main\java\appeng\server\services\compass\CompassRegion.java	21	#if FABRIC	import net.minecraft.util.datafix.DataFixTypes;  import java.util.BitSet; import java.util.HashMap; import java.util.List; import java.util.Map; import java.uti
 src\main\java\appeng\server\testplots\CraftingPatternHelper.java	91		var it = nfcompat.recipes.RecipeMaps.of(level).getRecipesFor(RecipeType.STONECUTTING, input, level).iterator();
 src\main\java\appeng\server\testplots\InscriberTestPlots.java	32		var namedIngots = new ItemStackTemplate(Items.IRON_INGOT.builtInRegistryHolder(), 2, DataComponentPatch.builder()
-src\main\java\appeng\server\testplots\InscriberTestPlots.java	100		ItemStack.isSameItemSameComponents(inv.getStackInSlot(0), expectedTopSlot.create()),
-src\main\java\appeng\server\testplots\InscriberTestPlots.java	108		ItemStack.isSameItemSameComponents(inv.getStackInSlot(1), expectedBottomSlot.create()),
-src\main\java\appeng\server\testplots\InscriberTestPlots.java	116		ItemStack.isSameItemSameComponents(inv.getStackInSlot(2), expectedMiddleSlot.create()),
-src\main\java\appeng\server\testplots\InscriberTestPlots.java	124		ItemStack.isSameItemSameComponents(inv.getStackInSlot(3), expectedResult.create()),
+src\main\java\appeng\server\testplots\InscriberTestPlots.java	100		nfcompat.compat.ItemStackTemplates.isSameItemSameComponents(inv.getStackInSlot(0), expectedTopSlot),
+src\main\java\appeng\server\testplots\InscriberTestPlots.java	108		nfcompat.compat.ItemStackTemplates.isSameItemSameComponents(inv.getStackInSlot(1), expectedBottomSlot),
+src\main\java\appeng\server\testplots\InscriberTestPlots.java	116		nfcompat.compat.ItemStackTemplates.isSameItemSameComponents(inv.getStackInSlot(2), expectedMiddleSlot),
+src\main\java\appeng\server\testplots\InscriberTestPlots.java	124		nfcompat.compat.ItemStackTemplates.isSameItemSameComponents(inv.getStackInSlot(3), expectedResult),
 src\main\java\appeng\server\testplots\TestPlots.java	727		var craftingRecipes = nfcompat.recipes.RecipeMaps.of(node.getLevel()).byType(RecipeType.CRAFTING);
 src\main\java\appeng\server\testworld\PlotTestHelper.java	220		return cap.getCapability(getLevel(), absolutePos(ref), null, null, context);
 src\main\java\appeng\util\Platform.java	196	группы потоков в одиночной игре совпадают — сравниваем сам поток	return nfcompat.ServerThread.isClient();
 src\main\java\appeng\util\Platform.java	226		return nfcompat.ServerThread.isServer();
 src\main\java\appeng\util\Platform.java	237		if (!nfcompat.ServerThread.isServer()) {
+src\main\java\appeng\util\Platform.java	384	уходил в пустоту, у Fabric это NPE и падение теста.	if (serverPlayer.connection != null) { serverPlayer.connection.send(packet); }
 src\main\java\appeng\util\SearchInventoryEvent.java	35		var cap = CuriosIntegration.ITEM_HANDLER.getCapability(event.getEntity(), null);
-src\main\java\appeng\util\fluid\FluidSoundHelper.java	46		SoundEvent fillSound = null; // nfcompat: звуков жидкостей в шиме нет
-src\main\java\appeng\util\fluid\FluidSoundHelper.java	63		SoundEvent fillSound = null; // nfcompat: звуков жидкостей в шиме нет
+src\main\java\appeng\util\fluid\FluidSoundHelper.java	30	звука (вода/лава идут через ванильный Fluid#getBucketFillSound, моды могут регистрировать свой).	import net.fabricmc.fabric.api.transfer.v1.fluid.FluidVariantAttributes;  import nfcompat.bridge.FluidStacks;  import appeng.api.stacks.AEFluidKey;  /** * Helps
+src\main\java\appeng\util\fluid\FluidSoundHelper.java	71		var variant = FluidStacks.toVariant(fluid.toResource()); SoundEvent fillSound = variant.isBlank() ? null : FluidVariantAttributes.getEmptySound(variant);
 src\client\java\appeng\client\AEClientboundPacketHandler.java	144	#if FABRIC	soundEvent = null; // nfcompat: звуков жидкостей в шиме нет
 src\client\java\appeng\client\AppEngClient.java	219		"key.ae2.mouse_wheel_item_modifier", InputConstants.Type.KEYBOARD, InputConstants.KEY_LSHIFT, Hotkeys.CATEGORY);
 src\client\java\appeng\client\AppEngClient.java	228		"key.ae2.part_placement_opposite", InputConstants.Type.KEYBOARD, InputConstants.KEY_LCONTROL, Hotkeys.CATEGORY);
 src\client\java\appeng\client\AppEngClient.java	419		if (event.getKey() == PART_PLACEMENT_OPPOSITE.getDefaultKey().getValue()) {
 src\client\java\appeng\client\AppEngClient.java	428		var previousIsDown = nfcompat.attachments.Attachments.get(player, AEAttachmentTypes.HOLDING_CTRL);
 src\client\java\appeng\client\AppEngClient.java	434		nfcompat.attachments.Attachments.set(player, AEAttachmentTypes.HOLDING_CTRL, isDown);
+src\client\java\appeng\client\AppEngClient.java	669	#endif	nfcompat.client.EnvironmentRenderers.bind(SpatialStorageDimensionIds.WORLD_ID, SpatialStorageDimensionIds.CUSTOM_RENDERER_ID);  event.registerCloudRenderer(Spat
 src\client\java\appeng\client\areaoverlay\AreaOverlayRenderer.java	67		nfcompat.client.RenderStateData.set(event.getRenderState(), OVERLAY_AREAS, areasInThisLevel);
 src\client\java\appeng\client\areaoverlay\AreaOverlayRenderer.java	77		var visibleAreas = nfcompat.client.RenderStateData.getOrDefault(levelRenderState, OVERLAY_AREAS, List.of());
 src\client\java\appeng\client\gui\AEBaseScreen.java	302		if (configInv.isItemValid(nfcompat.menu.SlotIndices.get(slot), wrappedStack)) {
@@ -146,8 +149,8 @@ src\client\java\appeng\client\gui\implementations\InterfaceScreen.java	59		menu.
 src\client\java\appeng\client\gui\me\common\MEStorageScreen.java	733	By using the overload of the renderTooltip method that takes an ItemStack, we support the Forge tooltip event system	guiGraphics.setTooltipForNextFrame(font, currentToolTip, stack.getTooltipImage(), x, y);
 src\client\java\appeng\client\gui\style\Blitter.java	48	Непрозрачный вариант (без блендинга) не применяется; TODO: собрать свой пайплайн.	public static final RenderPipeline GUI_TEXTURED_OPAQUE = RenderPipelines.GUI_TEXTURED;
 src\client\java\appeng\client\gui\style\Blitter.java	334	теряется — в AE2 оно нигде не используется.	guiGraphics.blit(pipeline, this.texture, (int) x1, (int) y1, minU * referenceWidth, minV * referenceHeight, (int) (x2 - x1), (int) (y2 - y1), getSrcWidth(), get
-src\client\java\appeng\client\gui\style\FluidBlitter.java	54		var tintSource = fluidModel.tintSource();
-src\client\java\appeng\client\gui\style\FluidBlitter.java	60		color = -1; // nfcompat: тинт жидкости по стеку недоступен (BlockTintSource работает с ItemStack)
+src\client\java\appeng\client\gui\style\FluidBlitter.java	27	#if FABRIC	import nfcompat.bridge.FluidTint;  import appeng.api.stacks.AEFluidKey;  /** * Creates a {@link Blitter} to draw fluids into the user interface. */ public final
+src\client\java\appeng\client\gui\style\FluidBlitter.java	64	«Цвет текста» из Transfer API остался только фолбэком внутри FluidTint.	color = FluidTint.colorOf(fluidModel, stack);
 src\client\java\appeng\client\integrations\itemlists\FluidBlockRendering.java	15	TODO: портировать на fabric PictureInPictureRenderer.	
 src\client\java\appeng\client\integrations\jei\EntropyManipulatorCategory.java	163		Either.left(ItemModText.FLOWING_FLUID_NAME.text( net.neoforged.neoforge.fluids.FluidType.of(fluid).getDescription())));
 src\client\java\appeng\client\integrations\jei\FluidIngredientConverter.java	7		import mezz.jei.api.fabric.constants.FabricTypes; import mezz.jei.api.fabric.ingredients.fluids.IJeiFluidIngredient; import mezz.jei.api.fabric.ingredients.flui
@@ -181,12 +184,13 @@ src\client\java\appeng\client\renderer\blockentity\MEChestRenderer.java	110	#end
 src\client\java\appeng\client\renderer\blockentity\MEChestRenderer.java	116		var modelParts = state.cellModel.setupModel(IDENTITY, model.hasMaterialFlag(
 src\client\java\appeng\client\renderer\blockentity\MEChestRenderer.java	123	#endif	if (model instanceof net.neoforged.neoforge.client.model.DynamicBlockStateModel dynamic) { dynamic.collectParts(blockAndTintGetter, be.getBlockPos(), be.getBloc
 src\client\java\appeng\client\renderer\blockentity\SkyStoneChestRenderer.java	104		
-src\client\java\appeng\client\renderer\blockentity\SkyStoneTankRenderer.java	71		var tintSource = fluidModel.tintSource();
-src\client\java\appeng\client\renderer\blockentity\SkyStoneTankRenderer.java	77		state.color = -1; // nfcompat: тинт жидкости недоступен (BlockTintSource работает с ItemStack)
+src\client\java\appeng\client\renderer\blockentity\SkyStoneTankRenderer.java	39	#if FABRIC	import nfcompat.bridge.FluidTint;  public final class SkyStoneTankRenderer implements BlockEntityRenderer<SkyStoneTankBlockEntity, SkyStoneTankRenderState> {  p
+src\client\java\appeng\client\renderer\blockentity\SkyStoneTankRenderer.java	81	nfcompat: ванильный тинт жидкости (BlockTintSource её fluid-модели); -1 = без тинта.	state.color = FluidTint.colorOf(fluidModel, fluidStack);
 src\client\java\appeng\client\renderer\entity\TinyTNTPrimedRenderer.java	68		if (renderState.fuseRemainingInTicks + 1.0F < 10.0F) { // nfcompat: partialTick в render state — патч NeoForge
 src\client\java\appeng\client\renderer\entity\TinyTNTPrimedRenderer.java	73	#endif	f2 = 1.0F - (renderState.fuseRemainingInTicks + 1.0F) / 10.0F; // nfcompat: partialTick — патч NeoForge
-src\client\java\appeng\client\renderer\keytypes\FluidKeyRenderer.java	48		var tintSource = fluidModel.tintSource();
-src\client\java\appeng\client\renderer\keytypes\FluidKeyRenderer.java	54		state.color = -1; // nfcompat: тинт жидкости недоступен (BlockTintSource работает с ItemStack)
+src\client\java\appeng\client\renderer\keytypes\FluidKeyRenderer.java	25	#if FABRIC	import nfcompat.bridge.FluidTint;  public class FluidKeyRenderer implements AEKeyRenderer<AEFluidKey, FluidKeyRenderer.RenderState> { @Override public void draw
+src\client\java\appeng\client\renderer\keytypes\FluidKeyRenderer.java	58	nfcompat: ванильный тинт жидкости (BlockTintSource её fluid-модели); -1 = без тинта.	state.color = FluidTint.colorOf(fluidModel, fluidStack);
+src\client\java\appeng\client\renderer\keytypes\ItemKeyRenderer.java	59	Rotate the normal matrix a little for nicer lighting.	var itemModelResolver = this.itemModelResolver != null ? this.itemModelResolver : Minecraft.getInstance().getItemModelResolver(); itemModelResolver.updateForTop
 src\client\java\appeng\datagen\AE2DataGenerators.java	21	Must run last	import java.util.List;  import net.fabricmc.fabric.api.datagen.v1.DataGeneratorEntrypoint; import net.fabricmc.fabric.api.datagen.v1.FabricDataGenerator; import
 src\client\java\appeng\datagen\providers\loot\BlockDropProvider.java	82	Vanilla's BlockLootSubProvider has no getKnownBlocks() hook; AE2 only uses this as its own block iterator.	private Iterable<Block> getKnownBlocks() {
 src\client\java\appeng\datagen\providers\models\AE2ModelProvider.java	34		
@@ -223,40 +227,3 @@ src\client\java\appeng\datagen\providers\tags\ItemTagsProvider.java	56		return n
 src\client\java\appeng\datagen\providers\tags\ItemTagsProvider.java	185	equivalent.	.addOptionalTag(TagKey.create(Registries.ITEM, Identifier.parse("c:ingots/tin"))) .addOptionalTag(TagKey.create(Registries.ITEM, Identifier.parse("c:ingots/bras
 src\client\java\appeng\datagen\providers\tags\PoiTypeTagsProvider.java	15	Vanilla derives the pack directory from the tag namespace and has no mod-id parameter.	super(packOutput, registries);
 src\client\java\appeng\datagen\providers\tags\VillagerTradeTagsProvider.java	17	Vanilla derives the pack directory from the tag namespace and has no mod-id parameter.	super(output, Registries.VILLAGER_TRADE, lookupProvider);
-src\client\java\appeng\client\AEClientboundPacketHandler.java	145		
-src\client\java\appeng\client\gui\style\FluidBlitter.java	27		
-src\client\java\appeng\client\gui\style\FluidBlitter.java	58		
-src\client\java\appeng\client\gui\style\FluidBlitter.java	64		
-src\client\java\appeng\client\model\PaintSplotchesModel.java	85		
-src\client\java\appeng\client\model\QnbFormedModel.java	116		
-src\client\java\appeng\client\model\SpatialPylonModel.java	80		
-src\client\java\appeng\client\render\cablebus\CableBusModel.java	110		
-src\client\java\appeng\client\render\cablebus\FacadeBuilder.java	325		
-src\client\java\appeng\client\render\crafting\CraftingCubeModel.java	80		
-src\client\java\appeng\client\render\model\DriveModel.java	117		
-src\client\java\appeng\client\renderer\blockentity\SkyStoneTankRenderer.java	39		
-src\client\java\appeng\client\renderer\blockentity\SkyStoneTankRenderer.java	75		
-src\client\java\appeng\client\renderer\blockentity\SkyStoneTankRenderer.java	81		
-src\client\java\appeng\client\renderer\keytypes\FluidKeyRenderer.java	25		
-src\client\java\appeng\client\renderer\keytypes\FluidKeyRenderer.java	52		
-src\client\java\appeng\client\renderer\keytypes\FluidKeyRenderer.java	58		
-src\client\java\appeng\datagen\providers\models\AE2ModelProvider.java	114		
-src\client\java\appeng\datagen\providers\models\ItemModelProvider.java	283		
-src\client\java\appeng\datagen\providers\models\ModelSubProvider.java	120		
-src\client\java\appeng\datagen\providers\models\ModelSubProvider.java	291		
-src\client\java\appeng\datagen\providers\tags\IntrinsicTagAppender.java	30		
-src\main\java\appeng\api\features\PlayerRegistryInternal.java	66		
-src\main\java\appeng\api\stacks\AEFluidKey.java	160		
-src\main\java\appeng\block\crafting\AbstractCraftingUnitBlock.java	85		
-src\main\java\appeng\block\networking\CableBusBlock.java	150		
-src\main\java\appeng\block\qnb\QuantumBaseBlock.java	110		
-src\main\java\appeng\blockentity\AEBaseBlockEntity.java	100		
-src\main\java\appeng\parts\automation\PlaneConnectionHelper.java	156		
-src\main\java\appeng\server\services\ChunkLoadingService.java	29		
-src\main\java\appeng\server\services\ChunkLoadingService.java	101		
-src\main\java\appeng\server\services\ChunkLoadState.java	45		
-src\main\java\appeng\server\services\ChunkLoadState.java	50		
-src\main\java\appeng\server\services\compass\CompassRegion.java	63		
-src\main\java\appeng\util\fluid\FluidSoundHelper.java	30		
-src\main\java\appeng\util\fluid\FluidSoundHelper.java	51		
-src\main\java\appeng\util\fluid\FluidSoundHelper.java	71		
