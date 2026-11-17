@@ -21,11 +21,18 @@ public final class ModList {
     private final Map<String, ModContainer> byId = new HashMap<>();
 
     private ModList() {
-        for (var container : FabricLoader.getInstance().getAllMods()) {
-            var metadata = container.getMetadata();
-            var info = new ModInfo(metadata.getId(), metadata.getName(),
-                    metadata.getVersion() == null ? "0" : metadata.getVersion().getFriendlyString());
-            byId.put(info.getModId(), new ModContainer(info, null));
+        // Вне запуска игры FabricLoader недоступен (юнит-тесты) - тогда список модов пуст,
+        // а isLoaded() отвечает false. Раньше здесь падал статический инициализатор, и
+        // appeng.util.Platform (через ModList.get().isLoaded("ponder")) ронял весь класс.
+        try {
+            for (var container : FabricLoader.getInstance().getAllMods()) {
+                var metadata = container.getMetadata();
+                var info = new ModInfo(metadata.getId(), metadata.getName(),
+                        metadata.getVersion() == null ? "0" : metadata.getVersion().getFriendlyString());
+                byId.put(info.getModId(), new ModContainer(info, null));
+            }
+        } catch (Throwable ignored) {
+            // Нет лоадера - нет модов.
         }
     }
 
@@ -34,7 +41,11 @@ public final class ModList {
     }
 
     public boolean isLoaded(String modId) {
-        return FabricLoader.getInstance().isModLoaded(modId);
+        try {
+            return FabricLoader.getInstance().isModLoaded(modId);
+        } catch (Throwable ignored) {
+            return false;
+        }
     }
 
     public Optional<ModContainer> getModContainerById(String modId) {

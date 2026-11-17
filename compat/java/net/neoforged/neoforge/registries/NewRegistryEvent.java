@@ -34,4 +34,9 @@ public class NewRegistryEvent extends Event implements IModBusEvent {
     public static <T> Registry<T> getCreated(ResourceKey<? extends Registry<T>> key) {
         return (Registry<T>) CREATED.get(key);
     }
+
+    /** {@return все реестры, созданные шимом в этой сессии (для привязки значений и фриза)} */
+    public static java.util.Collection<Registry<?>> getCreatedRegistries() {
+        return CREATED.values();
+    }
 }

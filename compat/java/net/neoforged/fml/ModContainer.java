@@ -59,7 +59,7 @@ public class ModContainer {
 
     public void registerConfig(ModConfig.Type type, ModConfigSpec spec, @Nullable String fileName) {
         String name = fileName != null ? fileName : getModId() + "-" + type.getSerializedName() + ".toml";
-        Path path = FabricLoader.getInstance().getConfigDir().resolve(name);
+        Path path = configDir().resolve(name);
 
         var config = new ModConfig(type, spec, getModId(), name, path);
 
@@ -90,6 +90,24 @@ public class ModContainer {
 
     public List<ModConfig> getConfigs() {
         return configs;
+    }
+
+    /**
+     * Каталог конфигов мода. В запущенной игре - {@code FabricLoader#getConfigDir()}.
+     * В обычной JVM (юнит-тесты) FabricLoader не инициализирован и его configDir == null,
+     * поэтому подставляем каталог во временной папке: конфиг всё равно пишется/читается,
+     * но ничего не засоряет.
+     */
+    private static Path configDir() {
+        try {
+            var dir = FabricLoader.getInstance().getConfigDir();
+            if (dir != null) {
+                return dir;
+            }
+        } catch (Throwable ignored) {
+            // нет лоадера - уходим в fallback ниже
+        }
+        return java.nio.file.Paths.get(System.getProperty("java.io.tmpdir"), "nfcompat-test-config");
     }
 
     /** Регистрация точки расширения мода (в NeoForge — экран конфигов и т.п.). */

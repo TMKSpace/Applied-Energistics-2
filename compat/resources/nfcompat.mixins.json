@@ -4,6 +4,7 @@
   "package": "nfcompat.mixin",
   "compatibilityLevel": "JAVA_21",
   "mixins": [
+    "ArgumentTypeInfosMixin",
     "BlockEntityMixin",
     "CreativeModeTabMixin",
     "ItemExtensionMixin",
@@ -15,7 +16,7 @@
   ],
   "client": [
     "ClientTooltipComponentMixin",
-    "GuidesCommonMixin",
+    "GuideMEClientMixin",
     "MultipartSelectorMixin",
     "SimpleModelSelectorsMixin",
     "client.BlockColorsMixin",
