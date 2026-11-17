@@ -123,15 +123,14 @@ public class ModContainer {
     }
 
     /** Регистрация точки расширения мода (в NeoForge — экран конфигов и т.п.). */
-    public <T extends IExtensionPoint> T registerExtensionPoint(Class<? extends T> point) {
-        return registerExtensionPoint(point, null);
+    public <T extends IExtensionPoint> void registerExtensionPoint(Class<? extends T> point) {
+        registerExtensionPoint(point, null);
     }
 
-    public <T extends IExtensionPoint> T registerExtensionPoint(Class<? extends T> point, T impl) {
+    public <T extends IExtensionPoint> void registerExtensionPoint(Class<? extends T> point, T impl) {
         if (impl != null) {
             extensions.put(point, impl);
         }
-        return impl;
     }
 
     public <T extends IExtensionPoint> Optional<T> getCustomExtension(Class<T> point) {
