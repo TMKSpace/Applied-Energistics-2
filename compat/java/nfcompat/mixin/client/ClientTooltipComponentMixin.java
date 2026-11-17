@@ -10,7 +10,7 @@
  * в модуле `fabric-rendering-v1`, которого нет в нашем compile classpath. Тянуть
  * модуль ради одной строки не стали.
  */
-package nfcompat.mixin;
+package nfcompat.mixin.client;
 
 import net.minecraft.client.gui.screens.inventory.tooltip.ClientTooltipComponent;
 import net.minecraft.world.inventory.tooltip.TooltipComponent;

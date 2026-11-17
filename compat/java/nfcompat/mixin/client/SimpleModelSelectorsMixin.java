@@ -15,7 +15,7 @@
  *   - nfcompat.mixin.MultipartSelectorMixin ("multipart").
  * Если в новой версии MC появится третье чтение - его тоже придётся перенаправить.
  */
-package nfcompat.mixin;
+package nfcompat.mixin.client;
 
 import com.mojang.serialization.Codec;
 import net.minecraft.client.renderer.block.dispatch.BlockStateModel;
