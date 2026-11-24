@@ -1,0 +1,5 @@
+{
+  "replace": false,
+  "slots": ["hand/trinket"],
+  "entities": ["minecraft:player"]
+}

@@ -8,6 +8,9 @@ import net.minecraft.world.item.crafting.RecipeHolder;
 import net.minecraft.world.level.block.Blocks;
 
 import mezz.jei.api.constants.VanillaTypes;
+//#if FABRIC
+import mezz.jei.api.fabric.constants.FabricTypes;
+//#endif
 import mezz.jei.api.gui.builder.IRecipeLayoutBuilder;
 import mezz.jei.api.gui.drawable.IDrawable;
 import mezz.jei.api.helpers.IGuiHelper;
@@ -141,6 +144,13 @@ public class TransformCategory extends ViewBasedCategory<RecipeHolder<TransformR
                     // JEI renders the platform fluid ingredient itself; bucketVolume() is
                     // already in Fabric units (81000), same as the amount added above.
                     slot.setFluidRenderer(fluidHelper.bucketVolume(), true, 16, 16);
+                    // nfcompat: перекрываем этот рендерер своим — тот же тип ингредиента и те же
+                    // 16x16, поэтому JEI просто берёт последний (RendererOverrides кладёт в map по
+                    // типу). Вместо плоского спрайта рисуется 3D-блок жидкости, как в
+                    // NeoForge-сборке: FluidBlockRendering -> PiP-состояние -> FluidBlockPictureInPictureRenderer.
+                    // Если понадобится вернуть плоский вид — достаточно убрать эту строку.
+                    slot.setCustomRenderer(FabricTypes.FLUID_STACK,
+                            nfcompat.compat.jei.FluidBlockIngredientRenderer.INSTANCE);
 //#else
                     slot.setCustomRenderer(NeoForgeTypes.FLUID_STACK, fluidRenderer);
 //#endif

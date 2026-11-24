@@ -10,9 +10,9 @@
  * `nfcompat.mixin.client.GameRendererMixin` подкладывает их третьим аргументом
  * вызова `new GuiRenderer(...)`.
  *
- * Важно: это только регистрация. Сами состояния PiP в 26.3 отправляются через
- * `GuiRenderState#addPicturesInPictureState`, а у AE2 вызов (`FluidBlockRendering`)
- * на Fabric пока заглушен — см. комментарий там.
+ * Важно: это только регистрация, то есть карта "класс состояния -> рендерер". Сами
+ * состояния PiP в 26.3 отправляются через `GuiRenderState#addPicturesInPictureState`;
+ * у нас это делает `nfcompat.client.FluidBlockPictureInPicture` (см. комментарий там).
  */
 package nfcompat.client;
 

@@ -41,9 +41,14 @@ Outbound: 16 энерго-предметов AE2; fluid/item-в-предмете
 `[ ]` Скайбокс spatial-измерения: `RegisterCustomEnvironmentEffectRendererEvent` никто не постит,
 `neoforge:custom_skybox` вырезан из `InitBiomes` → в ячейке обычное небо. В 1.20.1 это закрывал
 `mixins/spatial/SkyRenderMixin` — можно повторить целиком в compat (client-миксин на рендер неба).
-`[ ]` `MatrixFrameBlock`: в FABRIC-ветке вырезаны `onBlockExploded`/`canEntityDestroy` → стенку
-плота можно пробить взрывом. Либо вернуть оверрайды в FABRIC-ветке, либо миксин на
-`Explosion#finalizeExplosion`.
+`[x]` `MatrixFrameBlock#onBlockExploded` — **закрыто**: дефолт в `IBlockExtension` +
+`common.BlockExplosionMixin` (инжект перед `ServerLevel.setBlockAndUpdate` в
+`BlockBehaviour#onExplosionHit` — в 26.3 NeoForge-хук переехал туда с `Explosion`); старый
+ad-hoc `MatrixFrameExplosionMixin` удалён. `[ ]` `canEntityDestroy` (визер/дракон) всё ещё
+не подключён — нужны дефолт в шиме + миксины на `WitherBoss#canDestroy` и
+`EnderDragon#destroyBlocks`.
+Оговорка: у рамки `explosionResistance = 6e6`, обычный TNT её и так не брал, так что живая
+регрессия — скорее дракон/визер, а не взрыв.
 `[x]` `ChunkLoadingService.isChunkForced()` — **уже сделано раньше** (`93f2b298a`): FABRIC-ветка
 идёт в `TicketOwnershipQueries.isForcedByUs` → `TicketOwnershipData`, `ChunkMapMixin` подключён
 в `nfcompat.ae2.mixins.json`. Пункт был устаревшим. Поправка по сути: в 26.3 рандом-тики в
@@ -97,9 +102,16 @@ Trinkets опционален: без него entrypoint сразу выход�
 а два нужных AE2 факта (`Platform.hasClientClasses/isDevelopmentEnvironment`) вынесены в
 `FMLEnvironment.dist`/`isProduction()` (шим уже определяет env при старте сервера). С `ConfigPlugin` (плагин апстримного
 `ae2.mixins.json`) то же самое — он исключён из сборки.
-**Не проверено в игре:** в headless-геймтесте `EntitySlotLoader.SERVER` у Trinkets пустой
-(слоты игрока берутся оттуда), поэтому геймтест моста не написать — нужен живой клиент
-с Trinkets Updated 4.2.1 и портативная ячейка в слоте аксессуара.
+**Слот:** Trinkets Updated 4.2.1 сам не привязывает ни одной группы к типу сущности
+(`EntitySlotLoader` пустой), поэтому AE2 везёт свой мини-датапак: `data/trinkets/entities/player.json`
+(`hand/trinket` для `minecraft:player`) + `data/trinkets/slots/hand/trinket.json`
+(`validator_predicates: ["trinkets:all"]`, т.е. в слот можно положить что угодно, включая
+портативную ячейку и беспроводной терминал) + подписи в `assets/trinkets/lang/{en_us,ru_ru}.json`
+(ключи мержатся по одному, чужие переводы не затираются). Если другой датапак уже даёт игроку
+слоты, наш просто добавляет ещё один — ничего не ломает.
+**Проверено геймтестом** `ae2:trinkets_curios_bridge` (82-й тест): адресация `(slotType, index)`,
+живой стек (правка через мост видна в инвентаре Trinkets), `forEachStack` и
+`SearchInventoryEvent` — всё работает. В живом клиенте (перетаскивание мышью + хоткей) — нет.
 `[x]` GuideME — **работает, проверено в игре**: страницы (текст, спрайты, ссылки), 3D-сцены,
 хоткей «зажми G у предмета» (через постинг `ItemTooltipEvent`), иконки жидкостей, поиск/навигация.
 Всё GuideME-специфичное изолировано в `nfcompat/compat/guideme` и `nfcompat/mixin/guideme`
@@ -271,13 +283,21 @@ submitGuiElementRenderState,submitPictureInPictureRenderState}`, `KeyMapping.get
 `Block implements IBlockExtension` и вызов из `Level#updateNeighbourForOutputSignal` по шести
 направлениям (как в NeoForge); `CableBusBlock` в FABRIC-ветке снова компилирует этот метод,
 так что части получают смену соседа (в т.ч. когда рядом поставили/убрали чужой контейнер).
-`[ ]` `onChunkUnloaded` не вызывается, `setRemoved` срабатывает до сохранения чанка — риск
-потерять данные ноды. Портировать `DeferredBlockEntityUnloader` в шим.
-`[ ]` `ExtractBlockOutlineRenderStateEvent` не постится: нет превью установки деталей и
-per-part обводки (светится весь блок).
-`[~]` `RegisterPictureInPictureRenderersEvent` постится и рендерер регистрируется, но состояния
-никто не отправляет: `FluidBlockRendering` нужен доступ к `GuiGraphicsExtractor` (AW на
-`scissorStack`/`guiRenderState` либо интерфейс-миксин). Пока 3D-иконки жидкости в JEI/REI не рисуются.
+`[x]` `onChunkUnloaded` — **закрыто**: `common.LevelChunkUnloadMixin` инжектит HEAD
+`LevelChunk#clearAllBlockEntities` (ровно точка патча NeoForge 26.3; очередь
+`DeferredBlockEntityUnloader` там больше не нужна — чанк сохраняется до выгрузки).
+Контракт — `nfcompat.blockentity.ChunkUnloadListener`, дефолт в `BlockEntityMixin`.
+`[x]` `ExtractBlockOutlineRenderStateEvent` — **закрыто**: постится из
+`client.LevelExtractorBlockOutlineMixin` (TAIL `LevelExtractor#extractBlockOutline`),
+рендереры зовутся в `client.LevelRendererBlockOutlineMixin` (HEAD
+`LevelRenderer#submitBlockOutline`). Список — `nfcompat.client.BlockOutlineRenderers`
+(ванильный record `BlockOutlineRenderState` не патчим). В игре не проверено.
+`[x]` PiP-состояния для жидкостей — **закрыто**: `nfcompat.client.GuiGraphicsExtractorAccess`
+(duck-интерфейс на `peekScissorStack`/`submitPictureInPictureRenderState`) +
+`FluidBlockPictureInPicture` (порт тела NeoForge-ветки) + `FluidBlockIngredientRenderer`
+(`IIngredientRenderer<IJeiFluidIngredient>`), подставленный в `TransformCategory` через
+`setCustomRenderer(FabricTypes.FLUID_STACK, ...)` внутри `//#if FABRIC`. В игре не проверено;
+откат — убрать эту одну строку, вернётся плоский спрайт.
 `[ ]` **После ресайза окна 3D-сцена в гайде растягивается по ширине** (и переоткрытие гайда
 НЕ помогает, то есть это не стейл, а рассинхрон единиц). Наши методы экстрактора сверены с патчем
 NeoForge 26.3 (`patches/net/minecraft/client/gui/GuiGraphicsExtractor.java.patch`): всё совпадает

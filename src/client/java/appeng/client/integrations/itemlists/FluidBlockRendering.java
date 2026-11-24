@@ -13,11 +13,11 @@ public final class FluidBlockRendering {
     public static void render(GuiGraphicsExtractor guiGraphics, Fluid fluid, int x, int y, int width, int height) {
 
 //#if FABRIC
-        // nfcompat: Picture-in-picture рендер (`submitPictureInPictureRenderState` и
-        // `peekScissorStack`) — механизм NeoForge. На Fabric он есть, но с другим API
-        // (через `PictureInPictureRenderer` из fabric-api), и его надо подключать отдельно.
-        // Пока превью жидкости в списках предметов не рисуется.
-        // TODO: портировать на fabric PictureInPictureRenderer.
+        // nfcompat: `submitPictureInPictureRenderState`/`peekScissorStack` — методы NeoForge,
+        // в ванили их нет. На Fabric их кладёт в класс миксин
+        // (nfcompat.mixin.client.GuiGraphicsExtractorMixin), а компилятор AE2 их не видит,
+        // поэтому тело ушло в шим: nfcompat.client.FluidBlockPictureInPicture.
+        nfcompat.client.FluidBlockPictureInPicture.submit(guiGraphics, fluid, x, y, width, height);
         //#else
         var rect = new ScreenRectangle(x - 16, y - 16, width + 32, height + 32);
         var screenBounds = rect.transformMaxBounds(guiGraphics.pose());
