@@ -476,3 +476,28 @@ payload'ы — то есть после смены мира `isServer` и кэш
    `net.neoforged.*`; если аддон сам проверяет «мы на NeoForge» через `Class.forName`
    (как yumi), он оживёт у нас и попробует применить свои NF-миксины - ровно та мина, что
    была с `FMLLoader`. При порте каждого аддона: искать такие проверки и учитывать.
+
+### Замер по реальным NF-аддонам (25.11)
+
+Взял два живых аддона под NeoForge и посчитал, что они требуют от `net.neoforged.*`
+(по константному пулу class-файлов) и чего у нас нет:
+
+- `ae2wtlib-26.3.2-beta` (Applied Energistics 2 Wireless Terminals, **26.3**, neoforge);
+- `extendedae_plus-1.6.3` (ExtendedAE-Plus, 26.1.2, neoforge).
+
+Итого: **117 разных классов `net.neoforged.*`, из них 97 в шиме уже есть, 19 не хватает.**
+Что именно не хватает (по приоритету):
+
+1. события: `LivingEntityUseItemEvent` (+`$Finish`), `PlayerTickEvent` (+`$Post`),
+   `ServerStartingEvent`, `client.event.RenderLevelStageEvent` (+`$AfterWeather`),
+   `ScreenEvent$KeyPressed`(+`$Pre`), `ScreenEvent$MouseButtonPressed`(+`$Pre`);
+2. API: `attachment.IAttachmentHolder`, `client.settings.KeyModifier`,
+   `fluids.crafting.FluidIngredient`, `neoforgespi.language.IModInfo`;
+3. **FML-группа**: `fml.loading.FMLPaths`, `fml.loading.FMLLoader`, `fml.loading.LoadingModList`,
+   `fml.loading.moddiscovery.ModFileInfo`.
+
+Пункт 3 - архитектурная развилка. `FMLLoader` мы **намеренно удалили** (через него чужие моды,
+например yumi из Trinkets, определяют «мы на NeoForge» и падают на наших фейковых классах).
+Но ExtendedAE на него ссылается. Значит для порта аддонов либо возвращать класс и ломать
+Trinkets-подобные моды, либо делать ASM-релокацию ссылок в jar аддона при порте
+(`net/neoforged/fml/loading/FMLLoader` → наш `nfcompat.*`). Второй вариант честнее.
