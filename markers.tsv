@@ -122,12 +122,12 @@ src\main\java\appeng\server\testplots\InscriberTestPlots.java	116		nfcompat.comp
 src\main\java\appeng\server\testplots\InscriberTestPlots.java	124		nfcompat.compat.ItemStackTemplates.isSameItemSameComponents(inv.getStackInSlot(3), expectedResult),
 src\main\java\appeng\server\testplots\TestPlots.java	727		var craftingRecipes = nfcompat.recipes.RecipeMaps.of(node.getLevel()).byType(RecipeType.CRAFTING);
 src\main\java\appeng\server\testworld\PlotTestHelper.java	220		return cap.getCapability(getLevel(), absolutePos(ref), null, null, context);
-src\main\java\appeng\util\Platform.java	189	поэтому сторона берётся из FabricLoader. Вне запуска Fabric (юнит-тесты) - true.	return nfcompat.PlatformCompat.hasClientClasses();
+src\main\java\appeng\util\Platform.java	189	поэтому сторона берётся из уже определённого `FMLEnvironment.dist`.	return FMLEnvironment.dist.isClient();
 src\main\java\appeng\util\Platform.java	204	группы потоков в одиночной игре совпадают — сравниваем сам поток	return nfcompat.ServerThread.isClient();
 src\main\java\appeng\util\Platform.java	234		return nfcompat.ServerThread.isServer();
 src\main\java\appeng\util\Platform.java	245		if (!nfcompat.ServerThread.isServer()) {
 src\main\java\appeng\util\Platform.java	392	уходил в пустоту, у Fabric это NPE и падение теста.	if (serverPlayer.connection != null) { serverPlayer.connection.send(packet); }
-src\main\java\appeng\util\Platform.java	417		return nfcompat.PlatformCompat.isDevelopmentEnvironment();
+src\main\java\appeng\util\Platform.java	417		return !FMLEnvironment.isProduction();
 src\main\java\appeng\util\fluid\FluidSoundHelper.java	30	звука (вода/лава идут через ванильный Fluid#getBucketFillSound, моды могут регистрировать свой).	import net.fabricmc.fabric.api.transfer.v1.fluid.FluidVariantAttributes;  import nfcompat.bridge.FluidStacks;  import appeng.api.stacks.AEFluidKey;  /** * Helps
 src\main\java\appeng\util\fluid\FluidSoundHelper.java	71		var variant = FluidStacks.toVariant(fluid.toResource()); SoundEvent fillSound = variant.isBlank() ? null : FluidVariantAttributes.getEmptySound(variant);
 src\client\java\appeng\client\AEClientboundPacketHandler.java	144	#if FABRIC	soundEvent = null; // nfcompat: звуков жидкостей в шиме нет

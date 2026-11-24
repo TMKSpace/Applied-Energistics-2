@@ -188,8 +188,8 @@ public class Platform {
     public static boolean hasClientClasses() {
         //#if FABRIC
         // В шиме нет `FMLLoader` (иначе NeoForge-детекторы чужих модов видят NeoForge),
-        // поэтому сторона берётся из FabricLoader. Вне запуска Fabric (юнит-тесты) - true.
-        return nfcompat.PlatformCompat.hasClientClasses();
+        // поэтому сторона берётся из уже определённого `FMLEnvironment.dist`.
+        return FMLEnvironment.dist.isClient();
         //#else
         // The null check is for tests
         var loader = FMLLoader.getCurrentOrNull();
@@ -415,7 +415,7 @@ public class Platform {
      */
     public static boolean isDevelopmentEnvironment() {
         //#if FABRIC
-        return nfcompat.PlatformCompat.isDevelopmentEnvironment();
+        return !FMLEnvironment.isProduction();
         //#else
         var loader = FMLLoader.getCurrentOrNull();
         return loader == null || !loader.isProduction();
