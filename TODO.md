@@ -76,6 +76,23 @@ Reborn: AE2-источник сам наружу не толкает, работ
 в игре не смотрели.
 `[ ]` REI — не проверялся вовсе.
 `[ ]` Jade — плагин грузится, реальный вывод не смотрели.
+`[x]` Curios — на Fabric его нет (единственная fabric-версия на Modrinth — 1.16.5), поэтому
+апстримный `CuriosEntrypoint` исключён из сборки, а вместо него работает мост на
+**Trinkets Updated** (`compat/java/appeng/integration/modules/curios/TrinketsCuriosAccess` +
+entrypoint `nfcompat/integration/TrinketsHook`): `CuriosAccess` реализуется поверх
+`eu.pb4.trinkets.api` (живые стеки), плюс `SearchInventoryEvent`. Адресация та же
+(`SlotType#getId()` + индекс), так что `MenuLocators.forCurioSlot` переиспользуется как есть.
+Trinkets опционален: без него entrypoint сразу выходит.
+**Важно (побочный эффект):** Trinkets тянет библиотеку yumi, которая определяет NeoForge через
+`Class.forName("net.neoforged.fml.loading.FMLLoader")`. Пока этот класс был в шиме, yumi
+применяла свои неофорджевские миксины к нашим же `net.neoforged.*` и роняла сервер
+(`RegisterEvent` ctor, `DeferredRegister` internals). Поэтому класс `FMLLoader` из шима удалён,
+а два нужных AE2 факта (`Platform.hasClientClasses/isDevelopmentEnvironment`) вынесены в
+`nfcompat.PlatformCompat` (FabricLoader). С `ConfigPlugin` (плагин апстримного
+`ae2.mixins.json`) то же самое — он исключён из сборки.
+**Не проверено в игре:** в headless-геймтесте `EntitySlotLoader.SERVER` у Trinkets пустой
+(слоты игрока берутся оттуда), поэтому геймтест моста не написать — нужен живой клиент
+с Trinkets Updated 4.2.1 и портативная ячейка в слоте аксессуара.
 `[x]` GuideME — **работает, проверено в игре**: страницы (текст, спрайты, ссылки), 3D-сцены,
 хоткей «зажми G у предмета» (через постинг `ItemTooltipEvent`), иконки жидкостей, поиск/навигация.
 Всё GuideME-специфичное изолировано в `nfcompat/compat/guideme` и `nfcompat/mixin/guideme`
@@ -90,7 +107,7 @@ submitGuiElementRenderState,submitPictureInPictureRenderState}`, `KeyMapping.get
 `RegisterFeatureRenderersEvent`, `TextureAtlasStitchedEvent`, `ScreenEvent`-стаб, `ItemTooltipEvent`.
 Известные ограничения: `/guideme export` (site-export) мёртв, датаген GuideME не подключён.
 `ScreenEvent.Opening` теперь **постится** (`client.MinecraftScreenOpeningMixin` → `@ModifyVariable`
-в `Minecraft#setScreen`), так что фича «показать гайд при входе» живая.
+в `Minecraft#setScreenAndShow` — в 26.3 `setScreen` переименован), так что фича «показать гайд при входе» живая.
 Открыто: dev-страховка рендера страницы (`-Dnfcompat.guide.debugCatch`) — перед релизом
 проверить, что она выключена.
 

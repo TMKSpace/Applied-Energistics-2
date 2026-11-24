@@ -71,6 +71,17 @@ sourceSets {
 			// EMI: официальных сборок под 26.3 нет вообще (на Modrinth максимум 1.21.1).
 			// Единственная точка касания — два файла конвертеров, снаружи ссылок нет.
 			exclude 'appeng/client/api/integrations/emi/**'
+
+			// Curios на Fabric нет (аналог - Trinkets), а CuriosEntrypoint напрямую
+			// ссылается на API Curios. Остальная обвязка (CuriosIntegration/CuriosAccess)
+			// от API не зависит и собирается как no-op.
+			exclude 'appeng/integration/modules/curios/CuriosEntrypoint.java'
+
+			// ConfigPlugin - плагин апстримного ae2.mixins.json: гейтит миксины по NeoForge-конфигу
+			// и через `FMLLoader` перечисляет моды. На Fabric этот конфиг не грузится, а класс
+			// тянет `net.neoforged.fml.loading.FMLLoader`, которого мы намеренно не отдаём
+			// (см. nfcompat.PlatformCompat).
+			exclude 'appeng/mixins/ConfigPlugin.java'
 		}
 		resources {
 			srcDir 'src/generated/resources'
@@ -368,6 +379,13 @@ dependencies {
 	// REI 26.3.824+fabric
 	compileOnly "maven.modrinth:rei:rKsAE6bX"
 	compileOnly "maven.modrinth:modmenu:xckkBHD5"
+
+	// Trinkets Updated 4.2.1 (fabric, 26.3): необязательная замена Curios на Fabric.
+	// API нужен только для компиляции моста (appeng.integration.modules.curios.
+	// TrinketsCuriosAccess); в рантайме мод грузится отдельно, и без него мост не
+	// поднимается. localRuntime - чтобы проверить слоты аксессуаров в dev-клиенте.
+	compileOnly "maven.modrinth:trinkets-updated:4.2.1+26.3"
+	localRuntime "maven.modrinth:trinkets-updated:4.2.1+26.3"
 
 	// Team Reborn Energy 5.0.0: API Fabric-энергии (1 E == 1 FE, пересчёта нет).
 	//

@@ -540,5 +540,40 @@ Forge Config API Port **не подошёл**: его `net.neoforged.fml.config`
 3. ошибки сборки после обновления — это и есть список «что изменилось в ваниле/NF»: чинится либо
    шимом, либо новым маркером.
 
-`markers.tsv` — инвентарь: файл, строка, пояснение, FABRIC-код. 216 мест в 121 файле.
+`markers.tsv` — инвентарь: файл, строка, пояснение, FABRIC-код. 227 мест в 123 файлах.
 Он же служит ответом на вопрос «а что вообще NeoForge патчит».
+
+## Сессия 25.11: синк апстрима -10 коммитов + Curios -> Trinkets
+
+Апстрим до `e7103cecc`. Rebase конфликтнул в трёх местах, все — наши прошлые маркеры:
+`build.gradle`/`gradle.properties` (взяли нашу Fabric-версию: апстрим добавил только
+`compileOnly curios` для своей сборки) и три Curios-файла, где апстрим заменил
+`ResourceHandler`-capability на `CuriosAccess` с живыми стеками (#9107).
+
+Что из нового кода реально задевало порт: только Curios.
+- `CuriosEntrypoint` (новый файл) напрямую импортирует `top.theillusivec4.curios.api` —
+  на Fabric такого артефакта нет (единственная fabric-версия Curios на Modrinth — 1.16.5),
+  поэтому файл исключён из source set.
+- Остальное — ванильные фиксы: `ManagedGridNode` (сохранение NBT до создания нода через
+  `ValueInput/ValueOutput` — ванильные, шим не нужен), `ChargerBlockEntity` (сравнение
+  энергии до/после), `MatterCannon` (частицы), `AEClientboundPacketHandler` (x/y вместо z/z),
+  `TransformLogic` (кэш чинится через явный `addListener` вместо `@SubscribeEvent`),
+  `CellWorkbenchMenu` (удалены `SynchronizedValue`/`NullableSynchronizedValue`),
+  JEI `EncodingHelper` (компоненты предметов), геймтест-флейки.
+
+Мост Curios -> Trinkets (по просьбе): `appeng.integration.modules.curios.TrinketsCuriosAccess`
+(в пакете AE2, потому что `CuriosAccess`/`setAccess` package-private — так исходники апстрима
+остаются нетронутыми) + entrypoint `nfcompat.integration.TrinketsHook` + `recommends` в
+`fabric.mod.json`. Стеки живые (`TrinketInventory` -> `NonNullList`), адресация совпадает.
+
+**Побочная находка, важная для всей сборки:** Trinkets тянет yumi, а yumi определяет
+NeoForge через `Class.forName("net.neoforged.fml.loading.FMLLoader")`. Наш шим этот класс
+содержал, поэтому yumi включала неофорджевские миксины и падала на `RegisterEvent`/
+`DeferredRegister` нашего же шима — то есть **фейковый `FMLLoader` ломал чужие моды**.
+Класс удалён (`LoadingModList` вместе с ним), `Platform.hasClientClasses()` и
+`isDevelopmentEnvironment()` переведены на `FabricLoader` через `nfcompat.PlatformCompat`,
+`appeng.mixins.ConfigPlugin` (плагин апстримного `ae2.mixins.json`, тоже тянет `FMLLoader`)
+исключён из сборки. После этого Trinkets + yumi грузятся нормально, 81/81 геймтест зелёный.
+
+Геймтест моста написать не вышло: в headless-прогоне `EntitySlotLoader.SERVER` у Trinkets
+пустой (слоты игрока берутся оттуда), так что проверка — на живом клиенте.

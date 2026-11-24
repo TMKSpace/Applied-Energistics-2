@@ -35,7 +35,7 @@ src\main\java\appeng\client\render\AERenderPipelines.java	101		.builder(AppEng.m
 src\main\java\appeng\client\render\AERenderPipelines.java	122		.builder(AppEng.makeId("lines_occluded").getPath(),
 src\main\java\appeng\client\render\AERenderPipelines.java	138	nfcompat: см. LINES_BEHIND_BLOCK — toBuilder отсутствует, берём ванильный пайплайн.	public static final RenderPipeline STORAGE_CELL_LEDS = RenderPipelines.EYES;
 src\main\java\appeng\client\render\AERenderPipelines.java	160		.builder(AppEng.makeId("lightning_fx").getPath(), RenderPipeline.builder(RenderPipelines.OIT_PARTICLE_SNIPPET)
-src\main\java\appeng\core\AppEngBase.java	341		return nfcompat.recipes.RecipeMaps.of(serverLevel);
+src\main\java\appeng\core\AppEngBase.java	344		return nfcompat.recipes.RecipeMaps.of(serverLevel);
 src\main\java\appeng\core\FacadeCreativeTab.java	40		group = CreativeModeTab.builder(CreativeModeTab.Row.TOP, 0)
 src\main\java\appeng\core\FacadeCreativeTab.java	46	nfcompat: withTabsBefore — метод NeoForge	
 src\main\java\appeng\core\MainCreativeTab.java	47		var tab = CreativeModeTab.builder(CreativeModeTab.Row.TOP, 0)
@@ -60,7 +60,6 @@ src\main\java\appeng\entity\TinyTNTPrimedEntity.java	188		.max(block.getExplosio
 src\main\java\appeng\helpers\InterfaceLogic.java	225		nfcompat.capabilities.CapabilityInvalidation.invalidate(this.host.getBlockEntity());
 src\main\java\appeng\helpers\patternprovider\PatternProviderTarget.java	54		storage = AECapabilities.ME_STORAGE.getCapability(l, be.getBlockPos(), be.getBlockState(), be, side);
 src\main\java\appeng\helpers\patternprovider\PatternProviderTarget.java	60		storage = AECapabilities.ME_STORAGE.getCapability(l, pos, null, null, side);
-src\main\java\appeng\hotkeys\CuriosHotkeyAction.java	22		var cap = CuriosIntegration.ITEM_HANDLER.getCapability(player, null);
 src\main\java\appeng\init\InitCapabilityProviders.java	112		var genericInv = AECapabilities.GENERIC_INTERNAL_INV.getCapability(level, pos, state, blockEntity, context);
 src\main\java\appeng\init\worldgen\InitBiomes.java	53	останется без своего неба/облаков, пока эти атрибуты не зарегистрированы.	.mobSpawnSettings(new MobSpawnSettings.Builder().build()) .build();
 src\main\java\appeng\items\materials\UpgradeCardItem.java	62		
@@ -84,7 +83,6 @@ src\main\java\appeng\menu\AEBaseMenu.java	1021		nfcompat.network.Buffers.create(
 src\main\java\appeng\menu\implementations\MenuTypeBuilder.java	160		
 src\main\java\appeng\menu\implementations\MenuTypeBuilder.java	170	провайдер в ExtendedMenuProvider и передаём тот же writer.	player.openMenu(nfcompat.menu.Menus.withData(new AppEngMenuProvider(), buffer -> { MenuLocators.writeToPacket(buffer, locator); buffer.writeBoolean(fromSubMenu)
 src\main\java\appeng\menu\implementations\MolecularAssemblerMenu.java	109		if (!currentItem.isEmpty() && !isValidItemForSlot(nfcompat.menu.SlotIndices.get(slot), currentItem)) {
-src\main\java\appeng\menu\locator\CuriosItemLocator.java	19		var cap = CuriosIntegration.ITEM_HANDLER.getCapability(player, null);
 src\main\java\appeng\menu\slot\AppEngSlot.java	64		/** * NeoForge патчит ванильный {@link Slot}, добавляя {@code getSlotIndex()}. * В ванили индекс лежит в приватном поле {@code slot}, куда нам не достать, * поэ
 src\main\java\appeng\parts\CableBusContainer.java	301		nfcompat.capabilities.CapabilityInvalidation.invalidate(getBlockEntity());
 src\main\java\appeng\parts\CableBusContainer.java	304	#else	nfcompat.capabilities.CapabilityInvalidation.invalidate(getBlockEntity());
@@ -101,18 +99,18 @@ src\main\java\appeng\recipes\game\CraftingUnitTransformRecipe.java	89		for (var 
 src\main\java\appeng\recipes\game\StorageCellDisassemblyRecipe.java	79		for (var holder : nfcompat.recipes.RecipeMaps.of(level).byType(AERecipeTypes.CELL_DISASSEMBLY)) {
 src\main\java\appeng\recipes\mattercannon\MatterCannonAmmo.java	103		consumer.accept(ResourceKey.create(Registries.RECIPE, id), recipe, null);
 src\main\java\appeng\recipes\quartzcutting\QuartzCuttingRecipe.java	62		this.isSimple = true; // nfcompat: ванильный Ingredient не различает simple/custom
-src\main\java\appeng\recipes\transform\TransformLogic.java	70		for (var holder : nfcompat.recipes.RecipeMaps.of(level).byType(AERecipeTypes.TRANSFORM)) {
-src\main\java\appeng\recipes\transform\TransformLogic.java	152		for (var holder : nfcompat.recipes.RecipeMaps.of(level).byType(AERecipeTypes.TRANSFORM)) {
-src\main\java\appeng\recipes\transform\TransformLogic.java	176		for (var holder : nfcompat.recipes.RecipeMaps.of(level).byType(AERecipeTypes.TRANSFORM)) {
-src\main\java\appeng\recipes\transform\TransformLogic.java	203		for (var holder : nfcompat.recipes.RecipeMaps.of(level).byType(AERecipeTypes.TRANSFORM)) {
-src\main\java\appeng\recipes\transform\TransformLogic.java	212		if (true) { // ванильный Ingredient не бывает "кастомным"
-src\main\java\appeng\recipes\transform\TransformLogic.java	215	#else	if (true) { // ванильный Ingredient не бывает "кастомным"
-src\main\java\appeng\recipes\transform\TransformLogic.java	218	#else	if (true) { // ванильный Ingredient не бывает "кастомным"
-src\main\java\appeng\recipes\transform\TransformLogic.java	225	#endif #endif #endif	holderSets.add(net.minecraft.core.HolderSet.direct(ingredient.items().toList()));
-src\main\java\appeng\recipes\transform\TransformLogic.java	228	#else	holderSets.add(net.minecraft.core.HolderSet.direct(ingredient.items().toList()));
-src\main\java\appeng\recipes\transform\TransformLogic.java	231	#else	holderSets.add(net.minecraft.core.HolderSet.direct(ingredient.items().toList()));
-src\main\java\appeng\recipes\transform\TransformLogic.java	281		if (true) { // ванильный Ingredient не "кастомный"
-src\main\java\appeng\recipes\transform\TransformLogic.java	286	#endif	holderSets.add(net.minecraft.core.HolderSet.direct(ingredient.items().toList()));
+src\main\java\appeng\recipes\transform\TransformLogic.java	69		for (var holder : nfcompat.recipes.RecipeMaps.of(level).byType(AERecipeTypes.TRANSFORM)) {
+src\main\java\appeng\recipes\transform\TransformLogic.java	151		for (var holder : nfcompat.recipes.RecipeMaps.of(level).byType(AERecipeTypes.TRANSFORM)) {
+src\main\java\appeng\recipes\transform\TransformLogic.java	175		for (var holder : nfcompat.recipes.RecipeMaps.of(level).byType(AERecipeTypes.TRANSFORM)) {
+src\main\java\appeng\recipes\transform\TransformLogic.java	202		for (var holder : nfcompat.recipes.RecipeMaps.of(level).byType(AERecipeTypes.TRANSFORM)) {
+src\main\java\appeng\recipes\transform\TransformLogic.java	211		if (true) { // ванильный Ingredient не бывает "кастомным"
+src\main\java\appeng\recipes\transform\TransformLogic.java	214	#else	if (true) { // ванильный Ingredient не бывает "кастомным"
+src\main\java\appeng\recipes\transform\TransformLogic.java	217	#else	if (true) { // ванильный Ingredient не бывает "кастомным"
+src\main\java\appeng\recipes\transform\TransformLogic.java	224	#endif #endif #endif	holderSets.add(net.minecraft.core.HolderSet.direct(ingredient.items().toList()));
+src\main\java\appeng\recipes\transform\TransformLogic.java	227	#else	holderSets.add(net.minecraft.core.HolderSet.direct(ingredient.items().toList()));
+src\main\java\appeng\recipes\transform\TransformLogic.java	230	#else	holderSets.add(net.minecraft.core.HolderSet.direct(ingredient.items().toList()));
+src\main\java\appeng\recipes\transform\TransformLogic.java	278		if (true) { // ванильный Ingredient не "кастомный"
+src\main\java\appeng\recipes\transform\TransformLogic.java	283	#endif	holderSets.add(net.minecraft.core.HolderSet.direct(ingredient.items().toList()));
 src\main\java\appeng\server\services\ChunkLoadState.java	3	#if FABRIC	import net.minecraft.util.datafix.DataFixTypes; import net.neoforged.neoforge.server.ServerLifecycleHooks;  import java.util.ArrayList; import java.util.HashMap
 src\main\java\appeng\server\services\ChunkLoadingService.java	29	спрашиваем бухгалтерию тикетов шима: там лежат именно наши владельцы, чужие форсы не в счёт.	import net.neoforged.neoforge.common.world.chunk.TicketOwnershipQueries; import net.neoforged.neoforge.event.server.ServerAboutToStartEvent; import net.neoforge
 src\main\java\appeng\server\services\compass\CompassRegion.java	21	#if FABRIC	import net.minecraft.util.datafix.DataFixTypes;  import java.util.BitSet; import java.util.HashMap; import java.util.List; import java.util.Map; import java.uti
@@ -124,11 +122,12 @@ src\main\java\appeng\server\testplots\InscriberTestPlots.java	116		nfcompat.comp
 src\main\java\appeng\server\testplots\InscriberTestPlots.java	124		nfcompat.compat.ItemStackTemplates.isSameItemSameComponents(inv.getStackInSlot(3), expectedResult),
 src\main\java\appeng\server\testplots\TestPlots.java	727		var craftingRecipes = nfcompat.recipes.RecipeMaps.of(node.getLevel()).byType(RecipeType.CRAFTING);
 src\main\java\appeng\server\testworld\PlotTestHelper.java	220		return cap.getCapability(getLevel(), absolutePos(ref), null, null, context);
-src\main\java\appeng\util\Platform.java	196	группы потоков в одиночной игре совпадают — сравниваем сам поток	return nfcompat.ServerThread.isClient();
-src\main\java\appeng\util\Platform.java	226		return nfcompat.ServerThread.isServer();
-src\main\java\appeng\util\Platform.java	237		if (!nfcompat.ServerThread.isServer()) {
-src\main\java\appeng\util\Platform.java	384	уходил в пустоту, у Fabric это NPE и падение теста.	if (serverPlayer.connection != null) { serverPlayer.connection.send(packet); }
-src\main\java\appeng\util\SearchInventoryEvent.java	35		var cap = CuriosIntegration.ITEM_HANDLER.getCapability(event.getEntity(), null);
+src\main\java\appeng\util\Platform.java	189	поэтому сторона берётся из FabricLoader. Вне запуска Fabric (юнит-тесты) - true.	return nfcompat.PlatformCompat.hasClientClasses();
+src\main\java\appeng\util\Platform.java	204	группы потоков в одиночной игре совпадают — сравниваем сам поток	return nfcompat.ServerThread.isClient();
+src\main\java\appeng\util\Platform.java	234		return nfcompat.ServerThread.isServer();
+src\main\java\appeng\util\Platform.java	245		if (!nfcompat.ServerThread.isServer()) {
+src\main\java\appeng\util\Platform.java	392	уходил в пустоту, у Fabric это NPE и падение теста.	if (serverPlayer.connection != null) { serverPlayer.connection.send(packet); }
+src\main\java\appeng\util\Platform.java	417		return nfcompat.PlatformCompat.isDevelopmentEnvironment();
 src\main\java\appeng\util\fluid\FluidSoundHelper.java	30	звука (вода/лава идут через ванильный Fluid#getBucketFillSound, моды могут регистрировать свой).	import net.fabricmc.fabric.api.transfer.v1.fluid.FluidVariantAttributes;  import nfcompat.bridge.FluidStacks;  import appeng.api.stacks.AEFluidKey;  /** * Helps
 src\main\java\appeng\util\fluid\FluidSoundHelper.java	71		var variant = FluidStacks.toVariant(fluid.toResource()); SoundEvent fillSound = variant.isBlank() ? null : FluidVariantAttributes.getEmptySound(variant);
 src\client\java\appeng\client\AEClientboundPacketHandler.java	144	#if FABRIC	soundEvent = null; // nfcompat: звуков жидкостей в шиме нет

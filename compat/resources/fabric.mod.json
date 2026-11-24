@@ -12,7 +12,9 @@
     "nfcompat.gametest.mixins.json"
   ],
   "entrypoints": {
-    "main": [],
+    "main": [
+      "nfcompat.integration.TrinketsHook::onInitialize"
+    ],
     "server": [
       "nfcompat.NfCompatServer"
     ],
@@ -37,6 +39,7 @@
   "recommends": {
     "team_reborn_energy": ">=5.0.0",
     "cloth-config": "*",
-    "modmenu": "*"
+    "modmenu": "*",
+    "trinkets_updated": "*"
   }
 }

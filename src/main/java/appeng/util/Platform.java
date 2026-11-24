@@ -56,7 +56,9 @@ import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraft.world.level.material.Fluid;
 import net.neoforged.fml.ModList;
 import net.neoforged.fml.loading.FMLEnvironment;
+//#if !FABRIC
 import net.neoforged.fml.loading.FMLLoader;
+//#endif
 import net.neoforged.fml.util.thread.SidedThreadGroups;
 import net.neoforged.neoforge.common.util.FakePlayerFactory;
 import net.neoforged.neoforge.fluids.FluidStack;
@@ -184,9 +186,15 @@ public class Platform {
      * @return True if client-side classes (such as Renderers) are available.
      */
     public static boolean hasClientClasses() {
+        //#if FABRIC
+        // В шиме нет `FMLLoader` (иначе NeoForge-детекторы чужих модов видят NeoForge),
+        // поэтому сторона берётся из FabricLoader. Вне запуска Fabric (юнит-тесты) - true.
+        return nfcompat.PlatformCompat.hasClientClasses();
+        //#else
         // The null check is for tests
         var loader = FMLLoader.getCurrentOrNull();
         return loader == null || loader.getDist().isClient();
+        //#endif
     }
 
     /*
@@ -406,8 +414,12 @@ public class Platform {
      * @return True if AE2 is being run within a dev environment.
      */
     public static boolean isDevelopmentEnvironment() {
+        //#if FABRIC
+        return nfcompat.PlatformCompat.isDevelopmentEnvironment();
+        //#else
         var loader = FMLLoader.getCurrentOrNull();
         return loader == null || !loader.isProduction();
+        //#endif
     }
 
     /**
