@@ -24,6 +24,9 @@
     "jei_mod_plugin": [
       "appeng.client.integrations.jei.JEIPlugin"
     ],
+    "jade": [
+      "appeng.integration.modules.jade.JadeModule"
+    ],
     "fabric-datagen": [
       "appeng.datagen.AE2DataGenerators"
     ],
