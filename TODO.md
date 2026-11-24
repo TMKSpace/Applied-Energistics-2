@@ -109,6 +109,11 @@ Trinkets опционален: без него entrypoint сразу выход�
 а два нужных AE2 факта (`Platform.hasClientClasses/isDevelopmentEnvironment`) вынесены в
 `FMLEnvironment.dist`/`isProduction()` (шим уже определяет env при старте сервера). С `ConfigPlugin` (плагин апстримного
 `ae2.mixins.json`) то же самое — он исключён из сборки.
+Ассеты и определения кастомного слота (`slots/legs/terminal.json`, тег, PNG-спрайт, lang-ключи)
+оставлены в репозитории **выключенными**: слот существует только когда он назначен через
+`data/trinkets/entities/*.json`, а там сейчас `legs/belt`. Чтобы вернуть, когда форк научится
+рисовать иконки, достаточно дописать `legs/terminal` в `entities/ae2_terminal.json`.
+
 **Иконка слота в Trinkets 4.x не рисуется вообще** (проверено разбором jar-ов):
 - 3.11.3 (1.21.11): `dev/emi/trinkets/SurvivalTrinketSlot` содержит `icon` — иконка рисуется,
   а `icon` в JSON это обычная текстура (`estrogen:slot/thighs` → `textures/slot/thighs.png`).

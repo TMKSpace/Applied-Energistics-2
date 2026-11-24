@@ -1,0 +1,6 @@
+{
+  "icon": "trinkets:container/slots/terminal",
+  "order": -640,
+  "max_stack_size": 1,
+  "validator_predicates": ["trinkets:default"]
+}
