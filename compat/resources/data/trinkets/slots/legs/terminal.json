@@ -1,4 +1,5 @@
 {
+  "icon": "ae2:item/wireless_terminal",
   "order": -640,
   "max_stack_size": 1,
   "validator_predicates": ["trinkets:default"]

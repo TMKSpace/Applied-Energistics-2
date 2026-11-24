@@ -1,4 +1,5 @@
 {
+  "replace": false,
   "values": [
     "ae2:wireless_terminal",
     "ae2:wireless_crafting_terminal"

@@ -1,5 +1,0 @@
-{
-  "replace": false,
-  "slots": ["legs/terminal"],
-  "entities": ["minecraft:player"]
-}
