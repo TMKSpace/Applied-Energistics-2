@@ -10,7 +10,10 @@
 package net.neoforged.neoforge.common.world.chunk;
 
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
+
+import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerLevel;
@@ -42,11 +45,19 @@ public class TicketHelper {
     /**
      * {@return all "BLOCK" tickets this controller had registered and which block positions are forcing which chunks}
      *
-     * <p>Shim note: the returned map is an unmodifiable snapshot, so it is safe to call the remove methods while
-     * iterating it.
+     * <p>Shim note: this is a real snapshot (both the map and the chunk sets are copied), so it is safe to call the
+     * remove methods while iterating it. AE2 does exactly that in {@code ChunkLoadingService.validateTickets}:
+     * it walks the map and drops tickets of block entities that no longer exist. A live view here would make
+     * {@link HashMap#forEach} throw {@link java.util.ConcurrentModificationException} at the end of the walk,
+     * which {@code TicketController.runCallbackValidation} would swallow as an error and skip
+     * {@code replaceBlockTickets}.
      */
     public Map<BlockPos, TicketSet> getBlockTickets() {
-        return Collections.unmodifiableMap(blockTickets);
+        var copy = new HashMap<BlockPos, TicketSet>(blockTickets.size());
+        blockTickets.forEach((owner, tickets) -> copy.put(owner, new TicketSet(
+                new LongOpenHashSet(tickets.normal().toLongArray()),
+                new LongOpenHashSet(tickets.naturalSpawning().toLongArray()))));
+        return Collections.unmodifiableMap(copy);
     }
 
     /**
