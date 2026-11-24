@@ -80,7 +80,7 @@ sourceSets {
 			// ConfigPlugin - плагин апстримного ae2.mixins.json: гейтит миксины по NeoForge-конфигу
 			// и через `FMLLoader` перечисляет моды. На Fabric этот конфиг не грузится, а класс
 			// тянет `net.neoforged.fml.loading.FMLLoader`, которого мы намеренно не отдаём
-			// (см. nfcompat.PlatformCompat).
+			// (там же есть FMLEnvironment.dist/isProduction).
 			exclude 'appeng/mixins/ConfigPlugin.java'
 		}
 		resources {

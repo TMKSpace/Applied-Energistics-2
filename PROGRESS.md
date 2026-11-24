@@ -571,7 +571,7 @@ NeoForge через `Class.forName("net.neoforged.fml.loading.FMLLoader")`. На
 содержал, поэтому yumi включала неофорджевские миксины и падала на `RegisterEvent`/
 `DeferredRegister` нашего же шима — то есть **фейковый `FMLLoader` ломал чужие моды**.
 Класс удалён (`LoadingModList` вместе с ним), `Platform.hasClientClasses()` и
-`isDevelopmentEnvironment()` переведены на `FabricLoader` через `nfcompat.PlatformCompat`,
+`isDevelopmentEnvironment()` переведены на уже существующий `FMLEnvironment` (`dist`/`isProduction()`),
 `appeng.mixins.ConfigPlugin` (плагин апстримного `ae2.mixins.json`, тоже тянет `FMLLoader`)
 исключён из сборки. После этого Trinkets + yumi грузятся нормально, 81/81 геймтест зелёный.
 

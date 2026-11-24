@@ -88,7 +88,7 @@ Trinkets опционален: без него entrypoint сразу выход�
 применяла свои неофорджевские миксины к нашим же `net.neoforged.*` и роняла сервер
 (`RegisterEvent` ctor, `DeferredRegister` internals). Поэтому класс `FMLLoader` из шима удалён,
 а два нужных AE2 факта (`Platform.hasClientClasses/isDevelopmentEnvironment`) вынесены в
-`nfcompat.PlatformCompat` (FabricLoader). С `ConfigPlugin` (плагин апстримного
+`FMLEnvironment.dist`/`isProduction()` (шим уже определяет env при старте сервера). С `ConfigPlugin` (плагин апстримного
 `ae2.mixins.json`) то же самое — он исключён из сборки.
 **Не проверено в игре:** в headless-геймтесте `EntitySlotLoader.SERVER` у Trinkets пустой
 (слоты игрока берутся оттуда), поэтому геймтест моста не написать — нужен живой клиент
