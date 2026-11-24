@@ -299,6 +299,17 @@ fabricApi {
 // (ResourceSelectorArgument): `*` = только namespace minecraft, `*:*` = все,
 // `ae2:tiny_tnt*` = группа плотов. id теста = id плота.
 // ---------------------------------------------------------------------------
+// ---------------------------------------------------------------------------
+// Локальные настройки стенда (ник в dev-клиенте и т.п.): `local.properties`
+// в корне, файл в .gitignore. Читаем без падений, если его нет.
+// ---------------------------------------------------------------------------
+def localProps = new Properties()
+def localPropsFile = file('local.properties')
+if (localPropsFile.exists()) {
+	localPropsFile.withInputStream { localProps.load(it) }
+}
+def devUsername = localProps.getProperty('dev_username', 'Player')
+
 fabricApi {
 	configureTests {
 		createSourceSet = false
@@ -316,6 +327,17 @@ loom {
 			vmArg '-Dneoforge.gametest.enabled=true'
 			// По умолчанию гоняем весь набор. Один плот: -PgtFilter=ae2:tiny_tnt*
 			vmArg "-Dfabric-api.gametest.filter=${project.findProperty('gtFilter') ?: '*:*'}"
+		}
+		client {
+			// Ник берём из local.properties (не в гите): по умолчанию "Player",
+			// у нас - KotIsOff, чтобы сервер и оп-лист знали постоянное имя.
+			programArgs '--username', devUsername
+		}
+		// Настоящий выделенный сервер для ручных тестов (отдельная папка, чтобы не
+		// трогать клиентский `run/` с мирами): .\gradlew.bat runServer
+		// Порт и остальные настройки - в runServer/server.properties (25566, offline).
+		server {
+			runDir 'runServer'
 		}
 	}
 }

@@ -1,5 +1,5 @@
 {
   "order": -640,
   "max_stack_size": 1,
-  "validator_predicates": ["trinkets:all"]
+  "validator_predicates": ["trinkets:default"]
 }

@@ -69,6 +69,16 @@ public final class TrinketsBridgeTestPlots {
             var slotType = inventory.slotType().getId();
             helper.check(inventory.isValidSlot(0), "Trinkets: слот 0 невалиден");
 
+            // Фильтр слота: в него можно положить только беспроводной терминал AE2
+            // (валидатор `trinkets:default` + наш тег `trinkets:hand/trinket`).
+            var slotAccess = inventory.getSlotAccess(0);
+            helper.check(!inventory.slotType().validatorCheck(new ItemStack(Items.DIAMOND), slotAccess, player),
+                    "Trinkets: в слот кладётся что угодно (фильтр по тегу не применился)");
+            helper.check(
+                    inventory.slotType().validatorCheck(new ItemStack(appeng.core.definitions.AEItems.WIRELESS_TERMINAL.get()),
+                            slotAccess, player),
+                    "Trinkets: слот не принимает беспроводной терминал");
+
             inventory.setItem(0, new ItemStack(Items.DIAMOND, 3));
 
             // 1) мост находит предмет по (slotType, index)
