@@ -44,10 +44,17 @@ Outbound: 16 энерго-предметов AE2; fluid/item-в-предмете
 `[ ]` `MatrixFrameBlock`: в FABRIC-ветке вырезаны `onBlockExploded`/`canEntityDestroy` → стенку
 плота можно пробить взрывом. Либо вернуть оверрайды в FABRIC-ветке, либо миксин на
 `Explosion#finalizeExplosion`.
-`[ ]` `ChunkLoadingService.isChunkForced()` читает `appeng.server.services.ChunkLoadState`, который
-в 26.3 никто не наполняет (класс package-private) → `appeng/mixins/chunkloading/ChunkMapMixin`
-(рандом-тики в форс-лоаднутых чанках) не работает. Нужен доступ к `src` либо перевод
-`isChunkForced` на наш `TicketOwnershipData`.
+`[x]` `ChunkLoadingService.isChunkForced()` — **уже сделано раньше** (`93f2b298a`): FABRIC-ветка
+идёт в `TicketOwnershipQueries.isForcedByUs` → `TicketOwnershipData`, `ChunkMapMixin` подключён
+в `nfcompat.ae2.mixins.json`. Пункт был устаревшим. Поправка по сути: в 26.3 рандом-тики в
+форс-чанках работают ванильно (`FORCED_TICKET_LEVEL` = `ENTITY_TICKING`), а миксин бьёт в
+публичный `ChunkMap#anyPlayerCloseEnoughForSpawning`, т.е. его единственный живой эффект —
+порталы в форс-чанках AE2 могут спавнить пиглинов без игрока рядом. Если нужен настоящий
+спавн мобов в форс-чанках — отдельный инжект в `anyPlayerCloseEnoughForSpawningInternal`.
+Попутно найдена и починена ошибка в шиме: `TicketHelper#getBlockTickets()` возвращал живое
+представление карты, хотя javadoc обещал снимок; AE2 в `validateTickets` удаляет тикеты прямо
+во время обхода → `ConcurrentModificationException` → `replaceBlockTickets` не выполнялся
+(чистка осиротевших якорей при загрузке уровня шла через аварийный путь). Теперь снимок.
 Тест: spatial IO порт + пилоны + ячейка, редстоун → блоки уезжают в ячейку и возвращаются;
 `/ae2 spatial info|tp|tpback`; перезапуск сервера сохраняет плот и форс чанков.
 

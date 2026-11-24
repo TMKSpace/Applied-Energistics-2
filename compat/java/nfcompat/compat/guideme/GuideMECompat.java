@@ -1,14 +1,14 @@
 /*
- * ╨з╨░╤Б╤В╤М nfcompat. ╨Ч╨░╨╝╨╡╨╜╨░ ╨╜╨╡╨╛╤Д╨╛╤А╨┤╨╢╨╡╨▓╤Б╨║╨╛╨│╨╛ `ArgumentTypeInfos.registerByClass`.
+ * Часть nfcompat. Замена неофорджевского `ArgumentTypeInfos.registerByClass`.
  *
- * NeoForge ╨┐╨░╤В╤З╨╕╤В ╨▓╨░╨╜╨╕╨╗╤М╨╜╤Л╨╣ `ArgumentTypeInfos`, ╨┤╨╛╨▒╨░╨▓╨╗╤П╤П ╤Б╤В╨░╤В╨╕╤З╨╡╤Б╨║╨╕╨╣
- * `registerByClass(Class, ArgumentTypeInfo)`, ╨║╨╛╤В╨╛╤А╤Л╨╣ ╨║╨╗╨░╨┤╤С╤В ╨┐╨░╤А╤Г ╨▓ ╨┐╤А╨╕╨▓╨░╤В╨╜╤Г╤О ╨║╨░╤А╤В╤Г
- * `BY_CLASS`. ╨Ф╨╛╨▒╨░╨▓╨╕╤В╤М ╤В╨░╨║╨╛╨╣ ╨╝╨╡╤В╨╛╨┤ ╨╝╨╕╨║╤Б╨╕╨╜╨╛╨╝ ╨╜╨╡╨╗╤М╨╖╤П (Mixin ╨╖╨░╨┐╤А╨╡╤Й╨░╨╡╤В non-private static
- * ╨▓ ╤З╤Г╨╢╨╕╤Е ╨║╨╗╨░╤Б╤Б╨░╤Е), ╨┐╨╛╤Н╤В╨╛╨╝╤Г ╨╝╨╡╤В╨╛╨┤ ╨╢╨╕╨▓╤С╤В ╨╖╨┤╨╡╤Б╤М, ╨░ ╨▓╤Л╨╖╨╛╨▓╤Л ╨╕╨╖ GuideME ╨┐╨╡╤А╨╡╨╜╨░╨┐╤А╨░╨▓╨╗╤П╤О╤В╤Б╤П
- * ╤Б╤О╨┤╨░ ╨╢╨╡ (╤Б╨╝. `nfcompat.mixin.GuideMERegisterByClassMixin`).
+ * NeoForge патчит ванильный `ArgumentTypeInfos`, добавляя статический
+ * `registerByClass(Class, ArgumentTypeInfo)`, который кладёт пару в приватную карту
+ * `BY_CLASS`. Добавить такой метод миксином нельзя (Mixin запрещает non-private static
+ * в чужих классах), поэтому метод живёт здесь, а вызовы из GuideME перенаправляются
+ * сюда же (см. `nfcompat.mixin.GuideMERegisterByClassMixin`).
  *
- * ╨Ы╨╛╨│╨╕╨║╨░ ╤А╨╛╨▓╨╜╨╛ ╨║╨░╨║ ╨▓ NeoForge: ╨┐╨╛╨╗╨╛╨╢╨╕╤В╤М ╨▓ ╨║╨░╤А╤В╤Г ╨╕ ╨▓╨╡╤А╨╜╤Г╤В╤М ╤В╨╛╤В ╨╢╨╡ info (GuideME ╨┤╨░╨╗╤М╤И╨╡
- * ╨┤╨╡╨╗╨░╨╡╤В checkcast ╨▓ `SingletonArgumentInfo`).
+ * Логика ровно как в NeoForge: положить в карту и вернуть тот же info (GuideME дальше
+ * делает checkcast в `SingletonArgumentInfo`).
  */
 package nfcompat.compat.guideme;
 
@@ -29,7 +29,7 @@ public final class GuideMECompat {
         return info;
     }
 
-    /** ╨б╤Л╤А╨╛╨╣ ╨▓╨░╤А╨╕╨░╨╜╤В ╨┤╨╗╤П ╨╝╨╕╨║╤Б╨╕╨╜╨░-╤А╨╡╨┤╨╕╤А╨╡╨║╤В╨░ (╤Б╤В╨╕╤А╨░╨╜╨╕╨╡ ╨┤╨╢╨╡╨╜╨╡╤А╨╕╨║╨╛╨▓). */
+    /** Сырой вариант для миксина-редиректа (стирание дженериков). */
     @SuppressWarnings({"rawtypes", "unchecked"})
     public static ArgumentTypeInfo registerByClassRaw(Class clazz, ArgumentTypeInfo info) {
         return registerByClass(clazz, info);

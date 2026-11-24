@@ -376,12 +376,16 @@ dependencies {
 	// Jade 26.3.5+fabric
 	compileOnly "maven.modrinth:jade:71CTWqdE"
 
-	// REI 26.3.824+fabric - только для проверки в dev: у AE2 26.3 своего REI-плагина
-	// нет (в апстриме остался только публичный API appeng.api.integrations.rei для
-	// чужих плагинов), так что проверяем лишь совместимость/загрузку рядом.
+	// REI 26.3.824+fabric - только когда явно тестируем: у AE2 26.3 своего REI-плагина
+	// нет (в апстриме остался лишь публичный API appeng.api.integrations.rei для чужих
+	// плагинов), а держать REI и JEI одновременно в обычном dev-ране незачем: два
+	// просмотрщика рецептов рисуются друг поверх друга. Запуск для проверки:
+	//   .\gradlew.bat runClient -PwithRei
 	// REI требует Architectury API 22.0.0+ (только рантайм, для компиляции не нужен).
-	localRuntime "maven.modrinth:rei:rKsAE6bX"
-	localRuntime "maven.modrinth:architectury-api:BqvOgTp1"        // 22.1.7+fabric, 26.3
+	if (project.hasProperty('withRei')) {
+		localRuntime "maven.modrinth:rei:rKsAE6bX"
+		localRuntime "maven.modrinth:architectury-api:BqvOgTp1"    // 22.1.7+fabric, 26.3
+	}
 
 	// REI 26.3.824+fabric
 	compileOnly "maven.modrinth:rei:rKsAE6bX"
