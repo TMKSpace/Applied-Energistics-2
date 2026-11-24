@@ -1,5 +1,5 @@
 {
   "replace": false,
-  "slots": ["hand/trinket"],
+  "slots": ["legs/terminal"],
   "entities": ["minecraft:player"]
 }

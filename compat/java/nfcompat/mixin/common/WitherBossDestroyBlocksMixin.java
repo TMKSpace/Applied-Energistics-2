@@ -26,15 +26,22 @@ import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 import com.llamalad7.mixinextras.sugar.Local;
 
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.boss.wither.WitherBoss;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 import net.neoforged.neoforge.common.extensions.IBlockExtension;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 
 @Mixin(WitherBoss.class)
 public abstract class WitherBossDestroyBlocksMixin {
+
+    private static final Logger NFCOMPAT_LOGGER = LoggerFactory.getLogger("nfcompat/wither");
 
     @ModifyExpressionValue(
             method = "customServerAiStep",
@@ -50,8 +57,17 @@ public abstract class WitherBossDestroyBlocksMixin {
         // дешёвая, а переопределение AE2 (`MatrixFrameBlock`) подхватывается естественно.
         if (state.getBlock() instanceof IBlockExtension extension) {
             var wither = (WitherBoss) (Object) this;
-            return extension.canEntityDestroy(state, wither.level(), pos, wither);
+            boolean allowed = extension.canEntityDestroy(state, wither.level(), pos, wither);
+            if (nfcompat$isAe2Block(state.getBlock())) {
+                NFCOMPAT_LOGGER.info("wither {} {} at {}", allowed ? "destroyed" : "blocked by", state.getBlock(), pos);
+            }
+            return allowed;
         }
         return true;
+    }
+
+    private static boolean nfcompat$isAe2Block(Block block) {
+        Identifier id = BuiltInRegistries.BLOCK.getKey(block);
+        return id != null && "ae2".equals(id.getNamespace());
     }
 }
