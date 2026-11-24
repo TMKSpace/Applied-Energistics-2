@@ -51,6 +51,9 @@ ad-hoc `MatrixFrameExplosionMixin` удалён. `[x]` `canEntityDestroy` (ви�
 хвостом, а `Operation` тоже хвостовой) и `common.EnderDragonDestroyBlocksMixin`
 (`@ModifyExpressionValue` на чтение `MOB_GRIEFING` в `checkWalls`; `destroyBlocks` в 26.3 больше
 нет). В игре не проверено: нужен визер/дракон рядом с плотом.
+`[x]` Проверено в игре: пилоны/контроллер/кабель дракон ест — это **не баг**: только
+`MatrixFrameBlock` переопределяет `canEntityDestroy` (в 1.20.1 Fabric-порте такого хука
+нет вообще). Защитить ещё и `SpatialPylonBlock`/`ControllerBlock` — отдельное решение.
 Оговорка: у рамки `explosionResistance = 6e6`, обычный TNT её и так не брал, так что живая
 регрессия — скорее дракон/визер, а не взрыв.
 `[x]` `ChunkLoadingService.isChunkForced()` — **уже сделано раньше** (`93f2b298a`): FABRIC-ветка
