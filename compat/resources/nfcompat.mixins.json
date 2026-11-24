@@ -15,7 +15,9 @@
     "common.LivingEntityClimbableMixin",
     "common.PickItemFromBlockMixin",
     "common.PlayerDestroySpeedMixin",
-    "common.RecipeManagerAccessor"
+    "common.RecipeManagerAccessor",
+    "common.WitherBossDestroyBlocksMixin",
+    "common.EnderDragonDestroyBlocksMixin"
   ],
   "client": [
     "client.ClientTooltipComponentMixin",

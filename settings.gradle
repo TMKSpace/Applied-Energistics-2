@@ -9,4 +9,4 @@ pluginManagement {
 	}
 }
 
-rootProject.name = 'appliedenergistics2'
+rootProject.name = 'appliedenergistics2-fabric'

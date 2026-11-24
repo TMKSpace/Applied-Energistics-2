@@ -1,8 +1,8 @@
 {
   "schemaVersion": 1,
   "id": "ae2",
-  "version": "26.3-nfcompat",
-  "name": "Applied Energistics 2 (nfcompat probe)",
+  "version": "26.3.1-alpha.1",
+  "name": "Applied Energistics 2 (Fabric)",
   "icon": "logo.png",
   "description": "Fabric port of Applied Energistics 2. A Minecraft mod about Matter, Energy and using them to conquer the world...",
   "environment": "*",

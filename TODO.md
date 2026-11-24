@@ -44,9 +44,13 @@ Outbound: 16 энерго-предметов AE2; fluid/item-в-предмете
 `[x]` `MatrixFrameBlock#onBlockExploded` — **закрыто**: дефолт в `IBlockExtension` +
 `common.BlockExplosionMixin` (инжект перед `ServerLevel.setBlockAndUpdate` в
 `BlockBehaviour#onExplosionHit` — в 26.3 NeoForge-хук переехал туда с `Explosion`); старый
-ad-hoc `MatrixFrameExplosionMixin` удалён. `[ ]` `canEntityDestroy` (визер/дракон) всё ещё
-не подключён — нужны дефолт в шиме + миксины на `WitherBoss#canDestroy` и
-`EnderDragon#destroyBlocks`.
+ad-hoc `MatrixFrameExplosionMixin` удалён. `[x]` `canEntityDestroy` (визер/дракон) — **закрыто**: дефолт в `IBlockExtension`
+(1:1 с NeoForge: дракон → `!DRAGON_IMMUNE`, визер/череп → `isAir() || canDestroy`),
+`common.WitherBossDestroyBlocksMixin` (`@ModifyExpressionValue` на вызов `canDestroy` в
+`customServerAiStep` — `@WrapOperation` не сошёлся по сигнатуре: MixinExtras требует сахар
+хвостом, а `Operation` тоже хвостовой) и `common.EnderDragonDestroyBlocksMixin`
+(`@ModifyExpressionValue` на чтение `MOB_GRIEFING` в `checkWalls`; `destroyBlocks` в 26.3 больше
+нет). В игре не проверено: нужен визер/дракон рядом с плотом.
 Оговорка: у рамки `explosionResistance = 6e6`, обычный TNT её и так не брал, так что живая
 регрессия — скорее дракон/визер, а не взрыв.
 `[x]` `ChunkLoadingService.isChunkForced()` — **уже сделано раньше** (`93f2b298a`): FABRIC-ветка
@@ -372,7 +376,9 @@ disconnect, `ServerThread` сбрасывается на `SERVER_STOPPED`, `Fake
 `Saving players` -> `Saving worlds` -> чанки всех 4 измерений (включая `ae2:spatial_storage`),
 без исключений; новый мир поднимается за 300-900 мс, AE2 заново раздаёт ME player id и гоняет
 payload'ы — то есть после смены мира `isServer` и кэш фейкплееров не врут.
-`[ ]` Удалить временное перед релизом: `/nfcompat cap|parts|pp|provider`, мёртвые `ofSlot()`.
+`[~]` Дев-команды: `/nfcompat cap|parts|pp|provider` **осознанно остаются в dev-сборке**
+(решение 25.11 - в альфе для тестов они полезны). Перед «серьёзным» релизом - либо
+спрятать за системным свойством (`-Dnfcompat.debug=true`), либо вырезать. `ofSlot()` - тоже.
 
 ## Позже: разложить код на три слоя (идея пользователя)
 
@@ -440,3 +446,31 @@ payload'ы — то есть после смены мира `isServer` и кэш
 ## Итог сессии 17.11 (клиент + гайд)
 
 Клиент запускается, гайд работает целиком (страницы, спрайты, 3D-сцены, хоткей G, иконки жидкостей), spatial IO и подсветка области проверены, экран настроек на Cloth Config работает (Mod Menu), TOML читается/пишется. Геймтесты 81/81, shimTest зелёный. Открыто: onChunkUnloaded, PiP-иконки жидкостей в JEI, обводка деталей, наковальня, растяжение сцены в момент ресайза окна (транзиент).
+
+## Шим как основа для портов аддонов (план пользователя, 25.11)
+
+Цель: тем же шимом портировать аддоны AE2. Первый кандидат - **ExtendedAE** («без него
+неиграбельно»), но не сейчас.
+
+Что из этого следует по порядку важности:
+
+1. **Шим должен стать отдельным артефактом.** Сейчас `net.neoforged.*` вкомпилирован в наш
+   jar. Если каждый аддон повезёт свою копию, на classpath окажутся дубли классов и победит
+   тот, кто загрузился первым: тихая рассинхронизация версий шима. Правильно - один
+   `nfcompat-shim` (Fabric-мод, `provides`/`depend`), который ставят и AE2, и аддоны. Это тот
+   же рефакторинг, что «три слоя» ниже, только с внешней мотивацией.
+2. **`AECapabilities` наружу становится реальным требованием** (п. 1 P1 выше): аддоны
+   (`ME_STORAGE`, `CRAFTING_MACHINE`, `GENERIC_INTERNAL_INV`, `IN_WORLD_GRID_NODE_HOST`,
+   `CRANKABLE`) ищут их через NeoForge `level.getCapability(...)`, значит нужны
+   `BlockApiLookup`-обёртки в шиме. Раньше это было «только для аддонов, которых нет».
+3. **Mod id остаётся `ae2`** (решение 25.11), иначе аддоны с `depends: ae2` не загрузятся.
+   Координаты сборки при этом свои: `space.tmkspace:appliedenergistics2-fabric`.
+4. **Поверхность шима придётся расширять по факту**: аддоны тянут куски NeoForge, которых у
+   AE2 нет (свои реестры/`DeferredRegister`, сетевые payload'ы, `IMenuTypeExtension`,
+   конфиги, датамапы, иногда AT-патчи). Правило прежнее: `net.neoforged` = только API,
+   Fabric-вызовы - через закрытый список бриджей, каждое расширение закрывается
+   `shimTest`-проверкой.
+5. **Отдельная развилка: аддоны с NeoForge-миксинами в свои классы.** Наш шим отдаёт
+   `net.neoforged.*`; если аддон сам проверяет «мы на NeoForge» через `Class.forName`
+   (как yumi), он оживёт у нас и попробует применить свои NF-миксины - ровно та мина, что
+   была с `FMLLoader`. При порте каждого аддона: искать такие проверки и учитывать.
