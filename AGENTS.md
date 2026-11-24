@@ -6,6 +6,30 @@
   Check classes in `appeng.server.testplots` for examples. To run game tests, run the `Gametests` IDE run configuration.
   If the exit code is 0, all tests passed.
 
+## Референс: официальная Fabric-ветка AE2 1.20.1
+
+Клон: **`D:\Code\java\applied-energistics-2-1.20.1-fabric`**
+(`git clone --branch fabric/1.20.1 --depth 1 https://github.com/AppliedEnergistics/Applied-Energistics-2.git`,
+артефакт `appliedenergistics2-fabric`, MC 1.20.1, Fabric API 0.88.1).
+
+Это официальный порт AE2 на Fabric, то есть **готовые ответы на большинство вопросов «а как это
+делается на Fabric»**. ПРАВИЛО: прежде чем писать миксин/шим-класс, сначала грепнуть здесь.
+
+Что там уже есть (проверено):
+- `src/main/java/appeng/init/InitApiLookup.java` — вынос AE2-ных lookup'ов наружу
+  (`MEStorage`, `GenericInternalInventory`, `ICraftingMachine`, `ICrankable`, P2P, энерго-предметы,
+  `PartApiLookup.addHostType`). База для пункта TODO «`AECapabilities` наружу» и для портов аддонов.
+- `appeng/server/services/ChunkLoadState.java` + `mixins/chunkloading/ServerLevelMixin.java`
+  (запрет снятия чужого форса) — альтернатива нашему `TicketOwnershipData`-подходу.
+- `appeng/hooks/RenderBlockOutlineHook.java` — обводка деталей.
+- `appeng/hotkeys/*`, `appeng/init/*` — регистрация контента без NeoForge.
+
+Чего там НЕТ (и не надо искать): **Curios/Trinkets** — ни одного упоминания, аксессуары на
+Fabric в 1.20.1 не поддерживались. Наш мост Curios→Trinkets — новая работа, референса нет.
+
+Важно: ветка 1.20.1, API там старее (Fabric lookups вместо `AECapabilities`, другие имена
+классов), поэтому копировать код «как есть» нельзя — берём подход и адаптируем под 26.3.
+
 ## Наше (nfcompat-порт), не апстрим
 
 - **НИКОГДА не убивайте java-процессы игры или сервера.** Пользователь держит запущенный
