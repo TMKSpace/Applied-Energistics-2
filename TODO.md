@@ -109,6 +109,18 @@ Trinkets опционален: без него entrypoint сразу выход�
 а два нужных AE2 факта (`Platform.hasClientClasses/isDevelopmentEnvironment`) вынесены в
 `FMLEnvironment.dist`/`isProduction()` (шим уже определяет env при старте сервера). С `ConfigPlugin` (плагин апстримного
 `ae2.mixins.json`) то же самое — он исключён из сборки.
+**Иконка слота в Trinkets 4.x не рисуется вообще** (проверено разбором jar-ов):
+- 3.11.3 (1.21.11): `dev/emi/trinkets/SurvivalTrinketSlot` содержит `icon` — иконка рисуется,
+  а `icon` в JSON это обычная текстура (`estrogen:slot/thighs` → `textures/slot/thighs.png`).
+- 4.2.1 (26.3, форк `eu.pb4`): ни один клиентский класс не упоминает `icon`; в
+  `TrinketScreenManager` блитятся только фиксированные спрайты (`container/slot`,
+  `container/compatible_slot_highlight`, `decorative_slot_overlay`, виджеты кнопок).
+  Спрайты `assets/trinkets/textures/gui/sprites/container/slots/*.png` (face/hat/necklace/...)
+  остались от 3.x мёртвым грузом.
+Значит скриншоты с силуэтами — из 3.x-сборки. Наш `icon = trinkets:container/slots/terminal`
+и PNG лежат на месте (не мешают, заработают если иконки вернут), но в 4.x пустой слот будет
+пустым. Если нужна иконка именно в 4.x — только клиентский миксин в `TrinketScreenManager`.
+
 **Слот:** Trinkets Updated 4.2.1 сам не привязывает ни одной группы к типу сущности
 (`EntitySlotLoader` пустой), поэтому AE2 везёт свой мини-датапак: `data/trinkets/entities/player.json`
 (`hand/trinket` для `minecraft:player`) + `data/trinkets/slots/hand/trinket.json`
