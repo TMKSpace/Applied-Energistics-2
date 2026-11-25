@@ -17,12 +17,19 @@ import net.minecraft.client.gui.screens.Screen;
 import com.terraformersmc.modmenu.api.ConfigScreenFactory;
 import com.terraformersmc.modmenu.api.ModMenuApi;
 
+import nfcompat.client.FcpConfigScreen;
+import nfcompat.compat.ForgeConfigApiPortBridge;
 import nfcompat.config.ClothConfigScreen;
 
 public class ModMenuIntegration implements ModMenuApi {
 
     @Override
     public ConfigScreenFactory<?> getModConfigScreenFactory() {
+        // Экран ForgeConfigAPIPort - настоящий NeoForge-ConfigurationScreen
+        // (секции, range, тултипы), если он установлен - он приоритетнее.
+        if (ForgeConfigApiPortBridge.isPresent()) {
+            return FcpConfigScreen::create;
+        }
         if (!FabricLoader.getInstance().isModLoaded("cloth-config")) {
             return parent -> null;
         }

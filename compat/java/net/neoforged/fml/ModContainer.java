@@ -28,6 +28,7 @@ import net.fabricmc.loader.api.FabricLoader;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.config.IConfigSpec;
 import net.neoforged.fml.config.ModConfig;
+import nfcompat.compat.ForgeConfigApiPortBridge;
 import net.neoforged.fml.event.config.ModConfigEvent;
 import net.neoforged.fml.loading.moddiscovery.ModInfo;
 import net.neoforged.neoforge.common.ModConfigSpec;
@@ -112,6 +113,18 @@ public class ModContainer {
         // Файл читаем сразу — иначе ConfigValue#get() в конструкторе мода упал бы
         // с "Cannot get config value before config is loaded".
         config.load();
+
+        // Если установлен ForgeConfigAPIPort - отдаём спеку и ему: тогда его экран
+        // конфига в Mod Menu показывает наши настройки. Значения общие (спека одна),
+        // файл один; наша загрузка выше уже отработала.
+        if (ForgeConfigApiPortBridge.isPresent()) {
+            // LOCAL (ae2-common.toml) у ForgeConfigAPIPort нет: их бутстрап грузит
+            // только STARTUP/COMMON/CLIENT/SERVER, поэтому LOCAL-конфиг остался бы
+            // у них незагруженным (и в экране был бы read-only). Отдаём как COMMON -
+            // имя файла мы задаём сами, значения общие, наша загрузка остаётся.
+            var fcpType = type == ModConfig.Type.LOCAL ? ModConfig.Type.COMMON : type;
+            ForgeConfigApiPortBridge.register(fcpType, spec, getModId(), name);
+        }
 
         this.configs.add(config);
 

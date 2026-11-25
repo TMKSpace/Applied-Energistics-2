@@ -72,8 +72,12 @@ import net.neoforged.neoforge.client.event.RegisterPictureInPictureRenderersEven
 import net.neoforged.neoforge.client.event.RegisterRangeSelectItemModelPropertyEvent;
 import net.neoforged.neoforge.client.event.RegisterRenderPipelinesEvent;
 import net.neoforged.neoforge.client.extensions.common.RegisterClientExtensionsEvent;
+//#if FABRIC
+// ConfigurationScreen в шиме больше нет: на Fabric экран конфига берётся у
+// ForgeConfigAPIPort (см. nfcompat.ModMenuIntegration), а не у NeoForge-класса.
+//#else
 import net.neoforged.neoforge.client.gui.ConfigurationScreen;
-import net.neoforged.neoforge.client.gui.IConfigScreenFactory;
+//#endifimport net.neoforged.neoforge.client.gui.IConfigScreenFactory;
 import net.neoforged.neoforge.client.model.standalone.SimpleUnbakedStandaloneModel;
 import net.neoforged.neoforge.client.network.ClientPacketDistributor;
 import net.neoforged.neoforge.client.resources.VanillaClientListeners;
@@ -284,8 +288,13 @@ public class AppEngClient extends AppEngBase {
             Hotkeys.checkHotkeys();
         });
 
+//#if FABRIC
+        // Расширение NeoForge для экрана конфига на Fabric не нужно: Mod Menu берёт
+        // экран напрямую у ForgeConfigAPIPort (nfcompat.ModMenuIntegration).
+//#else
         container.registerExtensionPoint(IConfigScreenFactory.class,
                 (mc, parent) -> new ConfigurationScreen(container, parent));
+//#endif
 
         modEventBus.addListener(new AEClientboundPacketHandler()::register);
         modEventBus.addListener(this::registerEntityRenderers);
