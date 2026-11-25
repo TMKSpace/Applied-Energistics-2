@@ -43,8 +43,32 @@ public class FluidType {
         return fluid;
     }
 
+    /**
+     * Имя жидкости. В NeoForge его даёт FluidType (у воды — «Water»), в ванили такого понятия нет.
+     * Раньше мы брали имя ведра ({@code fluid.getBucket()}) и получали «Ведро воды» вместо
+     * «Вода»: это лезло в тултипы (например «ПКМ: содержит Ведро воды» дважды) и в JEI.
+     * <p>
+     * Теперь приоритет — блок жидкости ({@code block.minecraft.water} → «Вода», лава → «Лава»),
+     * ведро — только фолбэк для жидкостей без блока/ведра.
+     */
     public Component getDescription() {
-        return fluid == null ? Component.empty() : Component.translatable(fluid.getBucket().getDescriptionId());
+        if (fluid == null) {
+            return Component.empty();
+        }
+
+        var state = fluid.defaultFluidState();
+        if (!state.isEmpty()) {
+            var block = state.createLegacyBlock();
+            if (block != null && !block.isAir()) {
+                return block.getBlock().getName();
+            }
+        }
+
+        var bucket = fluid.getBucket();
+        if (bucket != null && bucket != net.minecraft.world.item.Items.AIR) {
+            return Component.translatable(bucket.getDescriptionId());
+        }
+        return Component.empty();
     }
 
     public Component getDescription(FluidStack stack) {
