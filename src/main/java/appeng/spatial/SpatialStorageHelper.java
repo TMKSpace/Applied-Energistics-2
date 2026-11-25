@@ -188,26 +188,9 @@ public class SpatialStorageHelper {
             unloadEntityChunks(dstLevel, loadedDestChunks);
         }
 
-        //#if FABRIC
-        // Сознательное расхождение с апстримом: там обновления соседей для принимающего плана
-        // применяются в мире-источнике (координаты dst в srcLevel). На NeoForge остаётся
-        // апстримный вариант (ветка #else).
-        //
-        // Позиции в cDst.getUpdates() лежат в системе координат мира приёмника: их кладёт туда
-        // CachedPlane.swap() через dst.markForUpdate(dst.x_offset + x, ...), а cDst.level ==
-        // dstLevel. Поэтому уровень должен быть уровнем того же плана, чей список обновлений мы
-        // обходим: иначе updateNeighborsAt бьёт по чужим блокам того же адреса в другом мире
-        // (у spatial IO это либо случайные блоки оверворлда, либо чужая ячейка spatial-измерения),
-        // а уведомления, которые должны были дойти до соседей принимающего региона (воронки,
-        // наблюдатели, рамки матрицы), теряются.
         for (BlockPos pos : cDst.getUpdates()) {
             cDst.getLevel().updateNeighborsAt(pos, Blocks.AIR);
         }
-        //#else
-        for (BlockPos pos : cDst.getUpdates()) {
-            cDst.getLevel().updateNeighborsAt(pos, Blocks.AIR);
-        }
-        //#endif
 
         for (BlockPos pos : cSrc.getUpdates()) {
             cSrc.getLevel().updateNeighborsAt(pos, Blocks.AIR);
