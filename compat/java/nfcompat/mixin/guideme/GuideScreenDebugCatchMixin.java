@@ -47,7 +47,7 @@ public class GuideScreenDebugCatchMixin {
     @WrapOperation(method = "scaledExtractRenderState", require = 0,
             at = @At(value = "INVOKE",
                     target = "Lguideme/internal/screen/DocumentScreen;renderDocument(Lguideme/render/RenderContext;)V"))
-    private void nfcompat$renderDocumentSafely(Operation<Void> original, RenderContext context) {
+    private void nfcompat$renderDocumentSafely(RenderContext context, Operation<Void> original) {
         if (!CATCH) {
             original.call(context);
             return;

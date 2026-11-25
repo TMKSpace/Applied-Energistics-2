@@ -46,7 +46,7 @@ public class KeyboardHandlerScreenEventMixin {
     @WrapOperation(method = "keyPress",
             at = @At(value = "INVOKE",
                     target = "Lnet/minecraft/client/gui/screens/Screen;keyPressed(Lnet/minecraft/client/input/KeyEvent;)Z"))
-    private boolean nfcompat$postScreenKeyPressed(Operation<Boolean> original, Screen screen, KeyEvent event) {
+    private boolean nfcompat$postScreenKeyPressed(Screen screen, KeyEvent event, Operation<Boolean> original) {
         var pre = new ScreenEvent.KeyPressed.Pre(screen, event);
         NeoForge.EVENT_BUS.post(pre);
         if (pre.isCanceled()) {

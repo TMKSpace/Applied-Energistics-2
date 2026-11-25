@@ -42,8 +42,8 @@ public class MouseHandlerScreenEventMixin {
     @WrapOperation(method = "onButton",
             at = @At(value = "INVOKE",
                     target = "Lnet/minecraft/client/gui/screens/Screen;mouseClicked(Lnet/minecraft/client/input/MouseButtonEvent;Z)Z"))
-    private boolean nfcompat$postScreenMouseClicked(Operation<Boolean> original, Screen screen,
-            MouseButtonEvent event, boolean doubleClick) {
+    private boolean nfcompat$postScreenMouseClicked(Screen screen, MouseButtonEvent event, boolean doubleClick,
+            Operation<Boolean> original) {
         var pre = new ScreenEvent.MouseButtonPressed.Pre(screen, event, doubleClick);
         NeoForge.EVENT_BUS.post(pre);
         if (pre.isCanceled()) {
