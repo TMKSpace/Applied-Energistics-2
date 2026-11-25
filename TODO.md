@@ -22,6 +22,11 @@ Outbound: 16 энерго-предметов AE2; fluid/item-в-предмете
 не регистрирует), inbound работает через Fabric-провайдеры ванили.
 
 ## 3. Масштаб жидкостей ×81
+`[x]` Ключи перевода для экрана конфигурации: `ae2.configuration.<путь>` (+`.tooltip`) и
+`nfcompat.config.guideme.*` лежат в `compat/resources/assets/nfcompat/lang/en_us.json`
+(145 ключей), генерируются `compat/tools/gen_config_lang.py` из сгенерированных ae2-*.toml.
+Русского варианта нет - при русской локали Minecraft подставит en_us (fallback), это ок.
+
 `[x]` Конфиги полностью на ForgeConfigAPIPort (жёсткая зависимость): свой ModConfig/IConfigSpec/
 ModConfigSpec удалён, night-config больше не бандлим (его несёт FCP как JiJ). `ae2-common.toml`
 под `#if FABRIC` регистрируется как COMMON (в FCP нет LOCAL). Loading/Reloading рассылает наш

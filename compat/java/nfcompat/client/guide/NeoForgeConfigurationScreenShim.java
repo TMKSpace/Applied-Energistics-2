@@ -20,6 +20,7 @@
  * net/neoforged/neoforge/client/gui/ConfigurationScreen.
  *
  * Экран пустой: GuideME - библиотека, его настройки в Mod Menu открывают редко.
+ * Текст - из assets/nfcompat/lang (ключи рядом с ae2.configuration.*).
  */
 package nfcompat.client.guide;
 
@@ -30,6 +31,6 @@ import org.jetbrains.annotations.Nullable;
 
 public final class NeoForgeConfigurationScreenShim extends Screen {
     public NeoForgeConfigurationScreenShim(ModContainer container, @Nullable Screen parent) {
-        super(Component.literal("GuideME (config/guideme-client.toml)"));
+        super(Component.translatable("nfcompat.config.guideme.title"));
     }
 }
