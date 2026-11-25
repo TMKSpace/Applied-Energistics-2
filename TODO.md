@@ -536,6 +536,15 @@ spatial-измерения применяются к оверворлду. По�
 вся работа spatial-перехода упакована в один колбэк. Логика идентична 1.20.1-порту, лечится
 только разбиением перехода на этапы (апстримная задача).
 
+`[x]` **`Skipping Entity with id minecraft:zombie/...` (×71) — НЕ БАГ ПОРТА.** Разбор байткода
+26.3: `EntityType.create(ValueInput, ...)` находит тип по id, но `create(Level, EntitySpawnRequest)`
+возвращает `null`, если `canSpawn` не пропускает (у наших мобов `notInPeaceful()`), а `Optional.map`
+превращает `null` в пустой Optional — и ваниль печатает misleading-сообщение «Skipping Entity with id».
+Причина — `difficulty=peaceful` в `runServer/server.properties`: на старте `forceDifficulty()`
+возвращает peaceful, и монстры из чанков отбрасываются. Проверено: `level.dat` == peaceful, в
+чанках лежат zombie-спавнеры и мирные мобы, `byLocation`/`byValue` реестра никем не чистится
+(`ModRegistries` трогает только реестр реестров). Стенд переведён на `difficulty=normal`.
+
 ## Публикация событий для нативных Fabric-модов (идея пользователя, 26.11)
 
 Сейчас шим постит NeoForge-события в `NeoForge.EVENT_BUS`; их видят только моды, собранные
