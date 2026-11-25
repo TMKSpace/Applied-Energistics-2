@@ -72,7 +72,11 @@ public final class LifecycleBridge {
 
         // ВРЕМЕННО: команда-проба моста capability -> Fabric Transfer API.
         // Удалить, когда шины/провайдер будут проверены в бою.
-        nfcompat.debug.CapabilityProbeCommand.register();
+        // Отладка: проба моста capability -> Fabric Transfer API. Только по -Dnfcompat.debug=true,
+        // чтобы в обычной сборке (и на сервере) не появлялось лишних команд.
+        if (Boolean.getBoolean("nfcompat.debug")) {
+            nfcompat.debug.CapabilityProbeCommand.register();
+        }
 
         // --- Перезагрузка конфигов (/ae2config reload) ---
         // Аналог неофорджевского файлового вотчера: у нас перечитывание явное,

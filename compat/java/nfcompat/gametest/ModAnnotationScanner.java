@@ -75,7 +75,7 @@ public final class ModAnnotationScanner {
             throws IOException {
         // Сам обход общий с автоподпиской @EventBusSubscriber (nfcompat.scan.ClassFileWalker):
         // фильтр по пути отсекает всё, что заведомо не наше, ещё до чтения байткода.
-        ClassFileWalker.walk(root, ModAnnotationScanner::isCandidate, in -> scanClass(in, out, seen));
+        ClassFileWalker.walk(root, ModAnnotationScanner::isCandidate, data -> scanClass(data, out, seen));
     }
 
     private static boolean isCandidate(String path) {
@@ -84,9 +84,9 @@ public final class ModAnnotationScanner {
         return index >= 0 && normalized.endsWith(AE2_CLASS_SUFFIX);
     }
 
-    private static void scanClass(InputStream in, List<ModFileScanData.AnnotationData> out, Set<String> seen)
+    private static void scanClass(byte[] data, List<ModFileScanData.AnnotationData> out, Set<String> seen)
             throws IOException {
-        var reader = new ClassReader(in);
+        var reader = new ClassReader(data);
         String className = reader.getClassName().replace('/', '.');
         if (!seen.add(className)) {
             return;

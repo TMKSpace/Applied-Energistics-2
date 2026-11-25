@@ -44,6 +44,8 @@
 | D8 | Trinkets: слот-иконки не рисуются в 4.x, кастомный слот выключен, живём на `legs/belt` | `compat/resources/data/trinkets/**` | в 4.x `icon` не рендерится; вернуть = дописать `legs/terminal` в `entities/ae2_terminal.json` | обновление Trinkets |
 | D9 | Curios-интеграция заменена мостом на Trinkets | `appeng/integration/modules/curios/TrinketsCuriosAccess` | Curios не существует на Fabric | обновление Trinkets |
 | D10 | `AECapabilities` доступны через наши `BlockCapability`, но не через Fabric-lookup'ы | `nfcompat/bridge/*`, TODO | нативным Fabric-модам нужны отдельные lookup'ы (план есть) | RELEASE / ADDON |
+| D11 | **Автоподписка `@EventBusSubscriber` выключена по умолчанию** (`-Dnfcompat.autoEventSubscriber=true` включает). Скан classpath'а стоил ~0.6 с на стенде; пока нет T1/T2, свои обработчики регистрируем явно (`EVENT_BUS.register(Class)`) | `nfcompat/event/AutoEventSubscriber` | полноценной поддержки NF-аддонов ещё нет; флаг убрать, когда T1/T2 будут сделаны | T1/T2 |
+| D12 | Клиентский `RenderLevelStageEvent`: постится только `AfterWeather`, остальные под-стадии объявлены, но не firing | `nfcompat/mixin/client/LevelRendererRenderStageMixin` | минимализм: аддонам (extendedae_plus) нужен только AfterWeather; остальное - по требованию | ADDON |
 
 ## Unknown (проверяется только в игре)
 
@@ -52,9 +54,9 @@
 | U1 | Масштаб жидкостей NeoForge 1000/ведро ↔ Fabric 81000 | ведро → бак → ячейка → терминал и обратно, сверить объёмы | не проверено |
 | U2 | Item/fluid P2P между сетями; FE-P2P только pull | туннели в двух сетях | не проверено |
 | U3 | Автокрафт через molecular assembler и инскрайбер/печь | прогнать шаблоны | **проверено 26.11** |
-| U4 | 3D-иконка жидкости в JEI (PiP) | категория Transform: куб вместо плоского тайла | не проверено |
-| U5 | Обводка деталей кабеля (`ExtractBlockOutlineRenderStateEvent`) | навести на кабель с фасадом | не проверено |
-| U6 | Слот Trinkets мышью + хоткей терминала | положить терминал в `legs/belt`, нажать хоткей | не проверено |
+| U4 | 3D-иконка жидкости в JEI (PiP) | категория Transform: куб вместо плоского тайла | **проверено 26.11** |
+| U5 | Обводка деталей кабеля (`ExtractBlockOutlineRenderStateEvent`) | навести на кабель с фасадом | **проверено 26.11** |
+| U6 | Слот Trinkets мышью + хоткей терминала | положить терминал в `legs/belt`, нажать хоткей | **проверено 26.11** |
 | U7 | `canEntityDestroy`: дракон/визер не ломают `matrix_frame` | коробка из рамки, `summon ender_dragon` | **проверено: рамка целая, кобл разлетелся** (пилоны/контроллер ест — так и в апстриме) |
 | U8 | Spatial: форс чанков и данные тикетов переживают рестарт | `forceload query` после ребута | **проверено: `[0,0]` форснут** |
 | U9 | Фасады из старых `{Name:...}` (гайд, старые шаблоны) | открыть гайд, страницы с фасадами; лог без `Serialization errors` | код есть, в игре не смотрели |
@@ -81,14 +83,17 @@
 | T2 | Публикация событий в fabric-style `Event`-объекты (см. TODO) | — | после T1 |
 | T3 | Тинт `MutableQuad` → `BakedQuad` (индикаторы каналов белеют) | `compat/java/.../quad/*` | если станет заметно |
 | T4 | Фасады без ambient occlusion | `FacadeBuilder` | если станет заметно |
-| T5 | `Blitter.copy()` не копирует `blending`/`transform` | GuideME-шим | перед релизом |
+| T5 | `Blitter.copy()` не копирует `blending`/`transform` | GuideME-шим | **закрыто**: `guideme.BlitterCopyMixin` переносит флаги после `copy()` |
 | T6 | `GUI_TEXTURED_OPAQUE` = обычный `GUI_TEXTURED` | GuideME-шим | если понадобится настоящая непрозрачность |
 | T7 | `debug.log`: Mixin не понимает class version 69 (Java 25) | сборка шима | MIXIN |
-| T8 | Устаревший комментарий в `attachment/AttachmentType.java` | `compat` | RELEASE |
+| T8 | Устаревший комментарий в `attachment/AttachmentType.java` | `compat` | **закрыто** (переписан в лейне addon-api) |
 | T9 | `SpatialStorageHelper#swapRegions` применяет `updateNeighborsAt` к оверворлду с координатами spatial-измерения | `src/main/java/appeng/spatial/SpatialStorageHelper.java` | если всплывёт в игре |
 | T10 | Аудит дублей шима (`compat/java/net/neoforged/**` vs ваниль/Fabric API) | — | после аддонов |
-| T11 | Датаген не выгружает registry-записи: живём на апстримных JSON | `build.gradle` | REBASE |
-| T12 | Дев-команды `/nfcompat cap|parts|pp|provider` в сборке | `nfcompat/debug/*` | RELEASE (спрятать за `-Dnfcompat.debug=true`) |
+| T11 | Датаген не выгружает registry-записи: живём на апстримных JSON | `build.gradle` | **оставлено как есть** (решение 26.11): живём на апстримных данных |
+| T12 | Дев-команды `/nfcompat cap|parts|pp|provider` в сборке | `nfcompat/debug/*` | **закрыто**: только по `-Dnfcompat.debug=true` |
 | T13 | `PlayerTickEvent` порядок (см. D2) — если аддону нужен чередование | `LifecycleBridge` | ADDON |
+| T14 | Input-API для аддонов: `KeyMapping` 6-арг конструктор с `IKeyConflictContext`/`KeyModifier`, `getKeyConflictContext/getKeyModifier/isActiveAndMatches` | `compat/java/net/neoforged/neoforge/client/**` | ADDON |
+| T15 | `InputConstants.Type.KEYSYM` удалён в ванили 26.3 — аддоны, собранные под 26.1.2 (`extendedae_plus`), ломаются и на стоковом NeoForge; порт требует правки их исходников | — | ADDON (по факту порта) |
+| T16 | Переименования 26.3, на которых спотыкаются аддоны: `LevelRenderer#collectPerFrameGizmos` -> `collectPerFrameRenderThreadGizmos` | — | ADDON |
 
 Последнее обновление: 26.11 (сессия аддон-поверхности и логов).

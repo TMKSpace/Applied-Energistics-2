@@ -545,6 +545,21 @@ spatial-измерения применяются к оверворлду. По�
 чанках лежат zombie-спавнеры и мирные мобы, `byLocation`/`byValue` реестра никем не чистится
 (`ModRegistries` трогает только реестр реестров). Стенд переведён на `difficulty=normal`.
 
+`[x]` Клиентские события: `RenderLevelStageEvent` (+все под-стадии, постится `AfterWeather`),
+`ScreenEvent.KeyPressed`/`MouseButtonPressed` (+`Pre`/`Post`, отмена) — постинг из
+`LevelRenderer#executeClassicTransparency`, `KeyboardHandler#keyPress`, `MouseHandler#onButton`.
+`[x]` Автоподписка `@EventBusSubscriber` реализована, но **по умолчанию выключена**
+(`-Dnfcompat.autoEventSubscriber=true`): скан classpath'а стоит ~0.6 с, а полноценной поддержки
+аддонов пока нет. Своё регистрируем явно (`EVENT_BUS.register(Class)`), напр. `SpawnTestTools`.
+Флаг снять, когда будут T1/T2.
+`[ ]` **Input-API для аддонов**: `KeyMapping` 6-арг конструктор (`IKeyConflictContext`,
+`KeyModifier`), `getKeyConflictContext/getKeyModifier/isActiveAndMatches`. Без этого обработчики
+`extendedae_plus` на клавиши упадут.
+`[ ]` `extendedae_plus` 1.6.3 собран под 26.1.2 и использует `InputConstants.Type.KEYSYM`,
+которого в 26.3 нет: ломается и на стоковом NeoForge. Порт потребует правки его исходников.
+`[ ]` Переименование 26.3: `LevelRenderer#collectPerFrameGizmos` -> `collectPerFrameRenderThreadGizmos`
+(на этом спотыкается `AfterWeather` у аддонов).
+
 ## Публикация событий для нативных Fabric-модов (идея пользователя, 26.11)
 
 Сейчас шим постит NeoForge-события в `NeoForge.EVENT_BUS`; их видят только моды, собранные

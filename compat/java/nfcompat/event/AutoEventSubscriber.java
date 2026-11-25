@@ -29,7 +29,6 @@
 package nfcompat.event;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.nio.file.Path;
@@ -63,6 +62,13 @@ import org.slf4j.LoggerFactory;
 
 public final class AutoEventSubscriber {
 
+    /**
+     * Дескриптор аннотации в константном пуле class-файла: по нему работает дешёвый предфильтр,
+     * чтобы не гонять ASM по всем классам всех модов.
+     */
+    private static final byte[] EVENT_BUS_SUBSCRIBER_DESCRIPTOR =
+            "Lnet/neoforged/fml/common/EventBusSubscriber;".getBytes(java.nio.charset.StandardCharsets.ISO_8859_1);
+
     private static final Logger LOG = LoggerFactory.getLogger("nfcompat/events");
 
     private static final Type EVENT_BUS_SUBSCRIBER = Type.getType(EventBusSubscriber.class);
@@ -87,7 +93,21 @@ public final class AutoEventSubscriber {
      * Идемпотентно: повторный вызов ничего не делает (иначе хендлеры задвоятся —
      * `register(Method)` каждый раз создаёт нового слушателя).
      */
+    /**
+     * Флаг включения. По умолчанию ВЫКЛЮЧЕНО: скан classpath'а всех модов стоит ~0.6 с на стенде
+     * (на больших сборках заметно больше), а полноценной поддержки NeoForge-аддонов пока нет -
+     * для этого нужны T1 (Fabric-lookup'ы для AE2-хранилищ) и T2 (fabric-style события из TODO).
+     * До тех пор свои обработчики регистрируем явно: `EVENT_BUS.register(SomeEvents.class)`.
+     * Когда T1/T2 появятся, без автоподписки станет никак - тогда флаг убираем.
+     */
+    public static final String ENABLED_PROPERTY = "nfcompat.autoEventSubscriber";
+
     public static synchronized void install() {
+        if (!Boolean.getBoolean(ENABLED_PROPERTY)) {
+            LOG.debug("[nfcompat] автоподписка @EventBusSubscriber выключена (включить: -D{}=true)",
+                    ENABLED_PROPERTY);
+            return;
+        }
         if (installed) {
             return;
         }
@@ -123,9 +143,9 @@ public final class AutoEventSubscriber {
                 for (Path root : mod.getRootPaths()) {
                     roots++;
                     try {
-                        ClassFileWalker.walk(root, path -> path.endsWith(".class"),
-                                in -> collect(in, ownerId, ownerName, ownerVersion, candidates, seenClasses));
-                    } catch (IOException | RuntimeException e) {
+                        ClassFileWalker.walk(root, AutoEventSubscriber::isCandidatePath,
+                                data -> collect(data, ownerId, ownerName, ownerVersion, candidates, seenClasses));
+                    } catch (RuntimeException e) {
                         // Вложенный jar (jar-in-jar) через zipfs не открывается как файл —
                         // такие корни просто пропускаем, это не повод падать.
                         LOG.debug("[nfcompat] автоподписка: корень {} мода {} не прочитан: {}",
@@ -221,11 +241,16 @@ public final class AutoEventSubscriber {
      * Читает заголовок class-файла и, если на классе висит `@EventBusSubscriber`,
      * запоминает его значения. Тело и фреймы не разбираются — это и есть дешёвый фильтр.
      */
-    private static void collect(InputStream in, String ownerId, String ownerName, String ownerVersion,
+    private static void collect(byte[] data, String ownerId, String ownerName, String ownerVersion,
             List<Candidate> out, Set<String> seen) {
+        // Дешёвый предфильтр: аннотация живёт в константном пуле строкой, поэтому большинство
+        // class-файлов отсекается поиском подстроки по байтам - это в разы быстрее, чем ASM.
+        if (!contains(data, EVENT_BUS_SUBSCRIBER_DESCRIPTOR)) {
+            return;
+        }
         try {
             var info = new AnnotatedClass();
-            new ClassReader(in).accept(info,
+            new ClassReader(data).accept(info,
                     ClassReader.SKIP_CODE | ClassReader.SKIP_DEBUG | ClassReader.SKIP_FRAMES);
 
             if (!info.hasEventBusSubscriber || info.className == null || info.className.isEmpty()) {
@@ -236,12 +261,32 @@ public final class AutoEventSubscriber {
             }
             out.add(new Candidate(info.className, List.copyOf(info.dists), info.modid, info.bus, info.modValue,
                     ownerId, ownerName, ownerVersion));
-        } catch (IOException | RuntimeException e) {
+        } catch (RuntimeException e) {
             // один битый class-файл не должен ломать скан всего мода
             LOG.debug("[nfcompat] автоподписка: битый class-файл мода {}: {}", ownerId, describe(e));
         }
     }
 
+    /** Берём только class-файлы, мимо служебных. */
+    private static boolean isCandidatePath(String path) {
+        return path.endsWith(".class")
+                && !path.endsWith("module-info.class")
+                && !path.endsWith("package-info.class");
+    }
+
+    /** Поиск подстроки в байтах без аллокаций (ASM-разбор дороже на порядок). */
+    private static boolean contains(byte[] haystack, byte[] needle) {
+        outer:
+        for (int i = 0, last = haystack.length - needle.length; i <= last; i++) {
+            for (int j = 0; j < needle.length; j++) {
+                if (haystack[i + j] != needle[j]) {
+                    continue outer;
+                }
+            }
+            return true;
+        }
+        return false;
+    }
     private static boolean onDist(List<String> dists, Dist dist) {
         // Пустой value() — как у NeoForge по умолчанию: и клиент, и выделенный сервер.
         return dists.isEmpty() || dists.contains(dist.name());

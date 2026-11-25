@@ -30,7 +30,7 @@ public final class ClassFileWalker {
     /** Получает поток с содержимым одного class-файла; поток закрывает обходчик. */
     @FunctionalInterface
     public interface ClassFileVisitor {
-        void visit(InputStream in) throws IOException;
+        void visit(byte[] data) throws IOException;
     }
 
     private ClassFileWalker() {
@@ -48,9 +48,9 @@ public final class ClassFileWalker {
                     if (!filter.test(path.toString())) {
                         continue;
                     }
-                    try (InputStream in = Files.newInputStream(path)) {
-                        visitor.visit(in);
-                    }
+                    // Читаем целиком: вызывающей стороне нужен дешёвый предфильтр по байтам
+                    // (поиск строки-аннотации) до разбора ASM.
+                    visitor.visit(Files.readAllBytes(path));
                 }
             }
         } else if (root.toString().endsWith(".jar") && Files.isRegularFile(root)) {
@@ -62,7 +62,7 @@ public final class ClassFileWalker {
                         continue;
                     }
                     try (InputStream in = zip.getInputStream(entry)) {
-                        visitor.visit(in);
+                        visitor.visit(in.readAllBytes());
                     }
                 }
             }

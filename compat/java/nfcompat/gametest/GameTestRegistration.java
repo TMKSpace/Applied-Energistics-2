@@ -82,6 +82,11 @@ public final class GameTestRegistration {
         var testRegistry = (WritableRegistry<GameTestInstance>) tests;
 
         // Мод-шина шима — та же, на которую AppEngBase вешает addListener(this::registerTests).
+        // Автоподписка @EventBusSubscriber по умолчанию выключена (см. AutoEventSubscriber),
+        // поэтому тестовые обработчики AE2 регистрируем явно: без этого `SpawnExtraGridTestTools`
+        // не наполнял бы плоты беспроводными терминалами.
+        NeoForge.EVENT_BUS.register(appeng.server.testplots.SpawnTestTools.class);
+
         NeoForge.EVENT_BUS.post(new RegisterGameTestsEvent(envRegistry, testRegistry));
         LOGGER.info("[gametest] RegisterGameTestsEvent posted (appeng.tests={}), tests in registry: {}",
                 System.getProperty("appeng.tests"), testRegistry.size());
