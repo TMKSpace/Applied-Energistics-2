@@ -93,7 +93,7 @@ public class ModContainer {
     }
 
     public void registerConfig(ModConfig.Type type, IConfigSpec spec, @Nullable String fileName) {
-        String name = fileName != null ? fileName : getModId() + "-" + type.getSerializedName() + ".toml";
+        String name = fileName != null ? fileName : getModId() + "-" + type.extension() + ".toml";
         Path path = configDir().resolve(name);
 
         var config = new ModConfig(type, spec, getModId(), name, path);

@@ -388,9 +388,9 @@ dependencies {
 
 	// --- Сторонние API только для компиляции ---
 	// nightconfig: движок конфигов, на нём построен вендоренный ModConfigSpec.
-	implementation "com.electronwill.night-config:core:3.6.7"
+	implementation "com.electronwill.night-config:core:3.8.4"
 	// TOML-формат для конфигов: как в NeoForge, файл на диске + CommentedFileConfig
-	implementation "com.electronwill.night-config:toml:3.6.7"
+	implementation "com.electronwill.night-config:toml:3.8.4"
 
 	// JEI 31.17.0.113 (fabric, 26.3)
 	compileOnly "maven.modrinth:jei:zX75GFgt"
@@ -542,8 +542,8 @@ dependencies {
 	// night-config: наш ModConfigSpec и TOML. В dev он на classpath через `implementation`,
 	// но в раздаточный джар его нужно вкладывать: без него сервер падает на
 	// NoClassDefFoundError com/electronwill/nightconfig/... (поймано смоук-тестом релиза).
-	bundle("com.electronwill.night-config:core:3.6.7")
-	bundle("com.electronwill.night-config:toml:3.6.7")
+	bundle("com.electronwill.night-config:core:3.8.4")
+	bundle("com.electronwill.night-config:toml:3.8.4")
 }
 
 tasks.named('jar') {
