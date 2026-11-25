@@ -22,6 +22,13 @@ Outbound: 16 энерго-предметов AE2; fluid/item-в-предмете
 не регистрирует), inbound работает через Fabric-провайдеры ванили.
 
 ## 3. Масштаб жидкостей ×81
+`[ ]` **Совместимость с Tech Reborn 6.2.1 (временно).** Их AE2-интеграция ссылается на
+`#c:certus_quartz` и `#c:ores/certus_quartz`, которых в AE2 26.3 нет (руды нет вовсе), и реестр
+рецептов падает. Лечим вручную: после `assemble` прогнать
+`python compat/tools/inject_tr_tags.py build/libs/appliedenergistics2-fabric-*.jar` —
+скрипт вкладывает два тега (идемпотентно). В сборку НЕ вшит намеренно. Убрать, когда TR починят
+или когда AE2 начнёт поставлять теги сам (проверять на каждом ресинке апстрима).
+
 `[x]` Ключи перевода для экрана конфигурации: `ae2.configuration.<путь>` (+`.tooltip`) и
 `nfcompat.config.guideme.*` лежат в `compat/resources/assets/nfcompat/lang/en_us.json`
 (145 ключей), генерируются `compat/tools/gen_config_lang.py` из сгенерированных ae2-*.toml.

@@ -646,6 +646,7 @@ def patchGuideMeScreen = { File jarFile ->
 tasks.matching { it.name == 'jar' || it.name == 'remapJar' }.configureEach { theTask ->
 	theTask.doLast {
 		def archive = theTask.hasProperty('archiveFile') ? theTask.archiveFile.get().asFile : null
-		if (archive != null) patchGuideMeScreen(archive)
+		if (archive == null) return
+		patchGuideMeScreen(archive)
 	}
 }
