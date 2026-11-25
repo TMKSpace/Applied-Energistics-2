@@ -298,10 +298,30 @@ public class CachedPlane {
         }
     }
 
+    //#if FABRIC
+    /**
+     * Сознательное расхождение с апстримом: на Fabric отложенный тик возвращается в план со
+     * смещением, на NeoForge остаётся апстримный вариант с багом (ветка {@code #else}).
+     * <p>
+     * Возвращает отложенный block-тик в план, пересчитывая координаты плана (0..size) в мировые.
+     * <p>
+     * Апстрим планирует тик по координатам внутри плана. Ванильный {@code LevelTicks#schedule}
+     * не находит контейнер такого чанка, молча выбрасывает тик и пишет в лог
+     * "Trying to schedule tick in not loaded position" (а если чанк по этим координатам всё же
+     * загружен — тик уедет в чужое место). Из-за этого spatial IO терял отложенные тики
+     * перенесённого региона: повторители, наблюдатели, вода и прочие блоки с расписанием.
+     */
+    private void addTick(BlockPos relativePos, ScheduledTick<Block> tick) {
+        var pos = relativePos.offset(this.x_offset, this.y_offset, this.z_offset);
+        this.level.getBlockTicks().schedule(new ScheduledTick<>(
+                tick.type(), pos, tick.triggerTick(), tick.priority(), tick.subTickOrder()));
+    }
+    //#else
     private void addTick(BlockPos pos, ScheduledTick<Block> tick) {
         this.level.getBlockTicks().schedule(new ScheduledTick<>(
                 tick.type(), pos, tick.triggerTick(), tick.priority(), tick.subTickOrder()));
     }
+    //#endif
 
     private void addBlockEntity(int x, int y, int z, BlockEntityMoveRecord moveRecord) {
         try {
