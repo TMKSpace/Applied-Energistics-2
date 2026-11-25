@@ -1,17 +1,18 @@
 /*
- * Часть nfcompat. Точка входа Mod Menu: кнопка «Настройки» у AE2.
+ * Файл nfcompat. Крюк входа Mod Menu: кнопка <Конфигурация> у AE2.
  *
- * Mod Menu ищет entrypoint `modmenu` и ожидает класс, реализующий `ModMenuApi`. Здесь мы
- * отдаём экран из `ClothConfigScreen` (он строится по нашей `ModConfigSpec`).
+ * Mod Menu зовёт entrypoint `modmenu` у каждого мода, реализующего `ModMenuApi`.
+ * Получившийся экран - это `ConfigurationScreen` из ForgeConfigAPIPort (полноценный NeoForge-
+ * экран: секции, range, тултипы, перезапуск). Наши спеки регистрируются в их
+ * `ConfigTracker` (см. nfcompat.compat.ForgeConfigApiPortBridge), поэтому экран
+ * видит реальные настройки AE2.
  *
- * Библиотеки не поставляем: Cloth Config и Mod Menu — `compileOnly` (см. build.gradle),
- * в рантайме их приносит модпак. Если Cloth нет, а Mod Menu есть, возвращаем фабрику,
- * отдающую `null` — Mod Menu в этом случае просто не покажет кнопку конфига, и это лучше,
- * чем NoClassDefFoundError на его же кнопке.
+ * Без ForgeConfigAPIPort экрана нет вообще: Cloth Config мы не поддерживаем,
+ * а своя шим-заглушка удалена. Тогда возвращаем фабрику, отдающую null, - Mod Menu
+ * просто не покажет кнопку конфига и не упадёт (ни при старте, ни при открытии).
  */
 package nfcompat;
 
-import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.client.gui.screens.Screen;
 
 import com.terraformersmc.modmenu.api.ConfigScreenFactory;
@@ -19,20 +20,14 @@ import com.terraformersmc.modmenu.api.ModMenuApi;
 
 import nfcompat.client.FcpConfigScreen;
 import nfcompat.compat.ForgeConfigApiPortBridge;
-import nfcompat.config.ClothConfigScreen;
 
 public class ModMenuIntegration implements ModMenuApi {
 
     @Override
     public ConfigScreenFactory<?> getModConfigScreenFactory() {
-        // Экран ForgeConfigAPIPort - настоящий NeoForge-ConfigurationScreen
-        // (секции, range, тултипы), если он установлен - он приоритетнее.
         if (ForgeConfigApiPortBridge.isPresent()) {
             return FcpConfigScreen::create;
         }
-        if (!FabricLoader.getInstance().isModLoaded("cloth-config")) {
-            return parent -> null;
-        }
-        return ClothConfigScreen::create;
+        return parent -> null;
     }
 }

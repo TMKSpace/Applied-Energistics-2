@@ -381,10 +381,8 @@ dependencies {
 	// Только для рантайма, в компиляции не нужен. Лежит в libs/ (см. .gitignore).
 	localRuntime files("libs/mcpfabric-0.10.0+26.3.jar")
 
-	// Cloth Config + Mod Menu: только для компиляции экрана настроек (nfcompat.config.ClothConfigScreen).
-	// В рантайме их приносит модпак; в релизной сборке заменить на maven-зависимость.
-	compileOnly files("libs/cloth-config-fabric-26.3.159.jar", "libs/modmenu-21.0.0.jar")
-	localRuntime files("libs/cloth-config-fabric-26.3.159.jar", "libs/modmenu-21.0.0.jar")
+	// Mod Menu: только для интеграции экрана конфигурации (nfcompat.ModMenuIntegration).
+	// Экран отдаёт ForgeConfigAPIPort; без него кнопки конфига нет (Cloth Config не поддерживаем).
 
 	// --- Сторонние API только для компиляции ---
 	// nightconfig: движок конфигов, на нём построен вендоренный ModConfigSpec.
@@ -559,5 +557,90 @@ tasks.named('jar') {
 		exclude 'fabric.mod.json'
 		exclude '*.mixins.json'
 		exclude 'module-info.class'
+	}
+}
+
+// --- GuideME: подмена конструктора экрана конфига -------------------------------------
+// GuideME (шейдится внутрь нашего джара) регистрирует экран конфига как ссылку на
+// конструктор NeoForge:
+//     container.registerExtensionPoint(IConfigScreenFactory.class, ConfigurationScreen::new)
+// С установленным ForgeConfigAPIPort класс `net.neoforged.neoforge.client.gui.ConfigurationScreen` -
+// наш (у их версии конструктор (String, Screen), у NeoForge (ModContainer, Screen)), поэтому
+// линковка падает с NoSuchMethodError, и GuideME не доделывает инициализацию
+// (теряются onReceiveRecipes / onPlayerConnect / onPlayerDisconnect).
+//
+// Пока в шиме живёт ForgeConfigAPIPort-версия экрана, подменяем имя класса в пуле констант
+// GuideMEClient на наш одноимённый по длине шим: замена байт в байт, без ASM.
+def indexOfBytes = { byte[] data, byte[] pat, int from ->
+	for (int i = from; i <= data.length - pat.length; i++) {
+		boolean ok = true
+		for (int j = 0; j < pat.length; j++) {
+			if (data[i + j] != pat[j]) {
+				ok = false
+				break
+			}
+		}
+		if (ok) return i
+	}
+	return -1
+}
+
+def patchGuideMeScreen = { File jarFile ->
+	if (jarFile == null || !jarFile.exists()) return
+	def oldName = 'net/neoforged/neoforge/client/gui/ConfigurationScreen'
+	def newName = 'nfcompat/client/guide/NeoForgeConfigurationScreenShim'
+	if (oldName.length() != newName.length()) {
+		throw new GradleException('patchGuideMeScreen: имена разной длины, замена невозможна')
+	}
+	def entryName = 'guideme/internal/GuideMEClient.class'
+	byte[] oldBytes = oldName.getBytes('UTF-8')
+	byte[] newBytes = newName.getBytes('UTF-8')
+
+	def zip = new java.util.zip.ZipFile(jarFile)
+	if (zip.getEntry(entryName) == null) {
+		zip.close()
+		return
+	}
+	def entries = []
+	zip.entries().each { e -> entries << [e.name, e.time, zip.getInputStream(e).bytes] }
+	zip.close()
+
+	int patched = 0
+	entries.each { item ->
+		if (item[0] == entryName) {
+			byte[] data = item[2]
+			int at = indexOfBytes(data, oldBytes, 0)
+			while (at >= 0) {
+				System.arraycopy(newBytes, 0, data, at, newBytes.length)
+				patched++
+				at = indexOfBytes(data, oldBytes, at + newBytes.length)
+			}
+		}
+	}
+
+	if (patched == 0) return
+	def tmp = new File(jarFile.parentFile, jarFile.name + '.tmp')
+	tmp.withOutputStream { os ->
+		def zos = new java.util.zip.ZipOutputStream(os)
+		entries.each { item ->
+			def e = new java.util.zip.ZipEntry(item[0])
+			e.time = item[1]
+			zos.putNextEntry(e)
+			zos.write(item[2])
+			zos.closeEntry()
+		}
+		zos.close()
+	}
+	jarFile.delete()
+	if (!tmp.renameTo(jarFile)) {
+		throw new GradleException('patchGuideMeScreen: не удалось заменить ' + jarFile)
+	}
+	logger.lifecycle('patchGuideMeScreen: GuideME переключён на шим экрана конфига')
+}
+
+tasks.matching { it.name == 'jar' || it.name == 'remapJar' }.configureEach { theTask ->
+	theTask.doLast {
+		def archive = theTask.hasProperty('archiveFile') ? theTask.archiveFile.get().asFile : null
+		if (archive != null) patchGuideMeScreen(archive)
 	}
 }
