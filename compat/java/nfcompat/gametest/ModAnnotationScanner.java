@@ -20,16 +20,16 @@ package nfcompat.gametest;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.annotation.ElementType;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.zip.ZipFile;
 
 import net.fabricmc.loader.api.FabricLoader;
 import net.neoforged.neoforgespi.language.ModFileScanData;
+
+import nfcompat.scan.ClassFileWalker;
 
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassVisitor;
@@ -73,31 +73,9 @@ public final class ModAnnotationScanner {
 
     private static void scanRoot(Path root, List<ModFileScanData.AnnotationData> out, Set<String> seen)
             throws IOException {
-        if (Files.isDirectory(root)) {
-            try (var stream = Files.walk(root)) {
-                for (Path path : (Iterable<Path>) stream.filter(Files::isRegularFile)::iterator) {
-                    if (!isCandidate(path.toString())) {
-                        continue;
-                    }
-                    try (InputStream in = Files.newInputStream(path)) {
-                        scanClass(in, out, seen);
-                    }
-                }
-            }
-        } else if (root.toString().endsWith(".jar") && Files.isRegularFile(root)) {
-            try (var zip = new ZipFile(root.toFile())) {
-                var entries = zip.entries();
-                while (entries.hasMoreElements()) {
-                    var entry = entries.nextElement();
-                    if (entry.isDirectory() || !isCandidate(entry.getName())) {
-                        continue;
-                    }
-                    try (InputStream in = zip.getInputStream(entry)) {
-                        scanClass(in, out, seen);
-                    }
-                }
-            }
-        }
+        // Сам обход общий с автоподпиской @EventBusSubscriber (nfcompat.scan.ClassFileWalker):
+        // фильтр по пути отсекает всё, что заведомо не наше, ещё до чтения байткода.
+        ClassFileWalker.walk(root, ModAnnotationScanner::isCandidate, in -> scanClass(in, out, seen));
     }
 
     private static boolean isCandidate(String path) {

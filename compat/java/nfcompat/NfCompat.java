@@ -57,6 +57,12 @@ public final class NfCompat {
     public static void runRegistrationPhases() {
         var bus = NeoForge.EVENT_BUS;
 
+        // 0.0. Автоподписка по @EventBusSubscriber. На NeoForge её делает загрузчик
+        //      ДО первых событий (в момент построения мода). Обычно вызов уже сделан
+        //      точками входа (NfCompatClient/NfCompatServer) — здесь он идемпотентно
+        //      доигрывается для тех, кто пришёл другим путём.
+        nfcompat.event.AutoEventSubscriber.install();
+
         // 0. Конфиги. На NeoForge загрузчик грузит их после того, как все моды
         //    построены: AE2 вешает слушателя Loading в конструкторе уже ПОСЛЕ
         //    registerConfig, поэтому событие нельзя постить в момент регистрации.

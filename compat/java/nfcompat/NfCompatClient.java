@@ -32,6 +32,7 @@ import net.neoforged.neoforge.server.ServerLifecycleHooks;
 
 import appeng.client.AppEngClient;
 import nfcompat.compat.guideme.GuideMEBootstrap;
+import nfcompat.event.AutoEventSubscriber;
 
 public final class NfCompatClient implements ClientModInitializer {
     @Override
@@ -53,6 +54,13 @@ public final class NfCompatClient implements ClientModInitializer {
         ClientLifecycleEvents.CLIENT_STOPPING.register(client -> ServerLifecycleHooks.setCurrentServer(null));
 
         new AppEngClient(NeoForge.EVENT_BUS, NfCompat.container());
+
+        // 0a. Автоподписка классов с @EventBusSubscriber. На NeoForge загрузчик делает
+        //     это сразу после конструктора мода (FMLModContainer#constructMod ->
+        //     AutomaticEventSubscriber.inject) и до первых событий. Тот же порядок здесь:
+        //     статические хендлеры AE2 и аддонов (ae2wtlib, extendedae_plus) встают в
+        //     шину до runRegistrationPhases. Без этого они не получают ни одного события.
+        AutoEventSubscriber.install();
 
         // 0b. Клиентские рантайм-события (тики, вход в мир, клавиши, рендереры,
         //    частицы, команды). На NeoForge их рассылает сам загрузчик; без них

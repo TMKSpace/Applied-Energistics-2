@@ -58,6 +58,16 @@ public class ModContainer {
         return modInfo.getModId();
     }
 
+    /** Контейнер мода по id, если он уже построен (аналог `ModList.getModContainerById`). */
+    public static Optional<ModContainer> find(String modId) {
+        for (var container : CONTAINERS) {
+            if (container.getModId().equals(modId)) {
+                return Optional.of(container);
+            }
+        }
+        return Optional.empty();
+    }
+
     public ModInfo getModInfo() {
         return modInfo;
     }

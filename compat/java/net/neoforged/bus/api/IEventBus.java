@@ -31,7 +31,11 @@ public interface IEventBus {
 
     <T extends Event> void addListener(EventPriority priority, Class<T> eventType, Consumer<T> listener);
 
-    /** Подписывает объект: методы с {@link SubscribeEvent} и @SubscribeEvent. */
+    /**
+     * Подписывает объект: instance — методы с {@link SubscribeEvent} (с иерархией классов),
+     * {@link Class} — только static-методы класса, {@link java.lang.reflect.Method} — один
+     * static-метод. Набор форм — как у NeoForge.
+     */
     void register(Object target);
 
     <T extends Event> T post(T event);

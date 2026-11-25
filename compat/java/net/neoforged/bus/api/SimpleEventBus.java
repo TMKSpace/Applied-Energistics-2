@@ -26,7 +26,7 @@ import java.util.function.Consumer;
  */
 public final class SimpleEventBus implements IEventBus {
 
-    private record Entry(Consumer<Event> listener, EventPriority priority, int order) {
+    private record Entry(Consumer<Event> listener, EventPriority priority, boolean receiveCanceled, int order) {
     }
 
     /** Слушатель без известного типа события. */
@@ -59,7 +59,7 @@ public final class SimpleEventBus implements IEventBus {
             System.err.println("[nfcompat] не удалось определить тип события у слушателя: " + listener.getClass());
             return;
         }
-        addRaw(eventType, priority, asConsumer(listener));
+        addRaw(eventType, priority, true, asConsumer(listener));
     }
 
     @Override
@@ -77,13 +77,13 @@ public final class SimpleEventBus implements IEventBus {
     @Override
     @SuppressWarnings("unchecked")
     public <T extends Event> void addListener(Class<T> eventType, Consumer<T> listener) {
-        addRaw(eventType, EventPriority.NORMAL, (Consumer<Event>) listener);
+        addRaw(eventType, EventPriority.NORMAL, true, (Consumer<Event>) listener);
     }
 
     @Override
     @SuppressWarnings("unchecked")
     public <T extends Event> void addListener(EventPriority priority, Class<T> eventType, Consumer<T> listener) {
-        addRaw(eventType, priority, (Consumer<Event>) listener);
+        addRaw(eventType, priority, true, (Consumer<Event>) listener);
     }
 
     @SuppressWarnings("unchecked")
@@ -103,8 +103,45 @@ public final class SimpleEventBus implements IEventBus {
 
     @Override
     public void register(Object target) {
-        // Идём по всей иерархии: в NeoForge @SubscribeEvent в родительском классе
-        // подхватывается. Перекрытые методы не дублируем.
+        // Как в NeoForge: повторная регистрация того же объекта/класса/метода игнорируется,
+        // иначе хендлеры бы задваивались.
+        if (registered.containsKey(target)) {
+            return;
+        }
+        // Как в NeoForge: register() принимает и экземпляр, и Class, и отдельный Method.
+        //  - instance: подписываются методы @SubscribeEvent этого объекта (с иерархией классов);
+        //  - Class:    только static-методы этого класса (автоподписка @EventBusSubscriber,
+        //              AutoEventSubscriber);
+        //  - Method:   ровно один static-метод (позволяет раскладывать хендлеры одного
+        //              класса по разным шинам, как это делает NeoForge).
+        if (target instanceof Method method) {
+            var entry = registerMethod(null, method);
+            if (entry != null) {
+                registered.computeIfAbsent(target, k -> new CopyOnWriteArrayList<>()).add(entry);
+            }
+            return;
+        }
+        if (target instanceof Class<?> clazz) {
+            var entries = new ArrayList<Entry>();
+            for (Class<?> c = clazz; c != null && c != Object.class; c = c.getSuperclass()) {
+                for (Method m : c.getDeclaredMethods()) {
+                    if (!java.lang.reflect.Modifier.isStatic(m.getModifiers())) {
+                        continue;
+                    }
+                    var entry = registerMethod(null, m);
+                    if (entry != null) {
+                        entries.add(entry);
+                    }
+                }
+            }
+            if (!entries.isEmpty()) {
+                registered.put(clazz, entries);
+            }
+            return;
+        }
+
+        // Экземпляр: в NeoForge @SubscribeEvent в родительском классе подхватывается.
+        // Перекрытые методы не дублируем.
         var seen = new java.util.HashSet<String>();
         var entries = new ArrayList<Entry>();
         for (Class<?> c = target.getClass(); c != null && c != Object.class; c = c.getSuperclass()) {
@@ -116,18 +153,10 @@ public final class SimpleEventBus implements IEventBus {
                 if (!seen.add(m.getName() + java.util.Arrays.toString(m.getParameterTypes()))) {
                     continue;
                 }
-                m.setAccessible(true);
-                Class<?> param = m.getParameterTypes()[0];
-                if (!Event.class.isAssignableFrom(param)) {
-                    continue;
+                var entry = registerMethod(target, m);
+                if (entry != null) {
+                    entries.add(entry);
                 }
-                entries.add(addRaw(param, ann.priority(), event -> {
-                    try {
-                        m.invoke(target, event);
-                    } catch (ReflectiveOperationException e) {
-                        throw new RuntimeException("Ошибка вызова слушателя " + m, e);
-                    }
-                }));
             }
         }
         if (!entries.isEmpty()) {
@@ -135,10 +164,50 @@ public final class SimpleEventBus implements IEventBus {
         }
     }
 
+    /**
+     * Подписывает один метод, помеченный {@link SubscribeEvent}. {@code receiver == null} -
+     * метод статический. Возвращает null, если метод не годится в слушатели (как и
+     * NeoForge, такие методы просто не подписываются).
+     */
+    private Entry registerMethod(Object receiver, Method m) {
+        SubscribeEvent ann = m.getAnnotation(SubscribeEvent.class);
+        if (ann == null) {
+            return null;
+        }
+        if (receiver == null && !java.lang.reflect.Modifier.isStatic(m.getModifiers())) {
+            // register(Class/Method) в NeoForge подписывает только static-хендлеры.
+            System.err.println("[nfcompat] @SubscribeEvent " + m + " не static — пропускаю");
+            return null;
+        }
+        if (m.getParameterCount() != 1) {
+            return null;
+        }
+        Class<?> param = m.getParameterTypes()[0];
+        if (!Event.class.isAssignableFrom(param)) {
+            return null;
+        }
+        try {
+            m.setAccessible(true);
+        } catch (RuntimeException ignored) {
+            // в модульной системе бывает нельзя; попытка вызова ниже всё скажет сама
+        }
+        return addRaw(param, ann.priority(), ann.receiveCanceled(), event -> {
+            try {
+                m.invoke(receiver, event);
+            } catch (java.lang.reflect.InvocationTargetException e) {
+                // не заворачиваем дважды: иначе стек-трейс указывает на шину, а не на код мода
+                throw new RuntimeException("Ошибка в слушателе " + m, e.getCause() != null ? e.getCause() : e);
+            } catch (ReflectiveOperationException e) {
+                throw new RuntimeException("Ошибка вызова слушателя " + m, e);
+            }
+        });
+    }
+
     @SuppressWarnings({ "unchecked", "rawtypes" })
-    private Entry addRaw(Class<?> eventType, EventPriority priority, Consumer<Event> listener) {
+    private Entry addRaw(Class<?> eventType, EventPriority priority, boolean receiveCanceled,
+            Consumer<Event> listener) {
         List<Entry> list = listeners.computeIfAbsent(eventType, k -> new CopyOnWriteArrayList<>());
-        var entry = new Entry(listener, priority, list.size());
+        var entry = new Entry(listener, priority, receiveCanceled, list.size());
         list.add(entry);
         list.sort(Comparator.comparingInt((Entry e) -> priorityRank(e.priority())).thenComparingInt(Entry::order));
         return entry;
@@ -169,6 +238,12 @@ public final class SimpleEventBus implements IEventBus {
                 continue;
             }
             for (Entry entry : new ArrayList<>(list)) {
+                // Как в NeoForge: слушатель без receiveCanceled отменённое событие не получает.
+                // Слушатели, добавленные через addListener(...), сохраняют старое поведение
+                // шима (получают всё): они не несут аннотации и флага.
+                if (!entry.receiveCanceled() && event.isCanceled()) {
+                    continue;
+                }
                 entry.listener().accept(event);
             }
         }
