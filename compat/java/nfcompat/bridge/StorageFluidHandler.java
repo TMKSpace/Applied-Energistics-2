@@ -16,6 +16,14 @@
  * получалось, что жидкость из сети уже списана по симуляции, а предмет не сменился.
  * Поэтому здесь: сначала точное число (как раньше), и только если контейнер отказал
  * ЦЕЛИКОМ — повтор с запасом меньше одного mB (см. {@link FluidUnits#PAD}).
+ *
+ * ОСТАТОК (см. {@link FluidCarry}). Отчёт о результате раньше всегда округлялся вниз
+ * независимо от предыдущих операций, из-за чего каждая бутылка стоила сети 333 mB
+ * вместо 333.33, и три бутылки списывали 999 mB. Теперь, если у доступа к предмету
+ * есть игрок, число mB считает журнал переноса остатка: 333, 333, 334 = ровно 1000.
+ * Без игрока (танки-блоки, ItemAccess.forStack) поведение прежнее — честное деление
+ * вниз, остальное там не нужно: у блока нет «сессии игрока», к которой остаток можно
+ * привязать.
  */
 package nfcompat.bridge;
 
@@ -29,13 +37,22 @@ import net.fabricmc.fabric.api.transfer.v1.storage.base.SingleSlotStorage;
 import net.neoforged.neoforge.transfer.ResourceHandler;
 import net.neoforged.neoforge.transfer.fluid.FluidResource;
 import net.neoforged.neoforge.transfer.transaction.TransactionContext;
+import org.jetbrains.annotations.Nullable;
 
 public final class StorageFluidHandler implements ResourceHandler<FluidResource> {
 
     private final Storage<FluidVariant> storage;
+    /** Журнал переноса остатка или null, если привязывать его не к кому. */
+    @Nullable
+    private final FluidCarry carry;
 
     public StorageFluidHandler(Storage<FluidVariant> storage) {
+        this(storage, null);
+    }
+
+    public StorageFluidHandler(Storage<FluidVariant> storage, @Nullable FluidCarry carry) {
         this.storage = storage;
+        this.carry = carry;
     }
 
     public Storage<FluidVariant> storage() {
@@ -84,7 +101,8 @@ public final class StorageFluidHandler implements ResourceHandler<FluidResource>
         FluidVariant variant = FluidStacks.toVariant(resource);
         long maxFabric = FluidUnits.toFabric(amount);
         return HandlerTransactions.runOntoFabric(transaction, amount,
-                fabricTx -> FluidUnits.toNf(insertWithPad(storage, variant, maxFabric, fabricTx)));
+                fabricTx -> reportInsert(insertWithPad(storage, variant, maxFabric, fabricTx), amount,
+                        transaction));
     }
 
     @Override
@@ -94,9 +112,25 @@ public final class StorageFluidHandler implements ResourceHandler<FluidResource>
         }
         FluidVariant variant = FluidStacks.toVariant(resource);
         long maxFabric = FluidUnits.toFabric(amount);
-        int extracted = HandlerTransactions.runOntoFabric(transaction, amount,
-                fabricTx -> FluidUnits.toNf(extractWithPad(storage, variant, maxFabric, fabricTx)));
-        return extracted;
+        return HandlerTransactions.runOntoFabric(transaction, amount,
+                fabricTx -> reportExtract(extractWithPad(storage, variant, maxFabric, fabricTx), amount,
+                        transaction));
+    }
+
+    /** Отчёт о вставке: журнал остатка, если он есть, иначе прежнее деление вниз. */
+    private int reportInsert(long droplets, int amount, TransactionContext transaction) {
+        if (carry == null) {
+            return FluidUnits.toNf(droplets);
+        }
+        return carry.reportInsert(transaction, droplets, amount);
+    }
+
+    /** Отчёт об извлечении: см. {@link #reportInsert}. */
+    private int reportExtract(long droplets, int amount, TransactionContext transaction) {
+        if (carry == null) {
+            return FluidUnits.toNf(droplets);
+        }
+        return carry.reportExtract(transaction, droplets, amount);
     }
 
     /**
@@ -104,9 +138,11 @@ public final class StorageFluidHandler implements ResourceHandler<FluidResource>
      * отказе — повтор с запасом меньше одного mB (см. {@link FluidUnits#PAD}).
      *
      * Почему не «всегда с запасом»: обычный танк принимает и частично, и лишний запрос
-     * позволил бы ему отдать/принять больше droplets, чем оплачено в mB, то есть создать
-     * жидкость. А контейнер-«всё или ничего» на точный запрос отвечает нулём, так что
-     * повтор после нуля — единственный случай, где запас что-то меняет.
+     * позволил бы ему принять больше droplets, чем оплачено в mB (пусть журнал остатка
+     * и выровнял бы это позже — лишний запрос каждый раз уводил бы долг вверх, а
+     * кламп по запрошенному количеству не давал бы его вернуть). А контейнер-«всё или
+     * ничего» на точный запрос отвечает нулём, так что повтор после нуля — единственный
+     * случай, где запас что-то меняет.
      */
     private static long insertWithPad(Storage<FluidVariant> storage, FluidVariant variant, long maxFabric,
             net.fabricmc.fabric.api.transfer.v1.transaction.TransactionContext transaction) {
@@ -130,7 +166,8 @@ public final class StorageFluidHandler implements ResourceHandler<FluidResource>
         return storage.extract(variant, FluidUnits.pad(maxFabric), transaction);
     }
 
-    private StorageView<FluidVariant> view(int index) {        if (storage instanceof SlottedStorage<?> slotted) {
+    private StorageView<FluidVariant> view(int index) {
+        if (storage instanceof SlottedStorage<?> slotted) {
             if (index < 0 || index >= slotted.getSlotCount()) {
                 return null;
             }

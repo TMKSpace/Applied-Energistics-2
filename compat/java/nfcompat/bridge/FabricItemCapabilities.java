@@ -57,7 +57,9 @@ public final class FabricItemCapabilities {
 
         if (capability == Capabilities.Fluid.ITEM) {
             var storage = FluidStorage.ITEM.find(stack, new ItemAccessContainerContext(access));
-            return storage == null ? null : new StorageFluidHandler(storage);
+            // Журнал переноса остатка: у бутылки квант 27000 droplets = 333.33 mB, и без
+            // него каждая налитая бутылка «дарит» 1/3 mB (см. FluidCarry).
+            return storage == null ? null : new StorageFluidHandler(storage, FluidCarry.forAccess(access));
         }
 
         if (capability == Capabilities.Energy.ITEM) {
