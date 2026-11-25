@@ -14,17 +14,22 @@
  *    (`AEBaseBlockEntity` и наследники) объявляют метод сами — он естественным образом
  *    переопределяет добавленный, и вызов через `ChunkUnloadListener` попадает в них.
  *    Кто и когда дергает — см. nfcompat.mixin.common.LevelChunkUnloadMixin.
+ *
+ * 3. `IAttachmentHolder`: в NeoForge BlockEntity — держатель attachment'ов. Тела методов
+ *    default в самом интерфейсе (делегируют в nfcompat.attachments.Attachments),
+ *    здесь только навешиваем интерфейс. См. nfcompat.mixin.common.EntityAttachmentMixin.
  */
 package nfcompat.mixin.common;
 
 import nfcompat.blockentity.ChunkUnloadListener;
 import nfcompat.model.ModelDataProvider;
 import net.minecraft.world.level.block.entity.BlockEntity;
+import net.neoforged.neoforge.attachment.IAttachmentHolder;
 import net.neoforged.neoforge.model.data.ModelData;
 import org.spongepowered.asm.mixin.Mixin;
 
 @Mixin(BlockEntity.class)
-public abstract class BlockEntityMixin implements ModelDataProvider, ChunkUnloadListener {
+public abstract class BlockEntityMixin implements ModelDataProvider, ChunkUnloadListener, IAttachmentHolder {
 
     @Override
     public ModelData getModelData() {
