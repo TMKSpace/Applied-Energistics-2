@@ -97,3 +97,19 @@
 | T16 | Переименования 26.3, на которых спотыкаются аддоны: `LevelRenderer#collectPerFrameGizmos` -> `collectPerFrameRenderThreadGizmos` | — | ADDON |
 
 Последнее обновление: 26.11 (сессия аддон-поверхности и логов).
+
+## Проверка раздаточного джара на чистом сервере (26.11)
+
+Подняли настоящий выделенный сервер с нуля (fabric-installer, MC 26.3, loader 0.20.1,
+`.slim/release-test/server`, моды: наш джар + Fabric API + mcpfabric) и поймали два блокера,
+которые **в dev не видны**:
+
+1. `NoClassDefFoundError com/electronwill/nightconfig/...` — night-config был только
+   `implementation` (в dev на classpath от Gradle). **Исправлено**: `bundle(...)` для
+   `night-config:core` и `:toml`, в джаре теперь 162 файла `com/electronwill/**`.
+2. `IllegalAccessError ParticleTypes -> SimpleParticleType.<init>` — `"accessWidener"` не был
+   объявлен в `fabric.mod.json` (в dev Loom применяет AW сам). **Исправлено**: добавлен
+   `"accessWidener": "ae2.accesswidener"`.
+
+После правок: `Preparing level "world"` -> `Done (1.616s)`, ошибок нет. Конфиги на втором
+старте читаются без «исправлений по спецификации» (секции `[powerRatios]` и т.д. на месте).

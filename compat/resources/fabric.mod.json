@@ -6,6 +6,7 @@
   "icon": "logo.png",
   "description": "Fabric port of Applied Energistics 2. A Minecraft mod about Matter, Energy and using them to conquer the world...",
   "environment": "*",
+  "accessWidener": "ae2.accesswidener",
   "mixins": [
     "nfcompat.mixins.json",
     "nfcompat.ae2.mixins.json",
