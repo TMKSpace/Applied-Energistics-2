@@ -21,7 +21,9 @@ import com.mojang.datafixers.util.Either;
 import com.mojang.datafixers.util.Pair;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.DataResult;
+import com.google.gson.JsonElement;
 import com.mojang.serialization.DynamicOps;
+import com.mojang.serialization.JsonOps;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import java.util.ArrayList;
@@ -98,8 +100,45 @@ public final class BlockStateModelHooks {
 
         @Override
         public <T> DataResult<Pair<BlockStateModel.Unbaked, T>> decode(DynamicOps<T> ops, T input) {
+            // ВАЖНО: наш «primary» (NeoForge-формат с ключом "type") слишком терпим:
+            // объект вида {"fabric:type": "...", "model": "..."} он разберёт как
+            // обычный ванильный вариант и вернёт SingleVariant - а Fabric-модель
+            // (например рюкзак Traveler's Backpack) потеряется и блок станет невидимым.
+            // Поэтому если в JSON есть "fabric:type", сначала спрашиваем Fabric.
+            if (mentionsFabricType(ops, input)) {
+                var fabric = fallback.decode(ops, input);
+                return fabric.isSuccess() ? fabric : primary.decode(ops, input);
+            }
             var result = primary.decode(ops, input);
             return result.isSuccess() ? result : fallback.decode(ops, input);
+        }
+
+        /** Есть ли в JSON (в любом месте дерева) ключ {@code fabric:type}. */
+        private static <T> boolean mentionsFabricType(DynamicOps<T> ops, T input) {
+            return ops instanceof JsonOps && input instanceof JsonElement json && mentionsFabricType(json);
+        }
+
+        private static boolean mentionsFabricType(JsonElement json) {
+            if (json.isJsonObject()) {
+                var object = json.getAsJsonObject();
+                if (object.has("fabric:type")) {
+                    return true;
+                }
+                for (var entry : object.entrySet()) {
+                    if (mentionsFabricType(entry.getValue())) {
+                        return true;
+                    }
+                }
+                return false;
+            }
+            if (json.isJsonArray()) {
+                for (var element : json.getAsJsonArray()) {
+                    if (mentionsFabricType(element)) {
+                        return true;
+                    }
+                }
+            }
+            return false;
         }
 
         @Override
