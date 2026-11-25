@@ -1,0 +1,6 @@
+{
+  "pack": {
+    "description": "AE2 x TechReborn: certus quartz compat (AE2 26.3 has no quartz ore)",
+    "supported_formats": { "min_inclusive": 1, "max_inclusive": 999 }
+  }
+}

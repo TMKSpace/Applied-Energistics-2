@@ -58,3 +58,4 @@ replay_*.log
 # локальные настройки стенда (ник в dev-клиенте и т.п.) - не в гит
 /local.properties
 /runServer/
+dist/
