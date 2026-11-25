@@ -106,7 +106,12 @@ public class ModContainer {
 
         // FCP сам создаёт каталог и файл, читает TOML, правит его по спецификации и
         // ставит вотчер. Для всего, кроме SERVER, это происходит прямо здесь.
-        var config = ConfigTracker.INSTANCE.registerConfig(type, spec, getModId(), name);
+		// Его ModConfig проверяет, что modId - реальный Fabric-мод: библиотечные
+		// контейнеры (GuideME шейдится в наш джар) получают IllegalArgumentException
+		// «No mod with id 'guideme'». Для них регистрируем под id самого AE2 -
+		// спека одна и та же, а имя файла мы задаём сами.
+		String ownerId = FabricLoader.getInstance().isModLoaded(getModId()) ? getModId() : "ae2";
+		var config = ConfigTracker.INSTANCE.registerConfig(type, spec, ownerId, name);
 
         this.configs.add(config);
 
