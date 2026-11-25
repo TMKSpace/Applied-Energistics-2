@@ -535,3 +535,31 @@ spatial-измерения применяются к оверворлду. По�
 `[x]` **`Exceeded time limit of 25 ms ... (1 remain)`** — не баг: мягкий бюджет `TickHandler`,
 вся работа spatial-перехода упакована в один колбэк. Логика идентична 1.20.1-порту, лечится
 только разбиением перехода на этапы (апстримная задача).
+
+## Публикация событий для нативных Fabric-модов (идея пользователя, 26.11)
+
+Сейчас шим постит NeoForge-события в `NeoForge.EVENT_BUS`; их видят только моды, собранные
+против `net.neoforged.*`. Если кто-то захочет писать аддон **на чистом Fabric** (без шима),
+он не должен остаться в стороне.
+
+Ключевой факт: у Fabric **нет глобальной шины событий**. Каждый мод объявляет свои
+`net.fabricmc.fabric.api.event.Event<T>` через `EventFactory.createArrayBacked(...)` и сам
+подписывается. Значит «выбросить в фабриковый ивентбас» = завести **свои** фабрик-стайл события
+и дёргать их одновременно с NeoForge-ными:
+
+- новый небольшой API-пакет (например `nfcompat/api/events/`) с `Event`-объектами на каждое
+  значимое событие: tooltip, screen open, player tick, item use finish, server starting,
+  block outline, render level stage и т.п.;
+- в существующих точках постинга идём по схеме: `NeoForge.EVENT_BUS.post(neoforgeEvent)` +
+  `NV_EVENTS.<event>.invoker().onXxx(...)`; порядок и семантика — по NeoForge-событию
+  (отмена NeoForge-события не должна «съедать» Fabric-вызов, если это не оговорено);
+- для того, что уже есть в Fabric API (`UseBlockCallback`, `ServerTickEvents`,
+  `ResourceManagerHelper`, `ScreenEvents` из fabric-screen-api-v1) — не дублировать, а
+  *опираться* на них там, где это возможно: сначала искать существующее;
+- плюс к этому — выставить AE2-ные хранилища нативным модам через Fabric lookup'ы
+  (`ItemStorage.SIDED`, `FluidStorage.SIDED`, `EnergyStorage.SIDED` уже есть; `MEStorage.SIDED`,
+  `GenericInternalInventory.SIDED`, `ICraftingMachine.SIDED`, `ICrankable.LOOKUP` — по образцу
+  `InitApiLookup` из 1.20.1-порта).
+
+Итог для аддона: `depends: ae2` + Fabric API, и он получает и события, и хранилища, не зная
+про `net.neoforged.*`. Порядок работ: сначала выставить lookup'ы (это нужнее), потом события.

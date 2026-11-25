@@ -33,6 +33,9 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.storage.ValueInput;
 import net.minecraft.world.level.storage.ValueOutput;
+//#if FABRIC
+import nfcompat.util.LegacyBlockStateCodec;
+//#endif
 
 import appeng.api.parts.IFacadeContainer;
 import appeng.api.parts.IFacadePart;
@@ -94,7 +97,13 @@ public class FacadeContainer implements IFacadeContainer {
         for (var side : Direction.values()) {
             this.storage.removeFacade(side);
 
+            //#if FABRIC
+            // Терпимо к формату BlockState до 26.3: старые гайдбук-сцены и spatial-шаблоны
+            // лежат как {Name: "...", Properties: {...}}, а ванильный кодек ждёт строку/id
+            var blockState = input.read(NBT_KEY_NAMES[side.ordinal()], LegacyBlockStateCodec.CODEC).orElse(null);
+            //#else
             var blockState = input.read(NBT_KEY_NAMES[side.ordinal()], BlockState.CODEC).orElse(null);
+            //#endif
             if (blockState != null) {
                 this.storage.setFacade(side, new FacadePart(blockState, side));
             }

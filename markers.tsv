@@ -57,6 +57,7 @@ src\main\java\appeng\debug\MeteoritePlacerItem.java	89
 src\main\java\appeng\debug\ReplicatorCardItem.java	87		
 src\main\java\appeng\entity\TinyTNTPrimedEntity.java	134	override :P	
 src\main\java\appeng\entity\TinyTNTPrimedEntity.java	188		.max(block.getExplosionResistance(), fluidResistance);
+src\main\java\appeng\facade\FacadeContainer.java	36	лежат как {Name: "...", Properties: {...}}, а ванильный кодек ждёт строку/id	import nfcompat.util.LegacyBlockStateCodec;  import appeng.api.parts.IFacadeContainer; import appeng.api.parts.IFacadePart; import appeng.api.parts.IPartHost; i
 src\main\java\appeng\helpers\InterfaceLogic.java	225		nfcompat.capabilities.CapabilityInvalidation.invalidate(this.host.getBlockEntity());
 src\main\java\appeng\helpers\patternprovider\PatternProviderTarget.java	54		storage = AECapabilities.ME_STORAGE.getCapability(l, be.getBlockPos(), be.getBlockState(), be, side);
 src\main\java\appeng\helpers\patternprovider\PatternProviderTarget.java	60		storage = AECapabilities.ME_STORAGE.getCapability(l, pos, null, null, side);
@@ -122,6 +123,7 @@ src\main\java\appeng\server\testplots\InscriberTestPlots.java	116		nfcompat.comp
 src\main\java\appeng\server\testplots\InscriberTestPlots.java	124		nfcompat.compat.ItemStackTemplates.isSameItemSameComponents(inv.getStackInSlot(3), expectedResult),
 src\main\java\appeng\server\testplots\TestPlots.java	727		var craftingRecipes = nfcompat.recipes.RecipeMaps.of(node.getLevel()).byType(RecipeType.CRAFTING);
 src\main\java\appeng\server\testworld\PlotTestHelper.java	220		return cap.getCapability(getLevel(), absolutePos(ref), null, null, context);
+src\main\java\appeng\spatial\CachedPlane.java	301		/** * Сознательное расхождение с апстримом: на Fabric отложенный тик возвращается в план со * смещением, на NeoForge остаётся апстримный вариант с багом (ветка 
 src\main\java\appeng\util\Platform.java	189	поэтому сторона берётся из уже определённого `FMLEnvironment.dist`.	return FMLEnvironment.dist.isClient();
 src\main\java\appeng\util\Platform.java	204	группы потоков в одиночной игре совпадают — сравниваем сам поток	return nfcompat.ServerThread.isClient();
 src\main\java\appeng\util\Platform.java	234		return nfcompat.ServerThread.isServer();
