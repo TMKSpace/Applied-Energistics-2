@@ -4,31 +4,35 @@
  * В NeoForge сюда стекается всё, что относится к моду: метаданные, шина, конфиги.
  * Нам нужны метаданные, шина и регистрация конфигов.
  *
- * Конфиги сделаны как в NeoForge: TOML-файл на диске через night-config,
- * спецификация (`ModConfigSpec`) приводится к файлу через `correct`, а затем
- * привязывается через `acceptConfig`. Чтение/запись/перезагрузка файла живут в
- * `ModConfig`; здесь — валидация спеки и события.
+ * Конфиги целиком отданы ForgeConfigAPIPort (FCP) — он теперь жёсткая зависимость.
+ * `registerConfig` только перекладывает спеку в их `ConfigTracker`: файл TOML,
+ * чтение, запись, правка по спецификации и вотчер живут у них (своих классов
+ * ModConfig/IConfigSpec/ModConfigSpec в шиме больше нет). Для всех типов, кроме
+ * SERVER, FCP читает файл сразу внутри `registerConfig`, поэтому `ConfigValue#get()`
+ * в конструкторе мода уже работает.
  *
- * События: `Loading` — первая загрузка, но постится не в момент `registerConfig`
- * (иначе AE2, которая вешает слушателя ниже в своём конструкторе, его пропустит),
- * а после сборки модов — `postPendingConfigLoads()` из `NfCompat.runRegistrationPhases`.
- * `Reloading` — при повторном чтении файла (`reloadConfigs`). AE2 подписана на оба
- * и в этот момент пересобирает кэши (`AEConfig.CommonConfig#sync`).
+ * События `ModConfigEvent` (`Loading`/`Reloading`) FCP не шипит и не постит — это
+ * наши шим-классы (у него свои `fuzs...ModConfigEvents`). Поэтому:
+ *  - `Loading` постим сами, но не в момент `registerConfig` (иначе AE2, которая
+ *    вешает слушателя ниже в конструкторе, его пропустит), а после сборки модов —
+ *    `postPendingConfigLoads()` из `NfCompat.runRegistrationPhases`;
+ *  - `Reloading` — в `reloadConfigs()` уже после того, как FCP перечитал файлы.
+ * AE2 подписана на оба и в этот момент пересобирает кэши (`AEConfig.CommonConfig#sync`).
  */
 package net.neoforged.fml;
 
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 import net.fabricmc.loader.api.FabricLoader;
 import net.neoforged.bus.api.IEventBus;
+import net.neoforged.fml.config.ConfigTracker;
 import net.neoforged.fml.config.IConfigSpec;
 import net.neoforged.fml.config.ModConfig;
-import nfcompat.compat.ForgeConfigApiPortBridge;
 import net.neoforged.fml.event.config.ModConfigEvent;
 import net.neoforged.fml.loading.moddiscovery.ModInfo;
 import net.neoforged.neoforge.common.ModConfigSpec;
@@ -38,7 +42,7 @@ public class ModContainer {
     /** Все контейнеры этой JVM: на NeoForge такой список — `ModList`. */
     private static final List<ModContainer> CONTAINERS = new CopyOnWriteArrayList<>();
 
-    /** Переопределение каталога конфигов (тесты шима): null — обычное поведение. */
+    /** Переопределение каталога конфигов при перечитывании: null — обычное поведение. */
     @Nullable
     private static volatile Path configDirOverride;
 
@@ -93,42 +97,20 @@ public class ModContainer {
         registerConfig(type, spec, null);
     }
 
+    /**
+     * Регистрирует конфиг в ForgeConfigAPIPort. Имя файла — {@code fileName} или
+     * дефолтное {@code <modId>-<type.extension()>.toml}.
+     */
     public void registerConfig(ModConfig.Type type, IConfigSpec spec, @Nullable String fileName) {
         String name = fileName != null ? fileName : getModId() + "-" + type.extension() + ".toml";
-        Path path = configDir().resolve(name);
 
-        var config = new ModConfig(type, spec, getModId(), name, path);
-
-        // Проверка самой спецификации: ловит restart-типы, недопустимые для этого вида
-        // конфига, и валидаторы, отвергающие свой же дефолт.
-        spec.validateSpec(config);
-
-        try {
-            Files.createDirectories(path.getParent());
-        } catch (Exception e) {
-            throw new RuntimeException("nfcompat: не удалось создать каталог конфигов " + path.getParent(), e);
-        }
-
-        // Чтение файла (или создание его с дефолтами) + привязка значений к спеке.
-        // Файл читаем сразу — иначе ConfigValue#get() в конструкторе мода упал бы
-        // с "Cannot get config value before config is loaded".
-        config.load();
-
-        // Если установлен ForgeConfigAPIPort - отдаём спеку и ему: тогда его экран
-        // конфига в Mod Menu показывает наши настройки. Значения общие (спека одна),
-        // файл один; наша загрузка выше уже отработала.
-        if (ForgeConfigApiPortBridge.isPresent()) {
-            // LOCAL (ae2-common.toml) у ForgeConfigAPIPort нет: их бутстрап грузит
-            // только STARTUP/COMMON/CLIENT/SERVER, поэтому LOCAL-конфиг остался бы
-            // у них незагруженным (и в экране был бы read-only). Отдаём как COMMON -
-            // имя файла мы задаём сами, значения общие, наша загрузка остаётся.
-            var fcpType = type == ModConfig.Type.LOCAL ? ModConfig.Type.COMMON : type;
-            ForgeConfigApiPortBridge.register(fcpType, spec, getModId(), name);
-        }
+        // FCP сам создаёт каталог и файл, читает TOML, правит его по спецификации и
+        // ставит вотчер. Для всего, кроме SERVER, это происходит прямо здесь.
+        var config = ConfigTracker.INSTANCE.registerConfig(type, spec, getModId(), name);
 
         this.configs.add(config);
 
-        // А событие откладываем до конца сборки мода (postPendingConfigLoads):
+        // Событие откладываем до конца сборки мода (postPendingConfigLoads):
         // AE2 зовёт registerConfig в первой строке своего конструктора, а слушателя
         // Loading вешает ниже. На NeoForge загрузчик грузит конфиги после всех
         // конструкторов, поэтому слушатель в конструкторе событие успевает поймать.
@@ -168,27 +150,42 @@ public class ModContainer {
     }
 
     /**
-     * Перечитывает конфиги контейнера с диска и постит {@link ModConfigEvent.Reloading}.
-     * NeoForge делает это файловым вотчером; у нас перечитывание явное — команда
-     * {@code /ae2config reload} (`nfcompat.config.ConfigReloadCommand`).
+     * Перечитывает конфиги контейнера с диска (это делает FCP) и постит
+     * {@link ModConfigEvent.Reloading} на нашу шину. NeoForge делает это файловым
+     * вотчером; у нас перечитывание ещё и явное — команда {@code /ae2config reload}
+     * (`nfcompat.config.ConfigReloadCommand`).
      *
-     * @return сколько конфигов перечитано
+     * @return сколько НАШИХ конфигов перечитано
      */
     public int reloadConfigs() {
         // Если по конфигу ещё не было Loading (перезагрузка пришла раньше конца сборки
         // мода), сначала шлём его — порядок событий должен остаться Loading -> Reloading.
         postPendingConfigLoads();
 
-        int reloaded = 0;
+        // Только те типы, что у нас реально зарегистрированы; STARTUP не трогаем:
+        // такой конфиг NeoForge читает один раз при запуске игры.
+        var types = new LinkedHashSet<ModConfig.Type>();
         for (var config : configs) {
-            // STARTUP-конфиги NeoForge читает только при запуске игры: правка такого
-            // файла на ходу ничего не даст, поэтому и события по нему не шлём.
-            if (config.getType() == ModConfig.Type.STARTUP) {
-                continue;
+            if (config.getType() != ModConfig.Type.STARTUP) {
+                types.add(config.getType());
             }
-            config.load();
-            eventBus.post(new ModConfigEvent.Reloading(config));
-            reloaded++;
+        }
+
+        Path configDir = configDir();
+        int reloaded = 0;
+        for (var type : types) {
+            // ВАЖНО: FCP перечитывает ВСЕ конфиги этого типа, включая конфиги чужих
+            // модов, а не только наши (у него нет API «перечитай один конфиг»).
+            // Это допустимо: файлы у каждого свои, операция идемпотентна.
+            ConfigTracker.INSTANCE.loadConfigs(type, configDir);
+
+            // FCP постит свои Fabric-события, наших ModConfigEvent он не знает.
+            for (var config : configs) {
+                if (config.getType() == type) {
+                    eventBus.post(new ModConfigEvent.Reloading(config));
+                    reloaded++;
+                }
+            }
         }
         return reloaded;
     }
@@ -202,16 +199,16 @@ public class ModContainer {
         return reloaded;
     }
 
-    /** Каталог конфигов мода (см. `configDir()`). Для тестов шима можно подменить. */
+    /** Каталог конфигов мода (см. `configDir()`): подмена нужна только тестам. */
     public static void setConfigDirOverride(@Nullable Path dir) {
         configDirOverride = dir;
     }
 
     /**
-     * Каталог конфигов мода. В запущенной игре - {@code FabricLoader#getConfigDir()}.
-     * В обычной JVM (юнит-тесты) FabricLoader не инициализирован и его configDir == null,
-     * поэтому подставляем каталог во временной папке: конфиг всё равно пишется/читается,
-     * но ничего не засоряет. Тесты вместо временной папки ставят свой `@TempDir`.
+     * Каталог, из которого перечитываются конфиги. В запущенной игре это
+     * {@code FabricLoader#getConfigDir()} — тот же, куда их пишет FCP. В обычной JVM
+     * (юнит-тесты) FabricLoader не инициализирован и его configDir == null, поэтому
+     * подставляем каталог во временной папке, чтобы перечитывание не падало.
      */
     private static Path configDir() {
         var override = configDirOverride;

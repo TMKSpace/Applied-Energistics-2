@@ -54,7 +54,14 @@ public final class AEConfig {
     private AEConfig(ModContainer container) {
         container.registerConfig(ModConfig.Type.CLIENT, client.spec);
         // Keep the old file name to continue reading existing configs
+        //#if FABRIC
+        // У ForgeConfigAPIPort нет ModConfig.Type.LOCAL (только STARTUP/COMMON/CLIENT/SERVER),
+        // поэтому общий конфиг регистрируем как COMMON. Ближайший по смыслу тип: файл тот же,
+        // имя задаём явно, а на Fabric LOCAL и COMMON и так оба лежат в config/.
+        container.registerConfig(ModConfig.Type.COMMON, common.spec, "ae2-common.toml");
+        //#else
         container.registerConfig(ModConfig.Type.LOCAL, common.spec, "ae2-common.toml");
+        //#endif
         container.getEventBus().addListener((ModConfigEvent.Loading evt) -> {
             if (evt.getConfig().getSpec() == common.spec) {
                 common.sync();

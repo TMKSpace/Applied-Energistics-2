@@ -63,10 +63,10 @@ public final class NfCompat {
         //      доигрывается для тех, кто пришёл другим путём.
         nfcompat.event.AutoEventSubscriber.install();
 
-        // 0. Конфиги. На NeoForge загрузчик грузит их после того, как все моды
-        //    построены: AE2 вешает слушателя Loading в конструкторе уже ПОСЛЕ
-        //    registerConfig, поэтому событие нельзя постить в момент регистрации.
-        //    Значения при этом прочитаны раньше (ModConfig#load), так что get() работает.
+        // 0. Конфиги. Значения уже прочитаны: ForgeConfigAPIPort читает файл прямо
+        //    в registerConfig (см. ModContainer). Здесь только рассылаем наши шим-события
+        //    ModConfigEvent.Loading — их FCP не знает, и постить их в момент регистрации
+        //    нельзя: AE2 вешает слушателя позже, в том же конструкторе.
         int loadedConfigs = ModContainer.postAllPendingConfigLoads();
         if (loadedConfigs > 0) {
             System.out.println("[nfcompat] конфигов загружено: " + loadedConfigs);

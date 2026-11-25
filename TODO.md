@@ -22,6 +22,12 @@ Outbound: 16 энерго-предметов AE2; fluid/item-в-предмете
 не регистрирует), inbound работает через Fabric-провайдеры ванили.
 
 ## 3. Масштаб жидкостей ×81
+`[x]` Конфиги полностью на ForgeConfigAPIPort (жёсткая зависимость): свой ModConfig/IConfigSpec/
+ModConfigSpec удалён, night-config больше не бандлим (его несёт FCP как JiJ). `ae2-common.toml`
+под `#if FABRIC` регистрируется как COMMON (в FCP нет LOCAL). Loading/Reloading рассылает наш
+ModContainer (FCP постит только свои fuzs-события). Проверено: песочница FCP+PuzzlesLib+MutantMonsters
++StorageDrawers - `Done`, jar без night-config тоже `Done`, геймтесты 83/83.
+
 `[x]` Экран конфига: при установленном ForgeConfigAPIPort берём ЕГО ConfigurationScreen
 (секции, range, тултипы). Наша шим-заглушка удалена, `ModMenuIntegration` приоритезирует FCP,
 Cloth Config остаётся фолбэком, без них экрана нет. Спеки AE2 дополнительно регистрируются
