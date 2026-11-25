@@ -18,8 +18,10 @@
 package net.neoforged.neoforge.client.model.block;
 
 import com.mojang.datafixers.util.Either;
+import com.mojang.datafixers.util.Pair;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.DataResult;
+import com.mojang.serialization.DynamicOps;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import java.util.ArrayList;
@@ -70,9 +72,41 @@ public final class BlockStateModelHooks {
         BLOCK_STATE_MODEL_IDS.put(location, codec);
     }
 
-    /** Кодек, которым надо заменить ванильный {@code BlockStateModel.Unbaked.CODEC}. */
+    /**
+     * Кодек, который подменяет ванильный {@code BlockStateModel.Unbaked.CODEC}.
+     *
+     * ВАЖНО: это не голый наш кодек, а обёртка. Fabric API (fabric-model-loading-api-v1)
+     * подменяет то же поле своим `CustomUnbakedBlockStateModelRegistry.MODEL_CODEC`,
+     * который понимает модели вида {@code {"type": "travelersbackpack:backpack", ...}}.
+     * Если вернуть только наш кодек, чужие кастомные модели перестают парситься
+     * (у Traveler's Backpack из-за этого пропадала модель поставленного рюкзака).
+     *
+     * Поэтому: сначала пробуем NeoForge-формат, при ошибке - тот кодек, который
+     * лежал в поле до нас (уже обёрнутый Fabric'ом).
+     */
     public static Codec<BlockStateModel.Unbaked> codec() {
-        return Holder.CODEC;
+        return Holder.get();
+    }
+
+    /**
+     * Кодек «сначала наш, иначе чужой»: декодирование/кодирование идут в
+     * {@code primary}, а если он вернул ошибку - в {@code fallback}.
+     */
+    record DelegatingCodec(
+            Codec<BlockStateModel.Unbaked> primary,
+            Codec<BlockStateModel.Unbaked> fallback) implements Codec<BlockStateModel.Unbaked> {
+
+        @Override
+        public <T> DataResult<Pair<BlockStateModel.Unbaked, T>> decode(DynamicOps<T> ops, T input) {
+            var result = primary.decode(ops, input);
+            return result.isSuccess() ? result : fallback.decode(ops, input);
+        }
+
+        @Override
+        public <T> DataResult<T> encode(BlockStateModel.Unbaked input, DynamicOps<T> ops, T prefix) {
+            var result = primary.encode(input, ops, prefix);
+            return result.isSuccess() ? result : fallback.encode(input, ops, prefix);
+        }
     }
 
     // NeoForge: BlockStateModelHooks.makeSingleModelCodec()
@@ -170,7 +204,19 @@ public final class BlockStateModelHooks {
     // BlockStateModelDispatcher.SimpleModelSelectors, и порядок инициализации классов
     // лучше не трогать (Variant, ExtraCodecs и т.п.).
     private static final class Holder {
-        private static final Codec<BlockStateModel.Unbaked> CODEC = makeCodec();
+        private static Codec<BlockStateModel.Unbaked> CODEC;
+
+        static synchronized Codec<BlockStateModel.Unbaked> get() {
+            if (CODEC == null) {
+                var ours = makeCodec();
+                // Кодек, который лежит в поле сейчас: у Fabric это уже их обёртка
+                // с поддержкой кастомных "type". Читаем поле напрямую - наш GETSTATIC
+                // перехватывается только в чужих <clinit>, здесь его нет.
+                var fallback = BlockStateModel.Unbaked.CODEC;
+                CODEC = fallback == null ? ours : new DelegatingCodec(ours, fallback);
+            }
+            return CODEC;
+        }
     }
 
     private BlockStateModelHooks() {}
