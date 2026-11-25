@@ -36,11 +36,19 @@ COMMENT_RE = re.compile(r"^\s*#\s?(.*)$")
 NOISE = ("Default:", "Range:", "Allowed Values:")
 
 
+# Особые случаи: одной эвристикой не разобрать (нет границы слов / устоявшееся написание).
+SECTION_NAMES = {"spatialio": "Spatial IO"}
+
+ACRONYMS = {"tnt", "io", "cpu", "fe", "p2p", "ae", "gui", "ui", "id", "nbt", "me", "jei", "pch"}
+
+
 def humanize(name: str) -> str:
-    """unsupportedDeveloperTools -> Unsupported Developer Tools"""
+    """unsupportedDeveloperTools -> Unsupported Developer Tools, tinyTnt -> Tiny TNT"""
     spaced = re.sub(r"(?<=[a-z0-9])(?=[A-Z])", " ", name)
     spaced = spaced.replace("_", " ").strip()
-    return spaced[:1].upper() + spaced[1:] if spaced else name
+    words = [w.upper() if w.lower() in ACRONYMS else w for w in spaced.split()]
+    text = " ".join(words)
+    return text[:1].upper() + text[1:] if text else name
 
 
 def parse(path: Path):
@@ -78,12 +86,16 @@ def main() -> None:
     for toml in sorted(src_dir.glob("ae2-*.toml")):
         for path, entries in parse(toml):
             section_key = ".".join([MOD_ID, "configuration", *path])
-            lang.setdefault(section_key, humanize(path[-1]))
+            lang.setdefault(section_key, SECTION_NAMES.get(path[-1], humanize(path[-1])))
             for name, comments in entries:
-                key = section_key + "." + name
-                lang.setdefault(key, humanize(name))
-                if comments:
-                    lang[key + ".tooltip"] = " ".join(comments)
+                # Экран (NeoForge и порт FCP) строит ключ значения как
+                # <modid>.configuration.<ИМЯ ОПЦИИ> - без пути секции.
+                # Полный путь оставляем тоже: он ничему не мешает и помогает,
+                # если апстрим когда-нибудь перейдёт на путь целиком.
+                for key in (section_key + "." + name, MOD_ID + ".configuration." + name):
+                    lang.setdefault(key, humanize(name))
+                    if comments:
+                        lang.setdefault(key + ".tooltip", " ".join(comments))
 
     out_file.parent.mkdir(parents=True, exist_ok=True)
     out_file.write_text(
