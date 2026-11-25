@@ -23,8 +23,9 @@ import nfcompat.GameBootstrap;
 
 /**
  * StorageFluidHandler: Fabric-ный Storage&lt;FluidVariant&gt; предъявляется NeoForge-ному
- * коду как ResourceHandler&lt;FluidResource&gt;. Рискованное место — пересчёт единиц
- * (Fabric 81000/ведро -> NeoForge 1000/ведро) и поведение на границах индексов.
+ * коду как ResourceHandler&lt;FluidResource&gt;. Единицы у порта и Fabric общие
+ * (droplets, ведро = 81000), поэтому количества проходят как есть; здесь проверяем
+ * это и поведение на границах индексов.
  * <p>
  * ЧЕГО ЗДЕСЬ НЕТ И ПОЧЕМУ: настоящий FluidVariant в тестах не создать — в loader'е
  * Fabric патчит {@code Fluid} до {@code FluidVariantCache}, а вне рантайма это
@@ -84,38 +85,36 @@ class StorageFluidHandlerTest {
         // бросает на выходе за границы, здесь — молча отдаёт первый слот.
         var handler = new StorageFluidHandler(new FakeStorage(FakeSlot.filled(40500, 81000)));
 
-        assertThat(handler.getAmountAsLong(0)).isEqualTo(500);
-        assertThat(handler.getAmountAsLong(99)).isEqualTo(500);
+        assertThat(handler.getAmountAsLong(0)).isEqualTo(40500);
+        assertThat(handler.getAmountAsLong(99)).isEqualTo(40500);
     }
 
     @Test
-    @DisplayName("amount: единицы Fabric -> NeoForge (81000 -> 1000)")
-    void amountConverts() {
+    @DisplayName("amount: единицы общие — 81000 droplets так и остаются 81000")
+    void amountPassesThrough() {
         var handler = new StorageFluidHandler(FakeSlottedStorage.of(FakeSlot.filled(81000, 81000)));
 
-        assertThat(handler.getAmountAsLong(0)).isEqualTo(1000);
+        assertThat(handler.getAmountAsLong(0)).isEqualTo(81000);
     }
 
     @Test
-    @DisplayName("amount: полведра и остатки округляются вниз")
-    void amountRoundsDown() {
+    @DisplayName("amount: остатки droplets не округляются и не сгорают")
+    void amountKeepsRemainders() {
         var halfBucket = new StorageFluidHandler(FakeSlottedStorage.of(FakeSlot.filled(40500, 81000)));
         var almostOneNf = new StorageFluidHandler(FakeSlottedStorage.of(FakeSlot.filled(404, 81000)));
 
-        assertThat(halfBucket.getAmountAsLong(0)).isEqualTo(500);
-        // 404 / 81 = 4.98 -> 4 mB, лишние 80 юнитов Fabric "сгорают"
-        assertThat(almostOneNf.getAmountAsLong(0)).isEqualTo(4);
+        assertThat(halfBucket.getAmountAsLong(0)).isEqualTo(40500);
+        assertThat(almostOneNf.getAmountAsLong(0)).isEqualTo(404);
     }
 
     @Test
-    @DisplayName("capacity: тоже пересчитывается и округляется вниз")
-    void capacityConverts() {
+    @DisplayName("capacity: тоже в droplets, как есть")
+    void capacityPassesThrough() {
         var bucket = new StorageFluidHandler(FakeSlottedStorage.of(FakeSlot.blank(81000)));
         var odd = new StorageFluidHandler(FakeSlottedStorage.of(FakeSlot.blank(100000)));
 
-        assertThat(bucket.getCapacityAsLong(0, FluidResource.EMPTY)).isEqualTo(1000);
-        // 100000 / 81 = 1234.56 -> 1234 mB
-        assertThat(odd.getCapacityAsLong(0, FluidResource.EMPTY)).isEqualTo(1234);
+        assertThat(bucket.getCapacityAsLong(0, FluidResource.EMPTY)).isEqualTo(81000);
+        assertThat(odd.getCapacityAsLong(0, FluidResource.EMPTY)).isEqualTo(100000);
     }
 
     @Test
@@ -170,7 +169,7 @@ class StorageFluidHandlerTest {
         var handler = StorageFluidHandler.ofSlot(FakeSlot.filled(81000, 81000));
 
         assertThat(handler.size()).isEqualTo(1);
-        assertThat(handler.getAmountAsLong(0)).isEqualTo(1000);
+        assertThat(handler.getAmountAsLong(0)).isEqualTo(81000);
     }
 
     @Test

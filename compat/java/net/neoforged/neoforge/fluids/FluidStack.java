@@ -2,9 +2,9 @@
  * Часть nfcompat. В NeoForge FluidStack — аналог ItemStack для жидкостей
  * (жидкость + количество + компоненты). В ванили 26.3 такого класса нет.
  *
- * ВАЖНО про единицы: здесь NeoForge-ная шкала, ведро = 1000 (FluidType.BUCKET_VOLUME).
- * Fabric Transfer API считает ведро как 81000, поэтому при пересечении границы
- * обязателен пересчёт — см. nfcompat.bridge.FluidUnits.
+ * ВАЖНО про единицы: порт живёт в Fabric-шкале droplets, ведро = 81000
+ * (FluidType.BUCKET_VOLUME согласован с AEFluidKey.AMOUNT_BUCKET и FluidConstants.BUCKET).
+ * Пересчёта на границе не нужно — см. nfcompat.bridge.FluidUnits (identity).
  */
 package net.neoforged.neoforge.fluids;
 

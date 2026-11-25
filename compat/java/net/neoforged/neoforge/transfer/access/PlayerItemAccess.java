@@ -5,13 +5,12 @@
 
 package net.neoforged.neoforge.transfer.access;
 
-import net.minecraft.world.entity.player.Player;
 import net.neoforged.neoforge.transfer.ResourceHandler;
 import net.neoforged.neoforge.transfer.item.ItemResource;
 import net.neoforged.neoforge.transfer.item.PlayerInventoryWrapper;
 import net.neoforged.neoforge.transfer.transaction.TransactionContext;
 
-class PlayerItemAccess implements ItemAccess, nfcompat.bridge.PlayerLedgerAccess {
+class PlayerItemAccess implements ItemAccess {
     private final PlayerInventoryWrapper inventoryWrapper;
     private final ResourceHandler<ItemResource> slot;
 
@@ -43,14 +42,5 @@ class PlayerItemAccess implements ItemAccess, nfcompat.bridge.PlayerLedgerAccess
     @Override
     public int extract(ItemResource resource, int amount, TransactionContext transaction) {
         return slot.extract(0, resource, amount, transaction);
-    }
-
-    /**
-     * Только для шима nfcompat: владелец слота. Нужен, чтобы привязать к игроку
-     * перенос остатка жидкости (см. FluidCarry).
-     */
-    @Override
-    public Player nfcompat$player() {
-        return inventoryWrapper.getPlayer();
     }
 }

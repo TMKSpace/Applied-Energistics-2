@@ -20,9 +20,9 @@ import nfcompat.GameBootstrap;
  * FluidHandlerStorage: обратное направление моста — NeoForge-ный
  * ResourceHandler&lt;FluidResource&gt; выглядит как Fabric-ный SlottedStorage&lt;FluidVariant&gt;.
  * <p>
- * Проверяем то, что не требует варианта жидкости: количество слотов, пересчёт
- * количеств/ёмкостей NF -> Fabric, "пустоту" слота, no-op на пустых входах и
- * версию. Транзакции и реальные вставки см. {@code @Disabled} внизу.
+ * Проверяем то, что не требует варианта жидкости: количество слотов, передачу
+ * количеств/ёмкостей NF -> Fabric (теперь как есть, шкала общая), "пустоту" слота,
+ * no-op на пустых входах и версию. Транзакции и реальные вставки см. {@code @Disabled} внизу.
  */
 class FluidHandlerStorageTest {
 
@@ -39,9 +39,9 @@ class FluidHandlerStorageTest {
     }
 
     @Test
-    @DisplayName("amount: NF -> Fabric (1000 mB -> 81000)")
-    void amountConverts() {
-        var storage = new FluidHandlerStorage(FakeHandler.filled(1000, 8000));
+    @DisplayName("amount: единицы общие (81000 = ведро) — проходит как есть")
+    void amountPassesThrough() {
+        var storage = new FluidHandlerStorage(FakeHandler.filled(81000, 81000));
 
         assertThat(storage.getSlot(0).getAmount()).isEqualTo(81000);
     }
@@ -56,11 +56,11 @@ class FluidHandlerStorageTest {
     }
 
     @Test
-    @DisplayName("capacity: тоже в единицах Fabric")
-    void capacityConverts() {
+    @DisplayName("capacity: тоже в droplets, как есть")
+    void capacityPassesThrough() {
         var storage = new FluidHandlerStorage(FakeHandler.filled(0, 2000));
 
-        assertThat(storage.getSlot(0).getCapacity()).isEqualTo(162000);
+        assertThat(storage.getSlot(0).getCapacity()).isEqualTo(2000);
     }
 
     @Test

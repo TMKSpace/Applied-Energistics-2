@@ -41,8 +41,8 @@ public class FluidIngredientConverter implements IngredientConverter<
     public IJeiFluidIngredient getIngredientFromStack(GenericStack stack) {
         if (stack.what() instanceof AEFluidKey fluidKey) {
             var nfAmount = Math.max(1, Ints.saturatedCast(stack.amount()));
-            // AE2 and the shim count in NeoForge millibuckets; JEI on Fabric counts in
-            // Fabric drops (bucketVolume == 81000).
+            // AE2 в этом порте и JEI на Fabric считают в droplets (ведро = 81000),
+            // так что количество совпадает один-к-одному (FluidUnits — identity).
             return new JeiFluidIngredient(FluidStacks.toVariant(fluidKey.toStack(nfAmount)),
                     FluidUnits.toFabric(nfAmount));
         } else {

@@ -1,26 +1,24 @@
 /*
- * Часть nfcompat. Геймтест точного учёта жидкости в бутылках (ME-терминал).
+ * Часть nfcompat. Геймтест бутылок в ME-терминале, всё считается в droplets.
  *
- * Симптом из игры: в сети 6000 mB, наполняем 3 стеклянные бутылки -> остаётся
- * 5001 mB. Причина: в Fabric бутылка — это 27000 droplets = 333.33 mB, целым mB не
- * представима. Пока отчёт об операции округлялся вниз на каждой операции, каждая
- * бутылка стоила сети 333 mB, и три бутылки списывали 999.
+ * Порт живёт в Fabric-шкале: ведро = 81000 droplets (AEFluidKey.AMOUNT_BUCKET =
+ * FluidConstants.BUCKET), бутылка = 27000 = ровно треть ведра. Поэтому здесь нет
+ * ни пересчёта, ни остатка на округление: три бутылки — это ровно 81000 droplets,
+ * то есть ровно одно ведро.
  *
  * Что проверяем:
  *  1) три бутылки, налитые по одной (как три клика по терминалу), списывают ровно
- *     1000 mB: 6000 -> 5000;
+ *     81000 droplets: 486000 (6 вёдер) -> 405000 (5 вёдер);
  *  2) каждая бутылка действительно превращается в бутылку воды, то есть предмет
- *     меняется там же, где списывается жидкость (это и был второй баг — «списали, а
- *     предмет не сменился»);
- *  3) слив тех же трёх бутылок возвращает ровно 1000 mB: 5000 -> 6000.
+ *     меняется там же, где списывается жидкость;
+ *  3) слив тех же трёх бутылок возвращает ровно 81000 droplets: 405000 -> 486000.
  *
  * Почему не через настоящее меню терминала: {@code AEBaseMenu.handleFillingHeldItem}
  * protected, а собрать полноценное меню терминала в тестплоте — это игрок, сеть и
  * синхронизация GUI. Поэтому здесь повторён ровно тот же серверный цикл
  * (SIMULATE -> извлечь из сети -> MODULATE -> вложить в предмет) поверх того же
  * публичного входа, которым пользуется меню: ContainerItemStrategies +
- * ContainerItemContext + capability предмета. Мост, контейнерные стратегии и учёт
- * остатка — настоящие.
+ * ContainerItemContext + capability предмета.
  *
  * Энергия: в плоте стоит творческая энергоячейка, но в тесте сеть дёргается напрямую
  * через MEStorage (без StorageHelper.poweredExtraction) — на учёт это не влияет.
@@ -51,25 +49,33 @@ import appeng.server.testworld.PlotTestHelper;
 import appeng.util.Platform;
 
 @TestPlotClass
-public final class FluidBottleCarryTestPlots {
+public final class FluidBottleTestPlots {
 
     private static final IActionSource SOURCE = new BaseActionSource();
+    /** Ведро в droplets (Fabric-шкала порта). */
+    private static final long BUCKET = AEFluidKey.AMOUNT_BUCKET;
+    /** Бутылка в droplets: треть ведра, как FluidConstants.BOTTLE. */
+    private static final long BOTTLE = 27000;
+    /** Стартовый запас: 6 вёдер = 486000 droplets. */
+    private static final long START = 6 * BUCKET;
+    /** После трёх наливов: 5 вёдер = 405000 droplets. */
+    private static final long AFTER_FILL = START - 3 * BOTTLE;
 
-    private FluidBottleCarryTestPlots() {
+    private FluidBottleTestPlots() {
     }
 
     @TestPlot(value = "fluid_bottles")
     public static void fluidBottles(PlotBuilder plot) {
         var origin = BlockPos.ZERO;
 
-        // Сеть из одного ME-сундука с жидкостной ячейкой на 6 B воды.
+        // Сеть из одного ME-сундука с жидкостной ячейкой на 6 вёдер воды (486000 droplets).
         plot.creativeEnergyCell(origin.below());
         plot.blockEntity(origin, AEBlocks.ME_CHEST, chest -> {
             var cellItem = AEItems.FLUID_CELL_1K.stack();
             var cellInv = StorageCells.getCellInventory(cellItem, null);
-            var inserted = cellInv.insert(AEFluidKey.of(Fluids.WATER), 6000, Actionable.MODULATE, SOURCE);
-            if (inserted != 6000) {
-                throw new IllegalStateException("ячейка не приняла 6 B воды: " + inserted);
+            var inserted = cellInv.insert(AEFluidKey.of(Fluids.WATER), START, Actionable.MODULATE, SOURCE);
+            if (inserted != START) {
+                throw new IllegalStateException("ячейка не приняла 6 вёдер воды: " + inserted);
             }
             chest.setCell(cellItem);
         });
@@ -78,14 +84,17 @@ public final class FluidBottleCarryTestPlots {
                 // ждём, пока сеть поднимется и ячейка смонтируется: thenWaitUntil
                 // повторяет проверку каждый тик (как succeedWhen), но ничего не меняет
                 .thenWaitUntil(() -> helper.assertGridOnline(origin))
-                .thenWaitUntil(() -> assertWater(helper, origin, 6000))
+                .thenWaitUntil(() -> assertWater(helper, origin, START))
                 .thenExecute(() -> fillAndDrain(helper, origin))
-                .thenExecute(() -> assertWater(helper, origin, 6000))
+                .thenExecute(() -> assertWater(helper, origin, START))
                 .thenSucceed());
     }
 
     /** Три клика «налить бутылку» и три «слить бутылку» — по одному контексту на клик. */
     private static void fillAndDrain(PlotTestHelper helper, BlockPos origin) {
+        helper.check(BUCKET == 81000, "AMOUNT_BUCKET = " + BUCKET + ", ожидалось 81000 (Fabric-шкала)");
+        helper.check(AFTER_FILL == 405000, "расчёт теста сломан: после наливов " + AFTER_FILL);
+
         var water = AEFluidKey.of(Fluids.WATER);
         var storage = helper.getGrid(origin).getStorageService().getInventory();
         var player = Platform.getFakePlayer(helper.getLevel(), null);
@@ -93,21 +102,20 @@ public final class FluidBottleCarryTestPlots {
         var filledBottles = new ItemStack[3];
 
         for (int i = 1; i <= 3; i++) {
-            // каждый клик — новый контекст: capability предмета запрашивается заново,
-            // и учёт остатка переживает это только потому, что привязан к игроку
+            // каждый клик — новый контекст, как в меню: capability предмета берётся заново
             menu.setCarried(new ItemStack(Items.GLASS_BOTTLE));
             var ctx = ContainerItemStrategies.findCarriedContextForKey(water, player, menu);
             helper.check(ctx != null, "нет контейнерного контекста для стеклянной бутылки");
 
             var filled = fill(helper, storage, ctx, water, i);
-            helper.check(filled > 0, "бутылка " + i + " не наполнилась");
+            helper.check(filled == BOTTLE, "бутылка " + i + " взяла " + filled + " droplets вместо " + BOTTLE);
             helper.check(menu.getCarried().is(Items.POTION),
                     "бутылка " + i + " не превратилась в бутылку воды: " + menu.getCarried());
             filledBottles[i - 1] = menu.getCarried().copy();
         }
 
-        helper.check(waterMb(storage, water) == 5000,
-                "после трёх бутылок в сети " + waterMb(storage, water) + " mB вместо 5000");
+        helper.check(waterDroplets(storage, water) == AFTER_FILL,
+                "после трёх бутылок в сети " + waterDroplets(storage, water) + " droplets вместо " + AFTER_FILL);
 
         for (int i = 1; i <= 3; i++) {
             // сливаем ровно те бутылки, что налили: у Potion без PotionContents воды
@@ -117,7 +125,8 @@ public final class FluidBottleCarryTestPlots {
             helper.check(ctx != null, "нет контейнерного контекста для бутылки воды");
 
             var drained = empty(helper, storage, ctx, i);
-            helper.check(drained > 0, "бутылка воды " + i + " не слилась");
+            helper.check(drained == BOTTLE, "бутылка воды " + i + " отдала " + drained
+                    + " droplets вместо " + BOTTLE);
             helper.check(menu.getCarried().is(Items.GLASS_BOTTLE),
                     "бутылка воды " + i + " не стала пустой бутылкой: " + menu.getCarried());
         }
@@ -126,8 +135,8 @@ public final class FluidBottleCarryTestPlots {
     private static void assertWater(PlotTestHelper helper, BlockPos origin, long expected) {
         var water = AEFluidKey.of(Fluids.WATER);
         var storage = helper.getGrid(origin).getStorageService().getInventory();
-        var actual = waterMb(storage, water);
-        helper.check(actual == expected, "в сети " + actual + " mB воды вместо " + expected);
+        var actual = waterDroplets(storage, water);
+        helper.check(actual == expected, "в сети " + actual + " droplets воды вместо " + expected);
     }
 
     /**
@@ -135,7 +144,7 @@ public final class FluidBottleCarryTestPlots {
      * симулируем извлечение из сети, симулируем вставку в предмет, потом повторяем оба
      * шага всерьёз ровно на столько, сколько прошла симуляция.
      *
-     * @return сколько mB реально ушло из сети в предмет
+     * @return сколько droplets реально ушло из сети в предмет
      */
     private static long fill(PlotTestHelper helper, MEStorage storage, ContainerItemContext ctx, AEKey what, int n) {
         var amount = (long) what.getAmountPerUnit();
@@ -149,7 +158,7 @@ public final class FluidBottleCarryTestPlots {
 
         var extracted = storage.extract(what, amountAllowed, Actionable.MODULATE, SOURCE);
         helper.check(extracted == amountAllowed, "бутылка " + n + ": сеть отдала " + extracted + " вместо "
-                + amountAllowed + " mB");
+                + amountAllowed + " droplets");
 
         var inserted = ctx.insert(what, extracted, Actionable.MODULATE);
         helper.check(inserted > 0, "бутылка " + n + ": жидкость ушла из сети, а в предмет не попала");
@@ -159,7 +168,7 @@ public final class FluidBottleCarryTestPlots {
     /**
      * Тело {@code AEBaseMenu.handleEmptyHeldItem} для одного клика (emptyAll = false).
      *
-     * @return сколько mB реально вернулось из предмета в сеть
+     * @return сколько droplets реально вернулось из предмета в сеть
      */
     private static long empty(PlotTestHelper helper, MEStorage storage, ContainerItemContext ctx, int n) {
         GenericStack content = ctx.getExtractableContent();
@@ -177,15 +186,15 @@ public final class FluidBottleCarryTestPlots {
 
         var extracted = ctx.extract(what, amountAllowed, Actionable.MODULATE);
         helper.check(extracted == amountAllowed, "бутылка воды " + n + ": предмет отдал " + extracted
-                + " вместо обещанных " + amountAllowed + " mB");
+                + " вместо обещанных " + amountAllowed + " droplets");
 
         var inserted = storage.insert(what, extracted, Actionable.MODULATE, SOURCE);
         helper.check(inserted == extracted, "бутылка воды " + n + ": в сеть попало " + inserted + " вместо "
-                + extracted + " mB");
+                + extracted + " droplets");
         return inserted;
     }
 
-    private static long waterMb(MEStorage storage, AEKey water) {
+    private static long waterDroplets(MEStorage storage, AEKey water) {
         return storage.getAvailableStacks().get(water);
     }
 

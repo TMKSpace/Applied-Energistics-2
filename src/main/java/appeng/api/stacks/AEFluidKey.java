@@ -44,8 +44,16 @@ public final class AEFluidKey extends AEKey {
                             dataComponentPatch) -> new AEFluidKey(new FluidStack(fluidHolder, 1, dataComponentPatch))));
     public static final Codec<AEFluidKey> CODEC = MAP_CODEC.codec();
 
+    //#if FABRIC
+    // nfcompat: на Fabric весь порт живёт в droplets (ведро = 81000), как официальный
+    // 1.20.1-Fabric-порт AE2: AEFluidKey.AMOUNT_BUCKET = FluidConstants.BUCKET.
+    // Конверсии mB <-> droplets больше нет, поэтому и бутылка (27000) делится нацело.
+    public static final int AMOUNT_BUCKET = 81000;
+    public static final int AMOUNT_BLOCK = 81000;
+    //#else
     public static final int AMOUNT_BUCKET = 1000;
     public static final int AMOUNT_BLOCK = 1000;
+    //#endif
 
     private final FluidStack stack;
     private final int hashCode;

@@ -5,11 +5,10 @@
 
 package net.neoforged.neoforge.transfer.access;
 
-import net.minecraft.world.entity.player.Player;
 import net.neoforged.neoforge.transfer.item.ItemResource;
 import net.neoforged.neoforge.transfer.transaction.TransactionContext;
 
-record OneByOneItemAccess(ItemAccess delegate) implements ItemAccess, nfcompat.bridge.PlayerLedgerAccess {
+record OneByOneItemAccess(ItemAccess delegate) implements ItemAccess {
     @Override
     public ItemResource getResource() {
         return delegate.getResource();
@@ -28,15 +27,5 @@ record OneByOneItemAccess(ItemAccess delegate) implements ItemAccess, nfcompat.b
     @Override
     public int extract(ItemResource resource, int amount, TransactionContext transaction) {
         return delegate.extract(resource, Math.min(amount, 1), transaction);
-    }
-
-    /**
-     * Только для шима nfcompat: пробрасываем владельца, иначе обёртка (её использует
-     * {@code FluidUtil.interactWithFluidHandler} — «налить бутылку из бака в мире»)
-     * теряла бы перенос остатка жидкости.
-     */
-    @Override
-    public Player nfcompat$player() {
-        return delegate instanceof nfcompat.bridge.PlayerLedgerAccess owner ? owner.nfcompat$player() : null;
     }
 }

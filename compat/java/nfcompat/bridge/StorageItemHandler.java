@@ -3,8 +3,8 @@
  * как NeoForge-ный ResourceHandler<ItemResource>, которого ждёт AE2.
  *
  * Симметрично nfcompat.bridge.StorageFluidHandler; отличие только в том, что у предметов
- * нет пересчёта единиц (1 предмет = 1 штука и там, и там), а жидкости расходятся
- * в 81 раз (ведро 1000 у NeoForge против 81000 у Fabric) — см. FluidUnits.
+ * нет пересчёта единиц (1 предмет = 1 штука и там, и там), а жидкости теперь тоже в
+ * общей шкале droplets — см. FluidUnits.
  *
  * Транзакции — через HandlerTransactions.runOntoFabric: SIMULATE больше не «протекает»
  * (раньше здесь был openOuter + немедленный commit).

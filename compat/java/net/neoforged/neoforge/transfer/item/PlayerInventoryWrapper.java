@@ -84,15 +84,6 @@ public final class PlayerInventoryWrapper extends VanillaContainerWrapper {
     }
 
     /**
-     * Только для шима nfcompat: владелец инвентаря. Через него {@link
-     * net.neoforged.neoforge.transfer.access.PlayerItemAccess} отдаёт игрока, к которому
-     * привязывается перенос остатка жидкости (см. {@code nfcompat.bridge.FluidCarry}).
-     */
-    public Player getPlayer() {
-        return inventory.player;
-    }
-
-    /**
      * Retrieves a wrapper for the slot corresponding to the current main hand.
      */
     public ResourceHandler<ItemResource> getMainHandSlot() {

@@ -10,7 +10,7 @@
  * камня коммитится).
  *
  * Проверять так:
- *   - ведро воды -> в жидкостной секции вода 1000 mB;
+ *   - ведро воды -> в жидкостной секции вода 81000 droplets (ведро);
  *   - пустое ведро -> хранилище всё равно не null (в него можно налить), объём 0;
  *   - энергоячейка/заряжаемый инструмент AE2 -> энергия X/Y (и в Fabric, и в шиме).
  *
@@ -194,7 +194,7 @@ public final class ItemCapabilityProbe {
         return storage instanceof SlottedStorage<?> slotted ? slotted.getSlotCount() : 1;
     }
 
-    /** Fabric-ные юниты (81000 на ведро) -> привычные mB (1000 на ведро). */
+    /** Юниты общие (droplets, ведро = 81000); обёртка осталась от времён пересчёта. */
     private static long nf(long fabricAmount) {
         return nfcompat.bridge.FluidUnits.toNfLong(fabricAmount);
     }

@@ -20,9 +20,9 @@ import net.neoforged.neoforge.transfer.fluid.FluidResource;
  * {@code ClassCastException: Fluid cannot be cast to FluidVariantCache}.
  * Бутстрап регистров это не лечит — нужен именно запущенный Fabric.
  * <p>
- * Что в итоге проверяется без рантайма: масштаб и округление количеств
- * (см. {@link FluidUnitsTest}) и то, что "меньше одного mB -> EMPTY" — эта ветка
- * тоже внутри {@code fromVariant}, поэтому здесь только тесты "на будущее":
+ * Что в итоге проверяется без рантайма: единицы общие (см. {@link FluidUnitsTest},
+ * ни умножения, ни округления) и то, что "ноль -> EMPTY" — эта ветка тоже внутри
+ * {@code fromVariant}, поэтому здесь только тесты "на будущее":
  * как только появится Fabric test-harness, их достаточно снять с @Disabled.
  */
 class FluidStacksTest {
@@ -38,22 +38,23 @@ class FluidStacksTest {
 
     @Test
     @org.junit.jupiter.api.Disabled("Fabric-рантайм: FluidVariant.of() падает ClassCastException")
-    @DisplayName("ведро: 81000 Fabric -> 1000 mB NeoForge")
+    @DisplayName("ведро: 81000 Fabric -> 81000 в шиме (шкала общая)")
     void bucketRoundTrip() {
-        var variant = FluidStacks.toVariant(new FluidStack(Fluids.WATER, 1000));
+        var variant = FluidStacks.toVariant(new FluidStack(Fluids.WATER, 81000));
         var stack = FluidStacks.fromVariant(variant, 81000);
 
         assertThat(stack.getFluid()).isEqualTo(Fluids.WATER);
-        assertThat(stack.getAmount()).isEqualTo(1000);
+        assertThat(stack.getAmount()).isEqualTo(81000);
     }
 
     @Test
     @org.junit.jupiter.api.Disabled("Fabric-рантайм: FluidVariant.of() падает ClassCastException")
-    @DisplayName("меньше одного mB Fabric -> пустой стек, а не 0-стек")
-    void lessThanOneMillibucketIsEmpty() {
+    @DisplayName("ноль droplets -> пустой стек, а не 0-стек")
+    void zeroIsEmpty() {
         var variant = FluidStacks.toVariant(FluidResource.of(Fluids.WATER));
 
-        assertThat(FluidStacks.fromVariant(variant, 80)).isSameAs(FluidStack.EMPTY);
         assertThat(FluidStacks.fromVariant(variant, 0)).isSameAs(FluidStack.EMPTY);
+        // Один droplet — уже не ноль: округления больше нет
+        assertThat(FluidStacks.fromVariant(variant, 1).getAmount()).isEqualTo(1);
     }
 }

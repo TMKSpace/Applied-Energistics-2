@@ -13,14 +13,12 @@ import net.neoforged.neoforge.transfer.item.ItemResource;
 import net.neoforged.neoforge.transfer.item.PlayerInventoryWrapper;
 import net.neoforged.neoforge.transfer.transaction.TransactionContext;
 
-class InfiniteMaterialsItemAccess implements ItemAccess, nfcompat.bridge.PlayerLedgerAccess {
-    private final Player player;
+class InfiniteMaterialsItemAccess implements ItemAccess {
     private final ResourceHandler<ItemResource> mainSlots;
     private final ItemResource resource;
     private final int amount;
 
     InfiniteMaterialsItemAccess(Player player, ItemResource resource, int amount) {
-        this.player = player;
         this.mainSlots = PlayerInventoryWrapper.of(player).getMainSlots();
         this.resource = resource;
         this.amount = amount;
@@ -55,15 +53,5 @@ class InfiniteMaterialsItemAccess implements ItemAccess, nfcompat.bridge.PlayerL
 
         // Extraction always succeeds from the POV of the access' user.
         return amount;
-    }
-
-    /**
-     * Только для шима nfcompat: владелец доступа. В креативе ItemAccess создаётся
-     * именно так (ItemAccess.forPlayerInteraction), поэтому перенос остатка жидкости
-     * должен работать и здесь.
-     */
-    @Override
-    public Player nfcompat$player() {
-        return player;
     }
 }

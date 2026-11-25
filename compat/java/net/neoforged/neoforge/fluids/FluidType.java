@@ -20,8 +20,12 @@ import net.neoforged.neoforge.common.SoundAction;
 import org.jetbrains.annotations.Nullable;
 
 public class FluidType {
-    /** Объём одного ведра в юнитах NeoForge. Fabric считает по-другому: 81000. */
-    public static final int BUCKET_VOLUME = 1000;
+    /**
+     * Объём одного ведра в юнитах шима. Порт целиком живёт в Fabric-шкале droplets,
+     * поэтому константа согласована с {@code AEFluidKey.AMOUNT_BUCKET} (81000); иначе
+     * FluidUtil/танки и AE-сеть считали бы разные вёдра. NeoForge-ной ветки у шима нет.
+     */
+    public static final int BUCKET_VOLUME = 81000;
 
     private static final Map<Fluid, FluidType> BY_FLUID = new ConcurrentHashMap<>();
 

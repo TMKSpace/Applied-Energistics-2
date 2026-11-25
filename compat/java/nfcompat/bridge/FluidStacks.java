@@ -4,7 +4,7 @@
  * Ключевой факт: в Fabric нет отдельного типа «стек жидкости». Нефть, пиво и прочее
  * из Fabric-модов — это обычные Fluid в BuiltInRegistries.FLUID, а FluidVariant
  * это Holder<Fluid> + DataComponentPatch. Наш FluidStack хранит ровно то же,
- * поэтому конвертация тотальная и без потерь (кроме количества, см. FluidUnits).
+ * поэтому конвертация тотальная и без потерь (шкала единиц у шима и Fabric общая).
  */
 package nfcompat.bridge;
 
