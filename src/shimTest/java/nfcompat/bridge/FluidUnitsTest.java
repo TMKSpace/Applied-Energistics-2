@@ -69,4 +69,23 @@ class FluidUnitsTest {
                     .isEqualTo((int) nf);
         }
     }
+
+    @Test
+    @DisplayName("бутылка = треть ведра, и запас меньше mB дотягивает запрос до её кванта")
+    void bottleIsOneThirdOfBucket() {
+        // треть ведра, как у ванильного котла
+        assertThat(FluidUnits.FABRIC_BOTTLE * 3).isEqualTo(FluidUnits.FABRIC_BUCKET);
+        // в mB это 333.33 -> AE2 видит 333
+        assertThat(FluidUnits.toNf(FluidUnits.FABRIC_BOTTLE)).isEqualTo(333);
+        // 333 mB обратно = 26973 droplets, на 27 меньше кванта бутылки:
+        // контейнер «всё или ничего» (EmptyItemFluidStorage/WaterPotionStorage) откажет
+        assertThat(FluidUnits.toFabric(333)).isEqualTo(26973L);
+        assertThat(FluidUnits.toFabric(333)).isLessThan(FluidUnits.FABRIC_BOTTLE);
+        // с запасом меньше одного mB запрос дотягивается до 27000, но не раздувает его
+        assertThat(FluidUnits.pad(FluidUnits.toFabric(333)))
+                .isBetween(FluidUnits.FABRIC_BOTTLE, FluidUnits.FABRIC_BOTTLE + FluidUnits.PAD);
+        // запас не превращается в «лишнее ведро»: он всегда меньше одного mB
+        assertThat(FluidUnits.PAD).isEqualTo(FluidUnits.SCALE - 1);
+        assertThat(FluidUnits.pad(Long.MAX_VALUE)).isEqualTo(Long.MAX_VALUE);
+    }
 }

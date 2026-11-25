@@ -7,6 +7,15 @@
  * `Actionable.SIMULATE` больше не «протекает»: без commit'а Fabric-ная сторона
  * откатывается. Раньше здесь был openOuter + немедленный commit — то есть симуляция
  * реально опустошала ведро/бак (SIMULATE-дыра).
+ *
+ * КВАНТ КОНТЕЙНЕРА (бутылка). Запрос в Fabric всегда `amount * 81` droplets, а отчёт
+ * обратно — деление вниз. Для ведра (81000) это точно, а для бутылки нет: 27000
+ * droplets = 333.33 mB, поэтому AE2 считает её за 333 mB, и повторный запрос на 333
+ * даёт 26973 < 27000. Контейнеры «всё или ничего» (EmptyItemFluidStorage для
+ * стеклянной бутылки, WaterPotionStorage для бутылки воды) на 26973 отвечают 0 —
+ * получалось, что жидкость из сети уже списана по симуляции, а предмет не сменился.
+ * Поэтому здесь: сначала точное число (как раньше), и только если контейнер отказал
+ * ЦЕЛИКОМ — повтор с запасом меньше одного mB (см. {@link FluidUnits#PAD}).
  */
 package nfcompat.bridge;
 
@@ -75,7 +84,7 @@ public final class StorageFluidHandler implements ResourceHandler<FluidResource>
         FluidVariant variant = FluidStacks.toVariant(resource);
         long maxFabric = FluidUnits.toFabric(amount);
         return HandlerTransactions.runOntoFabric(transaction, amount,
-                fabricTx -> FluidUnits.toNf(storage.insert(variant, maxFabric, fabricTx)));
+                fabricTx -> FluidUnits.toNf(insertWithPad(storage, variant, maxFabric, fabricTx)));
     }
 
     @Override
@@ -86,8 +95,39 @@ public final class StorageFluidHandler implements ResourceHandler<FluidResource>
         FluidVariant variant = FluidStacks.toVariant(resource);
         long maxFabric = FluidUnits.toFabric(amount);
         int extracted = HandlerTransactions.runOntoFabric(transaction, amount,
-                fabricTx -> FluidUnits.toNf(storage.extract(variant, maxFabric, fabricTx)));
+                fabricTx -> FluidUnits.toNf(extractWithPad(storage, variant, maxFabric, fabricTx)));
         return extracted;
+    }
+
+    /**
+     * Fabric-ная вставка: сначала ровно столько, сколько попросили, и только при полном
+     * отказе — повтор с запасом меньше одного mB (см. {@link FluidUnits#PAD}).
+     *
+     * Почему не «всегда с запасом»: обычный танк принимает и частично, и лишний запрос
+     * позволил бы ему отдать/принять больше droplets, чем оплачено в mB, то есть создать
+     * жидкость. А контейнер-«всё или ничего» на точный запрос отвечает нулём, так что
+     * повтор после нуля — единственный случай, где запас что-то меняет.
+     */
+    private static long insertWithPad(Storage<FluidVariant> storage, FluidVariant variant, long maxFabric,
+            net.fabricmc.fabric.api.transfer.v1.transaction.TransactionContext transaction) {
+        long inserted = storage.insert(variant, maxFabric, transaction);
+        if (inserted > 0) {
+            return inserted;
+        }
+        return storage.insert(variant, FluidUnits.pad(maxFabric), transaction);
+    }
+
+    /**
+     * То же для извлечения (бутылка воды отдаёт ровно 27000 droplets только если
+     * разрешено взять не меньше этого, иначе возвращает 0 и не меняет предмет).
+     */
+    private static long extractWithPad(Storage<FluidVariant> storage, FluidVariant variant, long maxFabric,
+            net.fabricmc.fabric.api.transfer.v1.transaction.TransactionContext transaction) {
+        long extracted = storage.extract(variant, maxFabric, transaction);
+        if (extracted > 0) {
+            return extracted;
+        }
+        return storage.extract(variant, FluidUnits.pad(maxFabric), transaction);
     }
 
     private StorageView<FluidVariant> view(int index) {        if (storage instanceof SlottedStorage<?> slotted) {
