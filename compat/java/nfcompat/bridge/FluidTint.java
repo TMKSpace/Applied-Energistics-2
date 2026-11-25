@@ -10,7 +10,7 @@
  * Факты из байткода 26.3 (minecraft-merged-deobf-26.3.jar):
  *  - FluidStateModelSet.<clinit> собирает модель воды с BlockTintSources.water():
  *    у него color(BlockState) == -1, а реальный цвет даёт colorInWorld ->
- *    BiomeColors.getAverageWaterColor -> Biome#getWaterColor (дефолтный биом = 4159204).
+ *    BiomeColors.getAverageWaterColor -> Biome#getWaterColor (у равнин это "#3f76e4").
  *  - модель лавы собирается с tintSource == null: block/lava_still уже оранжевая,
  *    тинтовать её не нужно (то же самое для модовых жидкостей без модели).
  *
@@ -18,7 +18,19 @@
  * из fluid-модели, поэтому ресурспак/датапак/мод, подменивший тинт или биомный цвет,
  * подхватится автоматически.
  *
- * Возвращаем packed RGB (0xRRGGBB); -1 = не тинтить (рисовать текстуру как есть).
+ * Возвращаем packed ARGB с непрозрачной альфой (0xFFRRGGBB); -1 = не тинтить
+ * (рисовать текстуру как есть).
+ *
+ * ПОЧЕМУ АЛЬФА. Цвет жидкости ваниль кладёт в вершины как ARGB целиком:
+ * FluidRenderer зовёт VertexConsumer.addVertex(x,y,z,color,...), BlockModelRenderer -
+ * QuadInstance.multiplyColor (ARGB.multiply умножает и альфу). У воды tint приходит из
+ * Biome#getWaterColor, а он парсится из `water_color: "#3f76e4"` через
+ * ExtraCodecs.STRING_RGB_COLOR, то есть это непрозрачный 0xFF3F76E4.
+ * Старое `color & 0xFFFFFF` срезало старший байт: в GUI это не замечалось
+ * (Blitter.colorRgb / ARGB.opaque сами берут три канала), а в Sky Stone Tank цвет уходит
+ * прямо в QuadInstance.setColor (BufferBuilder.setColor -> putRgba -> ARGB.toABGR), и
+ * alpha=0 означал «полностью прозрачно»: спрайт и геометрия были, а не рисовалось ни
+ * жидкости, ни столбика.
  */
 package nfcompat.bridge;
 
@@ -46,7 +58,7 @@ public final class FluidTint {
     }
 
     /**
-     * @return packed RGB (0xRRGGBB) или {@link #NO_TINT}.
+     * @return packed ARGB (0xFFRRGGBB) или {@link #NO_TINT}.
      */
     public static int colorOf(FluidStack stack) {
         if (stack == null || stack.isEmpty()) {
@@ -64,7 +76,7 @@ public final class FluidTint {
     }
 
     /**
-     * @return packed RGB (0xRRGGBB) или {@link #NO_TINT}.
+     * @return packed ARGB (0xFFRRGGBB) или {@link #NO_TINT}.
      */
     public static int colorOf(FluidModel model, FluidStack stack) {
         if (stack == null || stack.isEmpty() || model == null) {
@@ -106,7 +118,12 @@ public final class FluidTint {
     }
 
     private static int normalize(int color) {
-        return (color == 0 || color == NO_TINT) ? NO_TINT : color & 0xFFFFFF;
+        if (color == 0 || color == NO_TINT) {
+            return NO_TINT;
+        }
+        // Старший байт обязателен: значение уходит в QuadInstance.setColor (это ARGB, а не
+        // «три канала» GUI), и с alpha=0 слой не рисуется вообще.
+        return 0xFF000000 | (color & 0xFFFFFF);
     }
 
     private static BlockState legacyState(FluidStack stack) {

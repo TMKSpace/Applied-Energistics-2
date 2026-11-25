@@ -35,6 +35,9 @@ import net.minecraft.world.phys.Vec3;
 
 import appeng.blockentity.storage.SkyStoneTankBlockEntity;
 import appeng.client.render.CubeBuilder;
+//#if FABRIC
+import appeng.core.AELog;
+//#endif
 
 //#if FABRIC
 import nfcompat.bridge.FluidTint;
@@ -61,6 +64,12 @@ public final class SkyStoneTankRenderer
         var capacity = fluidHandler.getCapacityAsLong(0, resource);
         var amount = fluidHandler.getAmountAsLong(0);
         if (resource.isEmpty() || capacity <= 0 || amount <= 0) {
+            //#if FABRIC
+            // nfcompat: диагностика. Если при полном танке (data get block -> tank.stacks) тут
+            // пишется amount=0, значит до клиента не доехал синк, а не сломан рендер.
+            AELog.debug("Sky Stone Tank @ %s: пусто для рендера, resource=%s amount=%d capacity=%d",
+                    be.getBlockPos(), resource, amount, capacity);
+            //#endif
             state.fill = 0;
             state.sprite = null;
             return;
@@ -95,6 +104,11 @@ state.color = tintSource.colorAsStack(fluidStack);
             CameraRenderState cameraRenderState) {
 
         if (state.sprite == null) {
+            //#if FABRIC
+            // nfcompat: сабмит без спрайта — либо хендлер пуст (см. лог в extractRenderState),
+            // либо у жидкости не нашлось fluid-модели (fluidModel null / sprite == null).
+            AELog.debug("Sky Stone Tank: submit пропущен, sprite == null (fill=%.3f)", state.fill);
+            //#endif
             return;
         }
 
