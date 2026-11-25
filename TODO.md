@@ -34,6 +34,16 @@ Outbound: 16 энерго-предметов AE2; fluid/item-в-предмете
 (145 ключей), генерируются `compat/tools/gen_config_lang.py` из сгенерированных ae2-*.toml.
 Русского варианта нет - при русской локали Minecraft подставит en_us (fallback), это ок.
 
+`[ ]` **Проверить миксины на полном FO-паке** (Sodium, Iris, ModernFix, sodium-extra, polytone):
+dev-ран был на 59 модах без них. Чеклист: частицы модов после входа в мир и `/reload`; высота облаков
+sodium-extra и небо/облака в spatial-измерении; ModernFix - загрузка мира/креативные вкладки;
+CTM-стекло (continuity) и модель рюкзака Traveler's Backpack; клеймы + ПКМ фасадом AE2 (порядок
+`UseBlockCallback`); взрывы в привате; визер/дракон и matrix_frame; pick-block; хоткеи с Controlify.
+
+`[ ]` Хвосты из аудита миксинов: `StructureTemplateMixin` (флаг `VisualStateSaving` обернуть в
+try/finally), `AbstractContainerScreenMixin` (захват по индексу LVT 7 → `@Local`), `isAreaLoaded`
+в `LevelAccessorMixin` отдаёт всегда true (сделать честно через `hasChunkAt`).
+
 `[x]` Конфиги полностью на ForgeConfigAPIPort (жёсткая зависимость): свой ModConfig/IConfigSpec/
 ModConfigSpec удалён, night-config больше не бандлим (его несёт FCP как JiJ). `ae2-common.toml`
 под `#if FABRIC` регистрируется как COMMON (в FCP нет LOCAL). Loading/Reloading рассылает наш

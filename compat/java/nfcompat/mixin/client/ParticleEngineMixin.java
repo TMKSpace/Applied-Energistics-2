@@ -39,9 +39,6 @@ public class ParticleEngineMixin {
     @Final
     private static List<ParticleRenderType> RENDER_ORDER;
 
-    @Unique
-    private static List<ParticleRenderType> nfcompat$renderOrder;
-
     @Inject(method = "createParticleGroup", at = @At("HEAD"), cancellable = true)
     private void nfcompat$createParticleGroup(ParticleRenderType type,
             CallbackInfoReturnable<ParticleGroup<?>> cir) {
@@ -51,28 +48,30 @@ public class ParticleEngineMixin {
         }
     }
 
+    /**
+     * НЕ кешируем результат. `RENDER_ORDER` - живой список: Fabric API
+     * (fabric-particles-v1) делает его мутабельным и пересортировывает при
+     * регистрации групп, а моды (например polytone) регистрируют свои группы
+     * позже - после входа в мир или /reload. Кеш «навсегда» приводил к тому, что
+     * их частицы молча не рисовались (типа нет в снимке).
+     *
+     * Дорого это не стоит: `extract` вызывается раз в кадр, а быстрый путь
+     * (наших доп. типов нет) вообще не аллоцирует - возвращаем сам RENDER_ORDER.
+     */
     @Redirect(method = "extract", at = @At(value = "FIELD", opcode = Opcodes.GETSTATIC, target = "Lnet/minecraft/client/particle/ParticleEngine;RENDER_ORDER:Ljava/util/List;"))
     private static List<ParticleRenderType> nfcompat$renderOrder() {
-        var cached = nfcompat$renderOrder;
-        if (cached != null) {
-            return cached;
-        }
-
         var extra = ParticleGroups.extraRenderOrder();
         if (extra.isEmpty()) {
-            cached = RENDER_ORDER;
-        } else {
-            var all = new ArrayList<ParticleRenderType>(RENDER_ORDER.size() + extra.size());
-            all.addAll(RENDER_ORDER);
-            for (var type : extra) {
-                if (!all.contains(type)) {
-                    all.add(type);
-                }
-            }
-            cached = all;
+            return RENDER_ORDER;
         }
 
-        nfcompat$renderOrder = cached;
-        return cached;
+        var all = new ArrayList<ParticleRenderType>(RENDER_ORDER.size() + extra.size());
+        all.addAll(RENDER_ORDER);
+        for (var type : extra) {
+            if (!all.contains(type)) {
+                all.add(type);
+            }
+        }
+        return all;
     }
 }

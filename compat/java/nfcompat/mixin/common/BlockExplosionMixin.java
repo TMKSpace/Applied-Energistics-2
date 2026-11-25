@@ -25,6 +25,8 @@
  */
 package nfcompat.mixin.common;
 
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.BiConsumer;
 
 import net.minecraft.core.BlockPos;
@@ -36,12 +38,37 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.neoforged.neoforge.common.extensions.IBlockExtension;
 
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(BlockBehaviour.class)
 public abstract class BlockExplosionMixin {
+
+    /**
+     * Кеш: переопределяет ли класс блока `IBlockExtension#onBlockExploded`.
+     * Нужен, чтобы отменять ванильный хвост ТОЛЬКО для тех блоков, которые
+     * реально хотят свой обработчик (AE2 - `MatrixFrameBlock`), и не отбирать
+     * поведение у всех остальных.
+     */
+    @Unique
+    private static final Map<Class<?>, Boolean> NFCOMPAT$EXPLODES = new ConcurrentHashMap<>();
+
+    @Unique
+    private static boolean nfcompat$overridesExploded(BlockBehaviour block) {
+        return NFCOMPAT$EXPLODES.computeIfAbsent(block.getClass(), type -> {
+            try {
+                var method = type.getMethod("onBlockExploded", BlockState.class, ServerLevel.class, BlockPos.class,
+                        Explosion.class);
+                // У ванильных блоков интерфейс навешан миксином - метод придёт
+                // как default из IBlockExtension, а не из самого блока.
+                return method.getDeclaringClass() != IBlockExtension.class;
+            } catch (NoSuchMethodException e) {
+                return false;
+            }
+        });
+    }
 
     @Inject(
             method = "onExplosionHit",
@@ -56,7 +83,8 @@ public abstract class BlockExplosionMixin {
         // срабатывает для всех блоков, а переопределения AE2 (`MatrixFrameBlock`) подхватываются
         // виртуально. Если интерфейс почему-то не навесился — не отменяем метод и не падаем кастом,
         // блок просто уходит в ванильную ветку.
-        if (state.getBlock() instanceof IBlockExtension extension) {
+        if (state.getBlock() instanceof IBlockExtension extension
+                && nfcompat$overridesExploded(state.getBlock())) {
             extension.onBlockExploded(state, level, pos, explosion);
             ci.cancel();
         }
