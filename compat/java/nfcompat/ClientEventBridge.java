@@ -40,6 +40,7 @@ import net.neoforged.neoforge.client.event.RegisterKeyMappingsEvent;
 import net.neoforged.neoforge.client.event.RegisterParticleProvidersEvent;
 import net.neoforged.neoforge.client.extensions.common.RegisterClientExtensionsEvent;
 import net.neoforged.neoforge.common.NeoForge;
+import net.neoforged.neoforge.event.tick.PlayerTickEvent;
 
 public final class ClientEventBridge {
     private static boolean installed;
@@ -64,10 +65,23 @@ public final class ClientEventBridge {
         // --- Тики клиента ---
         // От них зависит обновление режима отображения кабелей (фасады/прозрачность),
         // очистка закреплённых ключей в терминалах и обработка хоткеев AE2.
-        ClientTickEvents.START_CLIENT_TICK.register(client ->
-                NeoForge.EVENT_BUS.post(new ClientTickEvent.Pre()));
-        ClientTickEvents.END_CLIENT_TICK.register(client ->
-                NeoForge.EVENT_BUS.post(new ClientTickEvent.Post()));
+        // Внутри клиентского тика игрок тикается из `ClientLevel#tickEntities` ->
+        // `LocalPlayer#tick`, поэтому Pre летит из начала тика (до игрока), Post — из конца.
+        // На NeoForge эти же события рассылаются из головы/хвоста `Player#tick()`
+        // (`EventHooks.firePlayerTickPre/Post`), так что порядок относительно тика совпадает;
+        // вся разница — группировка по всем игрокам (на клиенте он один).
+        ClientTickEvents.START_CLIENT_TICK.register(client -> {
+            NeoForge.EVENT_BUS.post(new ClientTickEvent.Pre());
+            if (client.player != null) {
+                NeoForge.EVENT_BUS.post(new PlayerTickEvent.Pre(client.player));
+            }
+        });
+        ClientTickEvents.END_CLIENT_TICK.register(client -> {
+            if (client.player != null) {
+                NeoForge.EVENT_BUS.post(new PlayerTickEvent.Post(client.player));
+            }
+            NeoForge.EVENT_BUS.post(new ClientTickEvent.Post());
+        });
 
         // --- Вход/выход из мира ---
         // LoggingIn чистит очередь крафта и закреплённые ключи: без него они

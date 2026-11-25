@@ -31,9 +31,11 @@ import net.neoforged.neoforge.event.level.ChunkEvent;
 import net.neoforged.neoforge.event.level.LevelEvent;
 import net.neoforged.neoforge.event.server.ServerAboutToStartEvent;
 import net.neoforged.neoforge.event.server.ServerStartedEvent;
+import net.neoforged.neoforge.event.server.ServerStartingEvent;
 import net.neoforged.neoforge.event.server.ServerStoppedEvent;
 import net.neoforged.neoforge.event.server.ServerStoppingEvent;
 import net.neoforged.neoforge.event.tick.LevelTickEvent;
+import net.neoforged.neoforge.event.tick.PlayerTickEvent;
 import net.neoforged.neoforge.event.tick.ServerTickEvent;
 import net.neoforged.neoforge.server.ServerLifecycleHooks;
 
@@ -81,9 +83,23 @@ public final class LifecycleBridge {
         ServerTickEvents.START_SERVER_TICK.register(server -> {
             adoptServerThread();
             NeoForge.EVENT_BUS.post(new ServerTickEvent.Pre(() -> true, server));
+            // PlayerTickEvent.Pre. На NeoForge он летит из головы `Player#tick()`, то есть
+            // до собственного тика каждого игрока; у нас нет своего хука в Player#tick,
+            // поэтому группируем: все Pre — в начале серверного тика (до тика игроков),
+            // все Post — в конце. Для аддонов, которым нужен "тик игрока" (extendedae_plus:
+            // JeiSyncManager), порядок внутри тика не важен, важно что раз в тик на игрока.
+            for (var player : server.getPlayerList().getPlayers()) {
+                NeoForge.EVENT_BUS.post(new PlayerTickEvent.Pre(player));
+            }
         });
-        ServerTickEvents.END_SERVER_TICK.register(server ->
-                NeoForge.EVENT_BUS.post(new ServerTickEvent.Post(() -> true, server)));
+        ServerTickEvents.END_SERVER_TICK.register(server -> {
+            // Post — уже после тиков игроков, но до ServerTickEvent.Post (как на NeoForge,
+            // где player-tick-события вложены в серверный тик).
+            for (var player : server.getPlayerList().getPlayers()) {
+                NeoForge.EVENT_BUS.post(new PlayerTickEvent.Post(player));
+            }
+            NeoForge.EVENT_BUS.post(new ServerTickEvent.Post(() -> true, server));
+        });
 
         // --- Тики измерения: NeoForge рассылает их по одному Level ---
         ServerTickEvents.START_LEVEL_TICK.register(level -> {
@@ -103,6 +119,12 @@ public final class LifecycleBridge {
         ServerLifecycleEvents.SERVER_STARTING.register(server -> {
             ServerLifecycleHooks.setCurrentServer(server);
             NeoForge.EVENT_BUS.post(new ServerAboutToStartEvent(server));
+            // NeoForge рассылает ServerStartingEvent из ServerLifecycleHooks.handleServerStarting,
+            // то есть после AboutToStart и до ServerStarted. У Fabric это же окно —
+            // SERVER_STARTING; команды регистрируются позже, так что порядок
+            // "Starting -> RegisterCommandsEvent" сохраняется (важно: NeoForge в
+            // javadoc ServerStartingEvent прямо отсылает за командами к RegisterCommandsEvent).
+            NeoForge.EVENT_BUS.post(new ServerStartingEvent(server));
         });
         ServerLifecycleEvents.SERVER_STARTED.register(server ->
                 NeoForge.EVENT_BUS.post(new ServerStartedEvent(server)));

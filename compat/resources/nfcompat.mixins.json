@@ -13,6 +13,7 @@
     "common.CreativeModeTabMixin",
     "common.ItemExtensionMixin",
     "common.LivingEntityClimbableMixin",
+    "common.LivingEntityUseItemMixin",
     "common.PickItemFromBlockMixin",
     "common.PlayerDestroySpeedMixin",
     "common.RecipeManagerAccessor",
